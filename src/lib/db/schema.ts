@@ -19,3 +19,12 @@ export const users = sqliteTable('users', {
     .default(sql`CURRENT_TIMESTAMP`)
     .notNull(),
 });
+
+export const logs = sqliteTable('logs', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  timestamp: text('timestamp').notNull(),
+  message: text('message').notNull(),
+  meta: text('meta'),
+  error: text('error'),
+  level: text('level', { enum: ['debug', 'info', 'warn', 'error'] }).notNull(),
+});

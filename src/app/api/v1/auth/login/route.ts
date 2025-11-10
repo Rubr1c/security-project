@@ -42,4 +42,6 @@ export async function POST(req: Request) {
       { status: STATUS.UNAUTHORIZED }
     );
   }
+
+  return NextResponse.json({}, { status: STATUS.OK });
 }

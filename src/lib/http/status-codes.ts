@@ -7,3 +7,5 @@ export const STATUS = {
   NOT_FOUND: 404,
   INTERNAL_ERROR: 500,
 } as const;
+
+export type StatusCode = typeof STATUS[keyof typeof STATUS];
