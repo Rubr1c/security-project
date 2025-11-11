@@ -1,4 +1,5 @@
-import { LOG_LEVEL_ORDER, Logger, LoggerParams, LogLevel } from '.';
+import { LOG_LEVEL_ORDER, Logger, LoggerParams } from '.';
+import { LogLevel } from '../db/types';
 
 export abstract class BaseLogger implements Logger {
   public level: LogLevel;
@@ -11,7 +12,7 @@ export abstract class BaseLogger implements Logger {
    * Formats a timestamp for logging.
    * @returns The formatted timestamp.
    */
-  protected formatTimestamp(): string {
+  public formatTimestamp(): string {
     return new Date().toISOString();
   }
 

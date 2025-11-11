@@ -1,4 +1,5 @@
-import { LoggerParams, LogLevel } from '.';
+import { LoggerParams } from '.';
+import { LogLevel } from '../db/types';
 import { HttpError } from '../http/http-error';
 import { BaseLogger } from './base-logger';
 

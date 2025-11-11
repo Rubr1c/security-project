@@ -1,8 +1,7 @@
+import { LogLevel } from '../db/types';
 import { AuditLogger } from './audit-logger';
 import { CompositeLogger } from './composite-logger';
 import { ConsoleLogger } from './console-logger';
-
-export type LogLevel = 'debug' | 'info' | 'warn' | 'error';
 
 export const LOG_LEVEL_ORDER = {
   debug: 10,

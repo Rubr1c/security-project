@@ -1,4 +1,5 @@
-import { Logger, LoggerParams, LogLevel } from '.';
+import { Logger, LoggerParams } from '.';
+import { LogLevel } from '../db/types';
 import { BaseLogger } from './base-logger';
 
 export class CompositeLogger extends BaseLogger {
