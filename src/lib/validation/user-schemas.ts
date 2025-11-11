@@ -4,6 +4,7 @@ export const roleEnum = v.picklist(['nurse', 'patient', 'admin', 'doctor']);
 
 export const createUserSchema = v.object({
   email: v.pipe(v.string(), v.email()),
+  name: v.pipe(v.string(), v.minLength(3, 'Name must be at least 3 characters')),
   password: v.pipe(
     v.string(),
     v.minLength(8, 'Password must be at least 8 characters'),

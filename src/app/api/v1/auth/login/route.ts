@@ -76,7 +76,7 @@ export async function POST(req: Request) {
 
   return NextResponse.json(
     {
-      token: jwt.sign({ userId: user.id, role: user.role }),
+      token: await jwt.sign({ userId: user.id, role: user.role }),
     },
     { status: STATUS.OK }
   );

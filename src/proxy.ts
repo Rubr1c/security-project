@@ -38,9 +38,22 @@ export async function proxy(req: NextRequest) {
   if (pathname.includes('/auth')) {
     return NextResponse.next();
   }
+  
+  logger.info({
+    message: 'Authorizing User',
+    meta: {
+      authorization: req.headers.get('authorization'),
+    },
+  });
 
   const token = req.headers.get('authorization')?.split(' ')[1];
   if (!token) {
+    logger.info({
+      message: 'No token found',
+      meta: {
+        authorization: req.headers.get('authorization'),
+      },
+    });
     return NextResponse.json(
       { error: 'Unauthorized' },
       { status: STATUS.UNAUTHORIZED }
@@ -48,15 +61,35 @@ export async function proxy(req: NextRequest) {
   }
   const decoded = await jwt.verify<JwtPayload>(token);
   if (!decoded) {
+    logger.info({
+      message: 'Invalid token',
+      meta: {
+        authorization: req.headers.get('authorization'),
+      },
+    });
     return NextResponse.json(
       { error: 'Unauthorized' },
       { status: STATUS.UNAUTHORIZED }
     );
   }
 
+  logger.debug({
+    message: 'Token verified',
+    meta: {
+      decoded,
+    },
+  });
+
   const requestHeaders = new Headers(req.headers);
   requestHeaders.set('x-user-id', decoded.userId.toString());
   requestHeaders.set('x-user-role', decoded.role);
+
+  logger.info({
+    message: 'Request headers set',
+    meta: {
+      requestHeaders,
+    },
+  });
 
   return NextResponse.next({
     request: {
