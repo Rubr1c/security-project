@@ -3,8 +3,55 @@ import type { NextRequest } from 'next/server';
 import { logger } from './lib/logger';
 import { STATUS } from './lib/http/status-codes';
 import { jwt, JwtPayload } from './lib/jwt';
+import arcjet, { detectBot, request, shield, tokenBucket } from "@arcjet/next";
+import { isSpoofedBot } from "@arcjet/inspect";
+
+export const aj = arcjet({
+  key: process.env.ARCJET_KEY!, // Get your site key from https://app.arcjet.com
+  rules: [
+    // Shield protects your app from common attacks e.g. SQL injection
+    shield({ mode: "LIVE" }),
+    // Create a bot detection rule
+    detectBot({
+      mode: "LIVE", // Blocks requests. Use "DRY_RUN" to log only
+      // Block all bots except the following
+      allow: [
+        "CATEGORY:SEARCH_ENGINE", // Google, Bing, etc
+        // Uncomment to allow these other common bot categories
+        // See the full list at https://arcjet.com/bot-list
+        //"CATEGORY:MONITOR", // Uptime monitoring services
+        //"CATEGORY:PREVIEW", // Link previews e.g. Slack, Discord
+      ],
+    }),
+    // Create a token bucket rate limit. Other algorithms are supported.
+    tokenBucket({
+      mode: "LIVE",
+      // Tracked by IP address by default, but this can be customized
+      // See https://docs.arcjet.com/fingerprints
+      //characteristics: ["ip.src"],
+      refillRate: 5, // Refill 5 tokens per interval
+      interval: 10, // Refill every 10 seconds
+      capacity: 10, // Bucket capacity of 10 tokens
+    }),
+  ],
+});
 
 export async function proxy(req: NextRequest) {
+  const decision = await aj.protect(req, { requested: 5 });
+  if (decision.isDenied()) {
+    return NextResponse.json(
+      { error: "Access denied by Arcjet" },
+      { status: 403 }
+    );
+  }
+
+  if (decision.results.some(isSpoofedBot)) {
+    return NextResponse.json(
+      { error: "Forbidden", reason: decision.reason },
+      { status: 403 },
+    );
+  }
+  
   const { pathname, protocol, host, searchParams } = req.nextUrl;
   const ip =
     req.headers.get('x-forwarded-for') ||
@@ -38,7 +85,7 @@ export async function proxy(req: NextRequest) {
   if (pathname.includes('/auth')) {
     return NextResponse.next();
   }
-  
+
   logger.info({
     message: 'Authorizing User',
     meta: {
@@ -87,7 +134,8 @@ export async function proxy(req: NextRequest) {
   logger.info({
     message: 'Request headers set',
     meta: {
-      requestHeaders,
+      'x-user-id': decoded.userId.toString(),
+      'x-user-role': decoded.role,
     },
   });
 

@@ -17,6 +17,7 @@ export async function POST(req: Request) {
     delete body.password;
 
     logger.info({ message: 'Invalid login request', meta: body });
+    
     return NextResponse.json(
       { error: result.issues[0].message },
       { status: STATUS.BAD_REQUEST }
@@ -29,6 +30,7 @@ export async function POST(req: Request) {
       email: result.output.email,
     },
   });
+
   const [user] = await db
     .select()
     .from(users)
