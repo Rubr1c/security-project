@@ -1,5 +1,6 @@
 import * as v from 'valibot';
 
+//TODO: Remove admin role later
 export const roleEnum = v.picklist(['nurse', 'patient', 'admin', 'doctor']);
 
 export const createUserSchema = v.object({
@@ -13,7 +14,7 @@ export const createUserSchema = v.object({
       'Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character (@$!%*?&)'
     )
   ),
-  role: roleEnum,
+  // role: roleEnum,
 });
 
 export const updateUserSchema = v.object({
