@@ -10,4 +10,4 @@ export const STATUS = {
   INTERNAL_ERROR: 500,
 } as const;
 
-export type StatusCode = typeof STATUS[keyof typeof STATUS];
+export type StatusCode = (typeof STATUS)[keyof typeof STATUS];

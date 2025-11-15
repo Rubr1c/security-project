@@ -1,0 +1,1 @@
+ALTER TABLE `users` ADD `doctor_id` integer DEFAULT NULL REFERENCES users(id);

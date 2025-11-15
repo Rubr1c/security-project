@@ -5,7 +5,10 @@ export const roleEnum = v.picklist(['nurse', 'patient', 'admin', 'doctor']);
 
 export const createUserSchema = v.object({
   email: v.pipe(v.string(), v.email()),
-  name: v.pipe(v.string(), v.minLength(3, 'Name must be at least 3 characters')),
+  name: v.pipe(
+    v.string(),
+    v.minLength(3, 'Name must be at least 3 characters')
+  ),
   password: v.pipe(
     v.string(),
     v.minLength(8, 'Password must be at least 8 characters'),
@@ -42,4 +45,8 @@ export const loginSchema = v.object({
       'Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character (@$!%*?&)'
     )
   ),
+});
+
+export const deleteUserSchema = v.object({
+  id: v.pipe(v.number(), v.integer()),
 });

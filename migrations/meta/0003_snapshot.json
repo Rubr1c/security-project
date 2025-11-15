@@ -1,8 +1,8 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "2616f152-4ab9-423c-8379-7d2cc0eab460",
-  "prevId": "fa7e6266-dda5-4125-87fd-65a87dab6520",
+  "id": "7d7bfd3d-1bc5-42c9-ac2e-ab16df86479c",
+  "prevId": "2616f152-4ab9-423c-8379-7d2cc0eab460",
   "tables": {
     "logs": {
       "name": "logs",
@@ -95,6 +95,14 @@
           "autoincrement": false,
           "default": "'patient'"
         },
+        "doctor_id": {
+          "name": "doctor_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": "NULL"
+        },
         "created_at": {
           "name": "created_at",
           "type": "text",
@@ -115,11 +123,27 @@
       "indexes": {
         "users_email_unique": {
           "name": "users_email_unique",
-          "columns": ["email"],
+          "columns": [
+            "email"
+          ],
           "isUnique": true
         }
       },
-      "foreignKeys": {},
+      "foreignKeys": {
+        "users_doctor_id_fkey": {
+          "name": "users_doctor_id_fkey",
+          "tableFrom": "users",
+          "tableTo": "users",
+          "columnsFrom": [
+            "doctor_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "checkConstraints": {}

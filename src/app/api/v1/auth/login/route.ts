@@ -10,29 +10,31 @@ import { logger } from '@/lib/logger';
 import { jwt } from '@/lib/jwt';
 import { aj } from '@/proxy';
 
-
 export async function POST(req: Request) {
   const decision = await aj.protect(req, { requested: 5 });
 
   if (decision.isDenied()) {
     if (decision.reason.isRateLimit()) {
-      return NextResponse.json(
-        { error: 'Too Many Requests', reason: decision.reason },
-
-        { status: STATUS.TOO_MANY_REQUESTS }
-      );
+      logger.info({
+        message: 'Too Many Requests',
+        meta: { reason: decision.reason },
+      });
+      return NextResponse.json({}, { status: STATUS.TOO_MANY_REQUESTS });
     } else if (decision.reason.isBot()) {
+      logger.info({
+        message: 'No bots allowed',
+        meta: { reason: decision.reason },
+      });
       return NextResponse.json(
-        { error: 'No bots allowed', reason: decision.reason },
-
+        { error: 'No bots allowed' },
         { status: STATUS.FORBIDDEN }
       );
     } else {
-      return NextResponse.json(
-        { error: 'Forbidden', reason: decision.reason },
-
-        { status: STATUS.FORBIDDEN }
-      );
+      logger.info({
+        message: 'Forbidden',
+        meta: { reason: decision.reason },
+      });
+      return NextResponse.json({}, { status: STATUS.FORBIDDEN });
     }
   }
 
