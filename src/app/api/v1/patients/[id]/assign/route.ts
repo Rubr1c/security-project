@@ -1,13 +1,14 @@
 import { STATUS } from '@/lib/http/status-codes';
 import { logger } from '@/lib/logger';
 import { NextResponse } from 'next/server';
-import { assignPatientSchema } from '@/lib/validation/actions-sechmas';
-import * as v from 'valibot';
 import { db } from '@/lib/db/client';
 import { users } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 
-export async function POST(req: Request) {
+export async function POST(
+  req: Request,
+  { params }: { params: { id: string } }
+) {
   if (req.headers.get('x-user-role') !== 'doctor') {
     logger.info({
       message: 'Unauthorized',
@@ -16,27 +17,19 @@ export async function POST(req: Request) {
         'x-user-role': req.headers.get('x-user-role') ?? 'unknown',
       },
     });
-  }
 
-  const body = await req.json();
-  const result = v.safeParse(assignPatientSchema, body);
-
-  if (!result.success) {
-    logger.info({ message: 'Invalid assign patient request', meta: body });
     return NextResponse.json(
-      { error: result.issues[0].message },
-      { status: STATUS.BAD_REQUEST }
+      { error: 'Unauthorized' },
+      { status: STATUS.UNAUTHORIZED }
     );
   }
 
-  const patient = await db
-    .select()
-    .from(users)
-    .where(eq(users.email, result.output.patientEmail))
-    .all();
+  const patientId = parseInt(params.id);
+
+  const patient = db.select().from(users).where(eq(users.id, patientId)).all();
 
   if (patient.length === 0) {
-    logger.info({ message: 'Patient not found', meta: result.output });
+    logger.info({ message: 'Patient not found', meta: patientId });
     return NextResponse.json(
       { error: 'Patient not found' },
       { status: STATUS.NOT_FOUND }

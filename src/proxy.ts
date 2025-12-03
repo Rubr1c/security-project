@@ -12,12 +12,7 @@ export const aj = arcjet({
     shield({ mode: 'LIVE' }),
     detectBot({
       mode: 'LIVE',
-      allow: [
-        'CATEGORY:SEARCH_ENGINE',
-        'CATEGORY:MONITOR',
-        'CATEGORY:PREVIEW',
-        'POSTMAN', //TODO: Remove Later
-      ],
+      allow: ['CATEGORY:SEARCH_ENGINE', 'CATEGORY:MONITOR', 'CATEGORY:PREVIEW'],
     }),
     tokenBucket({
       mode: 'LIVE',
@@ -59,24 +54,18 @@ export async function proxy(req: NextRequest) {
     },
   });
 
-  if (pathname.includes('/auth')) {
+  if (pathname.startsWith('/api/v1/auth')) {
     return NextResponse.next();
   }
 
   logger.info({
     message: 'Authorizing User',
-    meta: {
-      authorization: req.headers.get('authorization'),
-    },
   });
 
   const token = req.headers.get('authorization')?.split(' ')[1];
   if (!token) {
     logger.info({
       message: 'No token found',
-      meta: {
-        authorization: req.headers.get('authorization'),
-      },
     });
     return NextResponse.json(
       { error: 'Unauthorized' },
@@ -87,9 +76,6 @@ export async function proxy(req: NextRequest) {
   if (!decoded) {
     logger.info({
       message: 'Invalid token',
-      meta: {
-        authorization: req.headers.get('authorization'),
-      },
     });
     return NextResponse.json(
       { error: 'Unauthorized' },
@@ -100,7 +86,7 @@ export async function proxy(req: NextRequest) {
   logger.debug({
     message: 'Token verified',
     meta: {
-      decoded,
+      userId: decoded.userId,
     },
   });
 

@@ -28,15 +28,13 @@ export const users = sqliteTable(
       .default(sql`CURRENT_TIMESTAMP`)
       .notNull(),
   },
-  (table) => {
-    return {
-      doctorReference: foreignKey({
-        columns: [table.doctorId],
-        foreignColumns: [table.id],
-        name: 'users_doctor_id_fkey',
-      }),
-    };
-  }
+  (table) => [
+    foreignKey({
+      columns: [table.doctorId],
+      foreignColumns: [table.id],
+      name: 'users_doctor_id_fkey',
+    }),
+  ]
 );
 
 export const logs = sqliteTable('logs', {
@@ -47,3 +45,55 @@ export const logs = sqliteTable('logs', {
   error: text('error'),
   level: text('level', { enum: ['debug', 'info', 'warn', 'error'] }).notNull(),
 });
+
+export const appointments = sqliteTable(
+  'appointments',
+  {
+    id: integer('id').primaryKey({ autoIncrement: true }),
+    patientId: integer('patient_id').notNull(),
+    doctorId: integer('doctor_id').notNull(),
+    date: text('date').notNull(),
+    status: text('status', {
+      enum: ['pending', 'confirmed', 'denied', 'completed'],
+    })
+      .notNull()
+      .default('pending'),
+    diagnosis: text('diagnosis'),
+    createdAt: text('created_at')
+      .default(sql`CURRENT_TIMESTAMP`)
+      .notNull(),
+    updatedAt: text('updated_at')
+      .default(sql`CURRENT_TIMESTAMP`)
+      .notNull(),
+  },
+  (table) => [
+    foreignKey({
+      columns: [table.patientId],
+      foreignColumns: [users.id],
+      name: 'appointments_patient_id_fkey',
+    }),
+    foreignKey({
+      columns: [table.doctorId],
+      foreignColumns: [users.id],
+      name: 'appointments_doctor_id_fkey',
+    }),
+  ]
+);
+
+export const medications = sqliteTable(
+  'medications',
+  {
+    id: integer('id').primaryKey({ autoIncrement: true }),
+    appointmentId: integer('appointment_id').notNull(),
+    name: text('name').notNull(),
+    dosage: text('dosage').notNull(),
+    instructions: text('instructions').notNull(),
+  },
+  (table) => [
+    foreignKey({
+      columns: [table.appointmentId],
+      foreignColumns: [appointments.id],
+      name: 'medications_appointment_id_fkey',
+    }),
+  ]
+);

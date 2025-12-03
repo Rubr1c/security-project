@@ -31,7 +31,15 @@ export async function GET(req: Request) {
   });
 
   const patients = db
-    .select()
+    .select({
+      id: users.id,
+      email: users.email,
+      name: users.name,
+      role: users.role,
+      doctorId: users.doctorId,
+      createdAt: users.createdAt,
+      updatedAt: users.updatedAt,
+    })
     .from(users)
     .where(and(eq(users.role, 'patient'), eq(users.doctorId, doctorId)))
     .all();
