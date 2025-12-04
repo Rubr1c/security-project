@@ -2,7 +2,7 @@ import { db } from '@/lib/db/client';
 import { appointments } from '@/lib/db/schema';
 import { STATUS } from '@/lib/http/status-codes';
 import { logger } from '@/lib/logger';
-import { appointmentResponseSchema } from '@/lib/validation/user-schemas';
+import { appointmentResponseSchema } from '@/lib/validation/appointment-schemas';
 import { NextResponse } from 'next/server';
 import * as v from 'valibot';
 import { eq, and } from 'drizzle-orm';

@@ -2,7 +2,7 @@ import { db } from '@/lib/db/client';
 import { appointments } from '@/lib/db/schema';
 import { STATUS } from '@/lib/http/status-codes';
 import { logger } from '@/lib/logger';
-import { updateDiagnosisSchema } from '@/lib/validation/user-schemas';
+import { updateDiagnosisSchema } from '@/lib/validation/appointment-schemas';
 import { NextResponse } from 'next/server';
 import * as v from 'valibot';
 import { eq, and } from 'drizzle-orm';
@@ -61,7 +61,10 @@ export async function PUT(req: Request, { params }: RouteParams) {
     .select()
     .from(appointments)
     .where(
-      and(eq(appointments.id, appointmentId), eq(appointments.doctorId, doctorId))
+      and(
+        eq(appointments.id, appointmentId),
+        eq(appointments.doctorId, doctorId)
+      )
     )
     .all();
 
@@ -98,4 +101,3 @@ export async function PUT(req: Request, { params }: RouteParams) {
     { status: STATUS.OK }
   );
 }
-
