@@ -8,20 +8,20 @@ interface LogLevelBadgeProps {
 
 const levelStyles: Record<LogLevel, { bg: string; text: string }> = {
   debug: {
-    bg: 'bg-slate-500/10',
-    text: 'text-slate-400',
+    bg: 'bg-slate-100',
+    text: 'text-slate-600',
   },
   info: {
-    bg: 'bg-blue-500/10',
-    text: 'text-blue-400',
+    bg: 'bg-blue-50',
+    text: 'text-blue-700',
   },
   warn: {
-    bg: 'bg-yellow-500/10',
-    text: 'text-yellow-400',
+    bg: 'bg-amber-50',
+    text: 'text-amber-700',
   },
   error: {
-    bg: 'bg-red-500/10',
-    text: 'text-red-400',
+    bg: 'bg-red-50',
+    text: 'text-red-700',
   },
 };
 

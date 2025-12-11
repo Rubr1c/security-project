@@ -23,7 +23,7 @@ export const auth = {
     return response.data;
   },
   changePassword: async (data: ChangePasswordInput) => {
-    const response = await apiClient.post('/auth/change-password', data);
+    const response = await apiClient.put('/auth/change-password', data);
     return response.data;
   },
   me: async (token?: string) => {

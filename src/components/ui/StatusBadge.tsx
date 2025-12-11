@@ -6,26 +6,29 @@ interface StatusBadgeProps {
   status: AppointmentStatus;
 }
 
-const statusStyles: Record<AppointmentStatus, { bg: string; text: string; dot: string }> = {
+const statusStyles: Record<
+  AppointmentStatus,
+  { bg: string; text: string; dot: string }
+> = {
   pending: {
-    bg: 'bg-yellow-500/10',
-    text: 'text-yellow-400',
-    dot: 'bg-yellow-400',
+    bg: 'bg-amber-50',
+    text: 'text-amber-700',
+    dot: 'bg-amber-500',
   },
   confirmed: {
-    bg: 'bg-emerald-500/10',
-    text: 'text-emerald-400',
-    dot: 'bg-emerald-400',
+    bg: 'bg-emerald-50',
+    text: 'text-emerald-700',
+    dot: 'bg-emerald-500',
   },
   denied: {
-    bg: 'bg-red-500/10',
-    text: 'text-red-400',
-    dot: 'bg-red-400',
+    bg: 'bg-red-50',
+    text: 'text-red-700',
+    dot: 'bg-red-500',
   },
   completed: {
-    bg: 'bg-blue-500/10',
-    text: 'text-blue-400',
-    dot: 'bg-blue-400',
+    bg: 'bg-blue-50',
+    text: 'text-blue-700',
+    dot: 'bg-blue-500',
   },
 };
 
@@ -41,4 +44,3 @@ export function StatusBadge({ status }: StatusBadgeProps) {
     </span>
   );
 }
-

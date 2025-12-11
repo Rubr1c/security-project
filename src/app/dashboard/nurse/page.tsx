@@ -14,16 +14,21 @@ import {
   EmptyState,
   LoadingSpinner,
 } from '@/components/ui';
-import { useAppointments, useAppointmentMedications } from '@/hooks/useAppointments';
+import {
+  useAppointments,
+  useAppointmentMedications,
+} from '@/hooks/useAppointments';
 import { useUsers } from '@/hooks/useUsers';
 import { useAuthStore } from '@/store/auth';
 import type { Appointment } from '@/lib/db/types';
+import { Stethoscope, ClipboardList, Plus, Eye, Pill } from 'lucide-react';
 
 export default function NurseDashboardPage() {
   const [selectedAppointment, setSelectedAppointment] =
     useState<Appointment | null>(null);
   const [addMedicationModalOpen, setAddMedicationModalOpen] = useState(false);
-  const [viewMedicationsModalOpen, setViewMedicationsModalOpen] = useState(false);
+  const [viewMedicationsModalOpen, setViewMedicationsModalOpen] =
+    useState(false);
 
   const user = useAuthStore((state) => state.user);
   const { appointmentsQuery } = useAppointments();
@@ -61,8 +66,10 @@ export default function NurseDashboardPage() {
     <DashboardLayout allowedRoles={['nurse']}>
       <div className="space-y-8">
         <div>
-          <h1 className="text-3xl font-bold text-white">Nurse Dashboard</h1>
-          <p className="mt-1 text-slate-400">
+          <h1 className="text-2xl font-semibold text-slate-800">
+            Nurse Dashboard
+          </h1>
+          <p className="mt-1 text-slate-500">
             Manage medications for your assigned doctor&apos;s patients
           </p>
         </div>
@@ -70,27 +77,27 @@ export default function NurseDashboardPage() {
         <div className="grid gap-4 sm:grid-cols-2">
           <Card>
             <CardContent className="flex items-center gap-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-emerald-500/10">
-                <span className="text-2xl">👨‍⚕️</span>
+              <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-emerald-50">
+                <Stethoscope className="h-6 w-6 text-emerald-600" />
               </div>
               <div>
-                <p className="text-lg font-bold text-white">
+                <p className="text-lg font-semibold text-slate-800">
                   {assignedDoctor?.name ?? 'Not Assigned'}
                 </p>
-                <p className="text-sm text-slate-400">Assigned Doctor</p>
+                <p className="text-sm text-slate-500">Assigned Doctor</p>
               </div>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="flex items-center gap-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-cyan-500/10">
-                <span className="text-2xl">📋</span>
+              <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-blue-50">
+                <ClipboardList className="h-6 w-6 text-blue-600" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-white">
+                <p className="text-2xl font-semibold text-slate-800">
                   {doctorAppointments.length}
                 </p>
-                <p className="text-sm text-slate-400">Completed Appointments</p>
+                <p className="text-sm text-slate-500">Completed Appointments</p>
               </div>
             </CardContent>
           </Card>
@@ -100,7 +107,7 @@ export default function NurseDashboardPage() {
           <Card>
             <CardContent className="py-12">
               <EmptyState
-                icon="⏳"
+                icon={<Stethoscope className="h-6 w-6" />}
                 title="Not assigned to a doctor"
                 description="You need to be assigned to a doctor before you can manage patient medications"
               />
@@ -117,12 +124,12 @@ export default function NurseDashboardPage() {
                   <LoadingSpinner />
                 </div>
               ) : appointmentsQuery.isError ? (
-                <div className="py-8 text-center text-red-400">
+                <div className="py-8 text-center text-red-600">
                   Failed to load appointments
                 </div>
               ) : doctorAppointments.length === 0 ? (
                 <EmptyState
-                  icon="📋"
+                  icon={<ClipboardList className="h-6 w-6" />}
                   title="No completed appointments"
                   description="Completed appointments from your assigned doctor will appear here"
                 />
@@ -131,15 +138,15 @@ export default function NurseDashboardPage() {
                   {doctorAppointments.map((appointment) => (
                     <div
                       key={appointment.id}
-                      className="rounded-lg border border-slate-700 bg-slate-800/30 p-4"
+                      className="rounded-lg border border-gray-200 bg-white p-4"
                     >
                       <div className="flex items-start justify-between">
                         <div>
-                          <p className="font-medium text-white">
+                          <p className="font-medium text-slate-800">
                             {patientsMap.get(appointment.patientId) ??
                               `Patient #${appointment.patientId}`}
                           </p>
-                          <p className="text-sm text-slate-400">
+                          <p className="text-sm text-slate-500">
                             {new Date(appointment.date).toLocaleDateString()} at{' '}
                             {new Date(appointment.date).toLocaleTimeString([], {
                               hour: '2-digit',
@@ -151,24 +158,28 @@ export default function NurseDashboardPage() {
                           <Button
                             size="sm"
                             variant="ghost"
-                            onClick={() => openViewMedicationsModal(appointment)}
+                            onClick={() =>
+                              openViewMedicationsModal(appointment)
+                            }
                           >
+                            <Eye className="h-4 w-4" />
                             View Meds
                           </Button>
                           <Button
                             size="sm"
                             onClick={() => openAddMedicationModal(appointment)}
                           >
+                            <Plus className="h-4 w-4" />
                             Add Medication
                           </Button>
                         </div>
                       </div>
                       {appointment.diagnosis && (
-                        <div className="mt-3 rounded-md bg-slate-900/50 p-3">
+                        <div className="mt-3 rounded-md bg-gray-50 p-3">
                           <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
                             Diagnosis
                           </p>
-                          <p className="mt-1 text-sm text-slate-300">
+                          <p className="mt-1 text-sm text-slate-700">
                             {appointment.diagnosis}
                           </p>
                         </div>
@@ -188,10 +199,10 @@ export default function NurseDashboardPage() {
         >
           {selectedAppointment && (
             <div className="space-y-4">
-              <div className="rounded-md bg-slate-800/50 p-3">
-                <p className="text-sm text-slate-400">
+              <div className="rounded-md bg-gray-50 p-3">
+                <p className="text-sm text-slate-500">
                   Patient:{' '}
-                  <span className="text-white">
+                  <span className="font-medium text-slate-800">
                     {patientsMap.get(selectedAppointment.patientId) ??
                       `Patient #${selectedAppointment.patientId}`}
                   </span>
@@ -232,7 +243,7 @@ function MedicationsListModal({ appointmentId }: { appointmentId: number }) {
 
   if (medicationsQuery.isError) {
     return (
-      <div className="py-8 text-center text-red-400">
+      <div className="py-8 text-center text-red-600">
         Failed to load medications
       </div>
     );
@@ -241,7 +252,7 @@ function MedicationsListModal({ appointmentId }: { appointmentId: number }) {
   if (!medicationsQuery.data?.length) {
     return (
       <EmptyState
-        icon="💊"
+        icon={<Pill className="h-6 w-6" />}
         title="No medications"
         description="No medications have been added to this appointment"
       />

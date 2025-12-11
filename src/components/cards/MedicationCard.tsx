@@ -2,6 +2,7 @@
 
 import type { Medication } from '@/lib/db/types';
 import { Card, CardContent } from '@/components/ui';
+import { Pill } from 'lucide-react';
 
 interface MedicationCardProps {
   medication: Medication;
@@ -9,23 +10,21 @@ interface MedicationCardProps {
 
 export function MedicationCard({ medication }: MedicationCardProps) {
   return (
-    <Card className="transition hover:border-slate-700">
-      <CardContent className="space-y-3">
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-cyan-400 to-blue-500">
-            <span className="text-lg">💊</span>
+    <Card>
+      <CardContent>
+        <div className="flex items-start gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-50">
+            <Pill className="h-5 w-5 text-emerald-600" />
           </div>
-          <div>
-            <h4 className="font-medium text-white">{medication.name}</h4>
-            <p className="text-sm text-slate-400">{medication.dosage}</p>
+          <div className="flex-1">
+            <h4 className="font-medium text-slate-800">{medication.name}</h4>
+            <p className="text-sm text-emerald-600">{medication.dosage}</p>
+            <p className="mt-2 text-sm text-slate-500">
+              {medication.instructions}
+            </p>
           </div>
-        </div>
-        <div className="rounded-lg bg-slate-800/50 p-3">
-          <p className="text-xs text-slate-500">Instructions</p>
-          <p className="mt-1 text-sm text-slate-300">{medication.instructions}</p>
         </div>
       </CardContent>
     </Card>
   );
 }
-

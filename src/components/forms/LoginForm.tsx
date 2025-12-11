@@ -4,8 +4,9 @@ import { useForm } from 'react-hook-form';
 import { valibotResolver } from '@hookform/resolvers/valibot';
 import { loginSchema } from '@/lib/validation/user-schemas';
 import { useAuth } from '@/hooks/useAuth';
-import { Input, Button } from '@/components/ui';
+import { Button, Input } from '@/components/ui';
 import * as v from 'valibot';
+import Link from 'next/link';
 
 type LoginFormData = v.InferInput<typeof loginSchema>;
 
@@ -28,19 +29,19 @@ export function LoginForm() {
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
       <Input
         {...register('email')}
-        id="email"
         type="email"
-        label="Email Address"
+        id="email"
+        label="Email"
         placeholder="you@example.com"
         error={errors.email?.message}
       />
 
       <Input
         {...register('password')}
-        id="password"
         type="password"
+        id="password"
         label="Password"
-        placeholder="••••••••"
+        placeholder="Enter your password"
         error={errors.password?.message}
       />
 
@@ -53,12 +54,22 @@ export function LoginForm() {
       </Button>
 
       {loginMutation.isError && (
-        <p className="text-center text-sm text-red-400">
+        <div className="rounded-lg bg-red-50 p-3 text-center text-sm text-red-600">
           {loginMutation.error instanceof Error
             ? loginMutation.error.message
-            : 'Login failed. Please check your credentials.'}
-        </p>
+            : 'Login failed'}
+        </div>
       )}
+
+      <p className="text-center text-sm text-slate-500">
+        Don&apos;t have an account?{' '}
+        <Link
+          href="/register"
+          className="font-medium text-emerald-600 hover:text-emerald-700"
+        >
+          Sign up
+        </Link>
+      </p>
     </form>
   );
 }

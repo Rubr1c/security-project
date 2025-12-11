@@ -64,7 +64,7 @@ export function DiagnosisForm({
       </Button>
 
       {updateDiagnosisMutation.isError && (
-        <p className="text-center text-sm text-red-400">
+        <p className="text-center text-sm text-red-600">
           {updateDiagnosisMutation.error instanceof Error
             ? updateDiagnosisMutation.error.message
             : 'Failed to update diagnosis'}
@@ -73,4 +73,3 @@ export function DiagnosisForm({
     </form>
   );
 }
-

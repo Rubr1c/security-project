@@ -1,13 +1,9 @@
 'use client';
 
 import { useForm } from 'react-hook-form';
-import { createAppointmentSchema } from '@/lib/validation/appointment-schemas';
 import { useAppointments } from '@/hooks/useAppointments';
 import { useUsers } from '@/hooks/useUsers';
 import { Button, Input, Select } from '@/components/ui';
-import * as v from 'valibot';
-
-type BookAppointmentFormData = v.InferInput<typeof createAppointmentSchema>;
 
 interface FormData {
   doctorId: number;
@@ -30,25 +26,19 @@ export function BookAppointmentForm({ onSuccess }: BookAppointmentFormProps) {
   } = useForm<FormData>();
 
   const onSubmit = (data: FormData) => {
-    const isoDate = new Date(data.date).toISOString();
-    const validatedData = v.parse(createAppointmentSchema, {
-      doctorId: data.doctorId,
-      date: isoDate,
-    }) satisfies BookAppointmentFormData;
+    const dateObj = new Date(data.date);
+    const isoDate = dateObj.toISOString().slice(0, 19);
 
-    createAppointmentMutation.mutate(validatedData, {
-      onSuccess: () => {
-        reset();
-        onSuccess?.();
-      },
-    });
+    createAppointmentMutation.mutate(
+      { doctorId: data.doctorId, date: isoDate },
+      {
+        onSuccess: () => {
+          reset();
+          onSuccess?.();
+        },
+      }
+    );
   };
-
-  const doctorOptions =
-    doctorsQuery.data?.map((doctor) => ({
-      value: doctor.id,
-      label: doctor.name,
-    })) ?? [];
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
@@ -59,11 +49,16 @@ export function BookAppointmentForm({ onSuccess }: BookAppointmentFormProps) {
         })}
         id="doctorId"
         label="Select Doctor"
-        options={doctorOptions}
-        placeholder="Choose a doctor"
         error={errors.doctorId?.message}
         disabled={doctorsQuery.isPending}
-      />
+      >
+        <option value="">Choose a doctor...</option>
+        {doctorsQuery.data?.map((doctor) => (
+          <option key={doctor.id} value={doctor.id}>
+            {doctor.name}
+          </option>
+        ))}
+      </Select>
 
       <Input
         {...register('date', { required: 'Please select a date and time' })}
@@ -82,7 +77,7 @@ export function BookAppointmentForm({ onSuccess }: BookAppointmentFormProps) {
       </Button>
 
       {createAppointmentMutation.isError && (
-        <p className="text-center text-sm text-red-400">
+        <p className="text-center text-sm text-red-600">
           {createAppointmentMutation.error instanceof Error
             ? createAppointmentMutation.error.message
             : 'Failed to book appointment'}

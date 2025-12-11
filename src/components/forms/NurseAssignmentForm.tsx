@@ -44,7 +44,7 @@ export function NurseAssignmentForm({ onSuccess }: NurseAssignmentFormProps) {
       </Select>
 
       {availableNurses.length === 0 && !nursesQuery.isPending && (
-        <p className="text-sm text-slate-400">
+        <p className="text-sm text-slate-500">
           No available nurses. All nurses are already assigned.
         </p>
       )}
@@ -59,7 +59,7 @@ export function NurseAssignmentForm({ onSuccess }: NurseAssignmentFormProps) {
       </Button>
 
       {assignNurseMutation.isError && (
-        <p className="text-center text-sm text-red-400">
+        <p className="text-center text-sm text-red-600">
           {assignNurseMutation.error instanceof Error
             ? assignNurseMutation.error.message
             : 'Failed to assign nurse'}
@@ -68,4 +68,3 @@ export function NurseAssignmentForm({ onSuccess }: NurseAssignmentFormProps) {
     </form>
   );
 }
-

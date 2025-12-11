@@ -19,6 +19,15 @@ import { useAppointments } from '@/hooks/useAppointments';
 import { useUsers } from '@/hooks/useUsers';
 import { useAuthStore } from '@/store/auth';
 import type { Appointment } from '@/lib/db/types';
+import {
+  Clock,
+  CheckCircle,
+  ClipboardList,
+  Users,
+  Plus,
+  Calendar,
+  FileText,
+} from 'lucide-react';
 
 export default function DoctorDashboardPage() {
   const [selectedAppointment, setSelectedAppointment] =
@@ -86,8 +95,10 @@ export default function DoctorDashboardPage() {
     <DashboardLayout allowedRoles={['doctor']}>
       <div className="space-y-8">
         <div>
-          <h1 className="text-3xl font-bold text-white">Doctor Dashboard</h1>
-          <p className="mt-1 text-slate-400">
+          <h1 className="text-2xl font-semibold text-slate-800">
+            Doctor Dashboard
+          </h1>
+          <p className="mt-1 text-slate-500">
             Manage appointments and patient care
           </p>
         </div>
@@ -95,53 +106,53 @@ export default function DoctorDashboardPage() {
         <div className="grid gap-4 sm:grid-cols-4">
           <Card>
             <CardContent className="flex items-center gap-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-yellow-500/10">
-                <span className="text-2xl">⏳</span>
+              <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-amber-50">
+                <Clock className="h-6 w-6 text-amber-600" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-white">
+                <p className="text-2xl font-semibold text-slate-800">
                   {pendingAppointments?.length ?? 0}
                 </p>
-                <p className="text-sm text-slate-400">Pending</p>
+                <p className="text-sm text-slate-500">Pending</p>
               </div>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="flex items-center gap-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-emerald-500/10">
-                <span className="text-2xl">✓</span>
+              <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-emerald-50">
+                <CheckCircle className="h-6 w-6 text-emerald-600" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-white">
+                <p className="text-2xl font-semibold text-slate-800">
                   {confirmedAppointments?.length ?? 0}
                 </p>
-                <p className="text-sm text-slate-400">Confirmed</p>
+                <p className="text-sm text-slate-500">Confirmed</p>
               </div>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="flex items-center gap-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-blue-500/10">
-                <span className="text-2xl">📋</span>
+              <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-blue-50">
+                <ClipboardList className="h-6 w-6 text-blue-600" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-white">
+                <p className="text-2xl font-semibold text-slate-800">
                   {completedAppointments?.length ?? 0}
                 </p>
-                <p className="text-sm text-slate-400">Completed</p>
+                <p className="text-sm text-slate-500">Completed</p>
               </div>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="flex items-center gap-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-cyan-500/10">
-                <span className="text-2xl">👩‍⚕️</span>
+              <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-emerald-50">
+                <Users className="h-6 w-6 text-emerald-600" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-white">
+                <p className="text-2xl font-semibold text-slate-800">
                   {myNurses.length}
                 </p>
-                <p className="text-sm text-slate-400">My Nurses</p>
+                <p className="text-sm text-slate-500">My Nurses</p>
               </div>
             </CardContent>
           </Card>
@@ -158,12 +169,12 @@ export default function DoctorDashboardPage() {
                   <LoadingSpinner />
                 </div>
               ) : appointmentsQuery.isError ? (
-                <div className="py-8 text-center text-red-400">
+                <div className="py-8 text-center text-red-600">
                   Failed to load appointments
                 </div>
               ) : pendingAppointments?.length === 0 ? (
                 <EmptyState
-                  icon="✨"
+                  icon={<Calendar className="h-6 w-6" />}
                   title="No pending appointments"
                   description="All caught up!"
                 />
@@ -219,7 +230,7 @@ export default function DoctorDashboardPage() {
                 </div>
               ) : confirmedAppointments?.length === 0 ? (
                 <EmptyState
-                  icon="📅"
+                  icon={<Calendar className="h-6 w-6" />}
                   title="No confirmed appointments"
                   description="Confirm pending appointments to see them here"
                 />
@@ -255,6 +266,7 @@ export default function DoctorDashboardPage() {
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle>My Nurses</CardTitle>
             <Button size="sm" onClick={() => setAssignNurseModalOpen(true)}>
+              <Plus className="h-4 w-4" />
               Assign Nurse
             </Button>
           </CardHeader>
@@ -265,7 +277,7 @@ export default function DoctorDashboardPage() {
               </div>
             ) : myNurses.length === 0 ? (
               <EmptyState
-                icon="👩‍⚕️"
+                icon={<Users className="h-6 w-6" />}
                 title="No nurses assigned"
                 description="Assign nurses to help manage your patients"
               />
@@ -274,14 +286,14 @@ export default function DoctorDashboardPage() {
                 {myNurses.map((nurse) => (
                   <div
                     key={nurse.id}
-                    className="flex items-center gap-3 rounded-lg bg-slate-800/50 p-4"
+                    className="flex items-center gap-3 rounded-lg border border-gray-200 bg-white p-4"
                   >
-                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-cyan-400 to-blue-500 text-sm font-semibold text-white">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-100 text-sm font-semibold text-emerald-700">
                       {nurse.name.charAt(0).toUpperCase()}
                     </div>
                     <div>
-                      <p className="font-medium text-white">{nurse.name}</p>
-                      <p className="text-sm text-slate-400">{nurse.email}</p>
+                      <p className="font-medium text-slate-800">{nurse.name}</p>
+                      <p className="text-sm text-slate-500">{nurse.email}</p>
                     </div>
                   </div>
                 ))}
@@ -301,7 +313,7 @@ export default function DoctorDashboardPage() {
               </div>
             ) : uniquePatientHistory.length === 0 ? (
               <EmptyState
-                icon="📋"
+                icon={<FileText className="h-6 w-6" />}
                 title="No patient history"
                 description="Completed appointments with diagnoses will appear here"
               />
@@ -310,18 +322,18 @@ export default function DoctorDashboardPage() {
                 {uniquePatientHistory.map((patient) => (
                   <div
                     key={patient.patientId}
-                    className="rounded-lg border border-slate-700 bg-slate-800/30 p-4"
+                    className="rounded-lg border border-gray-200 bg-white p-4"
                   >
                     <div className="flex items-start justify-between">
                       <div className="flex items-center gap-3">
-                        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 text-lg font-semibold text-white">
+                        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100 text-lg font-semibold text-emerald-700">
                           {patient.name.charAt(0).toUpperCase()}
                         </div>
                         <div>
-                          <p className="font-medium text-white">
+                          <p className="font-medium text-slate-800">
                             {patient.name}
                           </p>
-                          <p className="text-sm text-slate-400">
+                          <p className="text-sm text-slate-500">
                             Last visit:{' '}
                             {new Date(
                               patient.lastAppointment.date
@@ -331,11 +343,11 @@ export default function DoctorDashboardPage() {
                       </div>
                     </div>
                     {patient.lastAppointment.diagnosis && (
-                      <div className="mt-3 rounded-md bg-slate-900/50 p-3">
-                        <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">
+                      <div className="mt-3 rounded-md bg-gray-50 p-3">
+                        <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
                           Latest Diagnosis
                         </p>
-                        <p className="mt-1 text-sm text-slate-300">
+                        <p className="mt-1 text-sm text-slate-700">
                           {patient.lastAppointment.diagnosis}
                         </p>
                       </div>
@@ -354,7 +366,7 @@ export default function DoctorDashboardPage() {
         >
           {selectedAppointment && (
             <div className="space-y-4">
-              <p className="text-sm text-slate-400">
+              <p className="text-sm text-slate-500">
                 Adding a diagnosis will mark this appointment as completed.
               </p>
               <DiagnosisForm

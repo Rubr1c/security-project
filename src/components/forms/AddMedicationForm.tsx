@@ -77,7 +77,7 @@ export function AddMedicationForm({
       </Button>
 
       {addMedicationMutation.isError && (
-        <p className="text-center text-sm text-red-400">
+        <p className="text-center text-sm text-red-600">
           {addMedicationMutation.error instanceof Error
             ? addMedicationMutation.error.message
             : 'Failed to add medication'}
@@ -86,4 +86,3 @@ export function AddMedicationForm({
     </form>
   );
 }
-

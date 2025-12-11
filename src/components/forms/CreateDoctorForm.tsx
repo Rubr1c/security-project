@@ -71,7 +71,7 @@ export function CreateDoctorForm({ onSuccess }: CreateDoctorFormProps) {
         id="password"
         type="password"
         label="Password"
-        placeholder="••••••••"
+        placeholder="Enter password"
         error={errors.password?.message}
       />
 
@@ -84,7 +84,7 @@ export function CreateDoctorForm({ onSuccess }: CreateDoctorFormProps) {
       </Button>
 
       {createDoctorMutation.isError && (
-        <p className="text-center text-sm text-red-400">
+        <p className="text-center text-sm text-red-600">
           {createDoctorMutation.error instanceof Error
             ? createDoctorMutation.error.message
             : 'Failed to create doctor'}
@@ -92,11 +92,10 @@ export function CreateDoctorForm({ onSuccess }: CreateDoctorFormProps) {
       )}
 
       {createDoctorMutation.isSuccess && (
-        <p className="text-center text-sm text-emerald-400">
+        <p className="text-center text-sm text-emerald-600">
           Doctor created successfully
         </p>
       )}
     </form>
   );
 }
-

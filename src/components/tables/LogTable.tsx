@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { LogLevelBadge, Modal } from '@/components/ui';
+import { Eye } from 'lucide-react';
 
 interface Log {
   id: number;
@@ -29,7 +30,7 @@ function MetaDisplay({ meta }: { meta: string | null }) {
   const [isExpanded, setIsExpanded] = useState(false);
   const parsed = formatMeta(meta);
 
-  if (!parsed) return <span className="text-slate-600">—</span>;
+  if (!parsed) return <span className="text-slate-400">-</span>;
 
   const entries = Object.entries(parsed);
   const preview = entries.slice(0, 2);
@@ -41,10 +42,10 @@ function MetaDisplay({ meta }: { meta: string | null }) {
         {preview.map(([key, value]) => (
           <span
             key={key}
-            className="inline-flex items-center gap-1 rounded bg-slate-800 px-2 py-0.5 text-xs"
+            className="inline-flex items-center gap-1 rounded bg-gray-100 px-2 py-0.5 text-xs"
           >
             <span className="text-slate-500">{key}:</span>
-            <span className="max-w-[120px] truncate text-slate-300">
+            <span className="max-w-[120px] truncate text-slate-700">
               {typeof value === 'object' ? JSON.stringify(value) : String(value)}
             </span>
           </span>
@@ -52,7 +53,7 @@ function MetaDisplay({ meta }: { meta: string | null }) {
         {hasMore && (
           <button
             onClick={() => setIsExpanded(true)}
-            className="inline-flex items-center gap-1 rounded bg-amber-500/10 px-2 py-0.5 text-xs text-amber-400 transition hover:bg-amber-500/20"
+            className="inline-flex items-center gap-1 rounded bg-emerald-50 px-2 py-0.5 text-xs text-emerald-700 transition hover:bg-emerald-100"
           >
             +{entries.length - 2} more
           </button>
@@ -65,9 +66,9 @@ function MetaDisplay({ meta }: { meta: string | null }) {
         title="Log Details"
       >
         <div className="space-y-4">
-          <div className="rounded-lg bg-slate-900 p-4">
+          <div className="rounded-lg bg-gray-50 p-4">
             <pre className="overflow-auto text-sm">
-              <code className="text-slate-300">
+              <code className="text-slate-700">
                 {JSON.stringify(parsed, null, 2)}
               </code>
             </pre>
@@ -86,7 +87,7 @@ export function LogTable({ logs }: LogTableProps) {
       <div className="overflow-x-auto">
         <table className="w-full">
           <thead>
-            <tr className="border-b border-slate-800">
+            <tr className="border-b border-gray-100 bg-gray-50">
               <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-slate-500">
                 Timestamp
               </th>
@@ -104,15 +105,15 @@ export function LogTable({ logs }: LogTableProps) {
               </th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-800">
+          <tbody className="divide-y divide-gray-100">
             {logs.map((log) => (
-              <tr key={log.id} className="transition hover:bg-slate-800/30">
-                <td className="whitespace-nowrap px-4 py-3 text-sm text-slate-400">
+              <tr key={log.id} className="transition hover:bg-gray-50">
+                <td className="whitespace-nowrap px-4 py-3 text-sm text-slate-600">
                   <div className="flex flex-col">
                     <span>
                       {new Date(log.timestamp).toLocaleDateString()}
                     </span>
-                    <span className="text-xs text-slate-500">
+                    <span className="text-xs text-slate-400">
                       {new Date(log.timestamp).toLocaleTimeString()}
                     </span>
                   </div>
@@ -120,7 +121,7 @@ export function LogTable({ logs }: LogTableProps) {
                 <td className="px-4 py-3">
                   <LogLevelBadge level={log.level} />
                 </td>
-                <td className="max-w-xs px-4 py-3 text-sm text-white">
+                <td className="max-w-xs px-4 py-3 text-sm text-slate-800">
                   <span className="line-clamp-2">{log.message}</span>
                 </td>
                 <td className="px-4 py-3 text-sm">
@@ -129,8 +130,9 @@ export function LogTable({ logs }: LogTableProps) {
                 <td className="px-4 py-3">
                   <button
                     onClick={() => setSelectedLog(log)}
-                    className="rounded bg-slate-800 px-2 py-1 text-xs text-slate-300 transition hover:bg-slate-700 hover:text-white"
+                    className="inline-flex items-center gap-1 rounded bg-gray-100 px-2 py-1 text-xs text-slate-600 transition hover:bg-gray-200"
                   >
+                    <Eye className="h-3 w-3" />
                     View
                   </button>
                 </td>
@@ -152,7 +154,7 @@ export function LogTable({ logs }: LogTableProps) {
                 <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
                   Timestamp
                 </p>
-                <p className="mt-1 text-sm text-white">
+                <p className="mt-1 text-sm text-slate-800">
                   {new Date(selectedLog.timestamp).toLocaleString()}
                 </p>
               </div>
@@ -170,7 +172,7 @@ export function LogTable({ logs }: LogTableProps) {
               <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
                 Message
               </p>
-              <p className="mt-1 text-sm text-white">{selectedLog.message}</p>
+              <p className="mt-1 text-sm text-slate-800">{selectedLog.message}</p>
             </div>
 
             {selectedLog.meta && (
@@ -178,9 +180,9 @@ export function LogTable({ logs }: LogTableProps) {
                 <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
                   Metadata
                 </p>
-                <div className="mt-2 rounded-lg bg-slate-900 p-4">
+                <div className="mt-2 rounded-lg bg-gray-50 p-4">
                   <pre className="overflow-auto text-sm">
-                    <code className="text-slate-300">
+                    <code className="text-slate-700">
                       {JSON.stringify(formatMeta(selectedLog.meta), null, 2)}
                     </code>
                   </pre>
@@ -193,9 +195,9 @@ export function LogTable({ logs }: LogTableProps) {
                 <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
                   Error
                 </p>
-                <div className="mt-2 rounded-lg bg-red-950/30 p-4">
+                <div className="mt-2 rounded-lg bg-red-50 p-4">
                   <pre className="overflow-auto text-sm">
-                    <code className="text-red-300">{selectedLog.error}</code>
+                    <code className="text-red-700">{selectedLog.error}</code>
                   </pre>
                 </div>
               </div>

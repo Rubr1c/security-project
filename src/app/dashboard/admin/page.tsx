@@ -19,6 +19,13 @@ import {
 import { useLogs } from '@/hooks/useLogs';
 import { useUsers } from '@/hooks/useUsers';
 import { apiClient } from '@/services/api/client';
+import {
+  FileText,
+  Stethoscope,
+  Users,
+  AlertTriangle,
+  Plus,
+} from 'lucide-react';
 
 type Tab = 'logs' | 'doctors' | 'nurses';
 
@@ -59,60 +66,65 @@ export default function AdminDashboardPage() {
     <DashboardLayout allowedRoles={['admin']}>
       <div className="space-y-8">
         <div>
-          <h1 className="text-3xl font-bold text-white">Admin Dashboard</h1>
-          <p className="mt-1 text-slate-400">System management and user administration</p>
+          <h1 className="text-2xl font-semibold text-slate-800">
+            Admin Dashboard
+          </h1>
+          <p className="mt-1 text-slate-500">
+            System management and user administration
+          </p>
         </div>
 
         <div className="grid gap-4 sm:grid-cols-4">
           <Card>
             <CardContent className="flex items-center gap-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-purple-500/10">
-                <span className="text-2xl">📊</span>
+              <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-emerald-50">
+                <FileText className="h-6 w-6 text-emerald-600" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-white">
+                <p className="text-2xl font-semibold text-slate-800">
                   {logsQuery.data?.length ?? 0}
                 </p>
-                <p className="text-sm text-slate-400">Total Logs</p>
+                <p className="text-sm text-slate-500">Total Logs</p>
               </div>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="flex items-center gap-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-emerald-500/10">
-                <span className="text-2xl">👨‍⚕️</span>
+              <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-emerald-50">
+                <Stethoscope className="h-6 w-6 text-emerald-600" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-white">
+                <p className="text-2xl font-semibold text-slate-800">
                   {doctorsQuery.data?.length ?? 0}
                 </p>
-                <p className="text-sm text-slate-400">Doctors</p>
+                <p className="text-sm text-slate-500">Doctors</p>
               </div>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="flex items-center gap-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-cyan-500/10">
-                <span className="text-2xl">👩‍⚕️</span>
+              <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-emerald-50">
+                <Users className="h-6 w-6 text-emerald-600" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-white">
+                <p className="text-2xl font-semibold text-slate-800">
                   {nursesQuery.data?.length ?? 0}
                 </p>
-                <p className="text-sm text-slate-400">Nurses</p>
+                <p className="text-sm text-slate-500">Nurses</p>
               </div>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="flex items-center gap-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-red-500/10">
-                <span className="text-2xl">⚠️</span>
+              <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-red-50">
+                <AlertTriangle className="h-6 w-6 text-red-600" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-white">
-                  {logsQuery.data?.filter((l) => l.level === 'error').length ?? 0}
+                <p className="text-2xl font-semibold text-slate-800">
+                  {logsQuery.data?.filter((l) => l.level === 'error').length ??
+                    0}
                 </p>
-                <p className="text-sm text-slate-400">Errors</p>
+                <p className="text-sm text-slate-500">Errors</p>
               </div>
             </CardContent>
           </Card>
@@ -120,15 +132,15 @@ export default function AdminDashboardPage() {
 
         <Card>
           <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex gap-1 rounded-lg bg-slate-800/50 p-1">
+            <div className="flex gap-1 rounded-lg bg-gray-100 p-1">
               {tabs.map((tab) => (
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
                   className={`rounded-md px-4 py-2 text-sm font-medium transition ${
                     activeTab === tab.id
-                      ? 'bg-amber-500 text-slate-950'
-                      : 'text-slate-400 hover:text-white'
+                      ? 'bg-white text-emerald-700 shadow-sm'
+                      : 'text-slate-600 hover:text-slate-800'
                   }`}
                 >
                   {tab.label}
@@ -136,8 +148,8 @@ export default function AdminDashboardPage() {
                     <span
                       className={`ml-2 rounded-full px-2 py-0.5 text-xs ${
                         activeTab === tab.id
-                          ? 'bg-slate-950/20 text-slate-950'
-                          : 'bg-slate-700 text-slate-300'
+                          ? 'bg-emerald-50 text-emerald-700'
+                          : 'bg-gray-200 text-slate-600'
                       }`}
                     >
                       {tab.count}
@@ -149,11 +161,15 @@ export default function AdminDashboardPage() {
 
             {activeTab === 'doctors' && (
               <Button onClick={() => setCreateDoctorModalOpen(true)}>
+                <Plus className="h-4 w-4" />
                 Add Doctor
               </Button>
             )}
             {activeTab === 'nurses' && (
-              <Button onClick={() => setCreateNurseModalOpen(true)}>Add Nurse</Button>
+              <Button onClick={() => setCreateNurseModalOpen(true)}>
+                <Plus className="h-4 w-4" />
+                Add Nurse
+              </Button>
             )}
           </CardHeader>
           <CardContent className="p-0">
@@ -164,12 +180,12 @@ export default function AdminDashboardPage() {
                     <LoadingSpinner />
                   </div>
                 ) : logsQuery.isError ? (
-                  <div className="py-12 text-center text-red-400">
+                  <div className="py-12 text-center text-red-600">
                     Failed to load logs
                   </div>
                 ) : logsQuery.data?.length === 0 ? (
                   <EmptyState
-                    icon="📝"
+                    icon={<FileText className="h-6 w-6" />}
                     title="No logs yet"
                     description="System logs will appear here"
                   />
@@ -186,12 +202,12 @@ export default function AdminDashboardPage() {
                     <LoadingSpinner />
                   </div>
                 ) : doctorsQuery.isError ? (
-                  <div className="py-12 text-center text-red-400">
+                  <div className="py-12 text-center text-red-600">
                     Failed to load doctors
                   </div>
                 ) : doctorsQuery.data?.length === 0 ? (
                   <EmptyState
-                    icon="👨‍⚕️"
+                    icon={<Stethoscope className="h-6 w-6" />}
                     title="No doctors"
                     description="Add your first doctor to get started"
                   />
@@ -212,12 +228,12 @@ export default function AdminDashboardPage() {
                     <LoadingSpinner />
                   </div>
                 ) : nursesQuery.isError ? (
-                  <div className="py-12 text-center text-red-400">
+                  <div className="py-12 text-center text-red-600">
                     Failed to load nurses
                   </div>
                 ) : nursesQuery.data?.length === 0 ? (
                   <EmptyState
-                    icon="👩‍⚕️"
+                    icon={<Users className="h-6 w-6" />}
                     title="No nurses"
                     description="Add your first nurse to get started"
                   />
@@ -252,4 +268,3 @@ export default function AdminDashboardPage() {
     </DashboardLayout>
   );
 }
-

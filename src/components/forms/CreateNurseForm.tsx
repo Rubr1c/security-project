@@ -71,7 +71,7 @@ export function CreateNurseForm({ onSuccess }: CreateNurseFormProps) {
         id="password"
         type="password"
         label="Password"
-        placeholder="••••••••"
+        placeholder="Enter password"
         error={errors.password?.message}
       />
 
@@ -84,7 +84,7 @@ export function CreateNurseForm({ onSuccess }: CreateNurseFormProps) {
       </Button>
 
       {createNurseMutation.isError && (
-        <p className="text-center text-sm text-red-400">
+        <p className="text-center text-sm text-red-600">
           {createNurseMutation.error instanceof Error
             ? createNurseMutation.error.message
             : 'Failed to create nurse'}
@@ -92,11 +92,10 @@ export function CreateNurseForm({ onSuccess }: CreateNurseFormProps) {
       )}
 
       {createNurseMutation.isSuccess && (
-        <p className="text-center text-sm text-emerald-400">
+        <p className="text-center text-sm text-emerald-600">
           Nurse created successfully
         </p>
       )}
     </form>
   );
 }
-

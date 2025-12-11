@@ -11,7 +11,11 @@ export const createAppointmentSchema = v.object({
   doctorId: v.pipe(v.number(), v.integer(), v.minValue(1, 'Invalid doctor ID')),
   date: v.pipe(
     v.string(),
-    v.isoDateTime('Date must be a valid ISO date-time string')
+    v.minLength(1, 'Date is required'),
+    v.regex(
+      /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2})?$/,
+      'Date must be a valid date-time string'
+    )
   ),
 });
 

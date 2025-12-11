@@ -31,7 +31,7 @@ export const appointments = {
     return response.data;
   },
   respond: async (id: number, data: AppointmentResponseInput) => {
-    const response = await apiClient.post<Appointment>(
+    const response = await apiClient.put<Appointment>(
       `/appointments/${id}/respond`,
       data
     );
