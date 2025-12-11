@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { ArrowRight, Shield, Clock, Users } from 'lucide-react';
+import { ArrowRight, Clock, Users } from 'lucide-react';
 
 export default function Home() {
   return (
@@ -60,19 +60,7 @@ export default function Home() {
           </div>
         </div>
 
-        <div className="mt-24 grid gap-8 sm:grid-cols-3">
-          <div className="rounded-lg border border-gray-200 bg-white p-6">
-            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-emerald-50">
-              <Shield className="h-6 w-6 text-emerald-600" />
-            </div>
-            <h3 className="mt-4 text-lg font-semibold text-slate-800">
-              Secure & Private
-            </h3>
-            <p className="mt-2 text-slate-500">
-              Your health data is protected with enterprise-grade security and
-              strict access controls.
-            </p>
-          </div>
+        <div className="mt-24 grid gap-8 sm:grid-cols-2">
           <div className="rounded-lg border border-gray-200 bg-white p-6">
             <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-emerald-50">
               <Clock className="h-6 w-6 text-emerald-600" />
