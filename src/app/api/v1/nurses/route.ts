@@ -84,12 +84,14 @@ export async function POST(req: Request) {
 }
 
 export async function GET(req: Request) {
-  if (req.headers.get('x-user-role') !== 'admin') {
+  const userRole = req.headers.get('x-user-role');
+
+  if (userRole !== 'admin' && userRole !== 'doctor') {
     logger.info({
-      message: 'Unauthorized: Only admin can list nurses',
+      message: 'Unauthorized: Only admin and doctors can list nurses',
       meta: {
         'x-user-id': req.headers.get('x-user-id') ?? 'unknown',
-        'x-user-role': req.headers.get('x-user-role') ?? 'unknown',
+        'x-user-role': userRole ?? 'unknown',
       },
     });
 
@@ -117,6 +119,7 @@ export async function GET(req: Request) {
     message: 'Nurses fetched',
     meta: {
       count: nurses.length,
+      requestedBy: userRole,
     },
   });
 

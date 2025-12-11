@@ -8,11 +8,13 @@
     "start": "bun next start",
     "lint": "eslint",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "seed": "bun run scripts/seed-test-accounts.ts"
   },
   "dependencies": {
     "@arcjet/inspect": "^1.0.0-beta.15",
     "@arcjet/next": "^1.0.0-beta.15",
+    "@hookform/resolvers": "^5.2.2",
     "@tanstack/react-query": "^5.90.6",
     "arcjet": "^1.0.0-beta.13",
     "argon2": "^0.44.0",
@@ -23,8 +25,10 @@
     "next": "16.0.1",
     "react": "19.2.0",
     "react-dom": "19.2.0",
+    "react-hook-form": "^7.68.0",
     "valibot": "^1.1.0",
-    "validator": "^13.15.20"
+    "validator": "^13.15.20",
+    "zustand": "^5.0.9"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

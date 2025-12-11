@@ -2,7 +2,6 @@ import { LoggerParams } from '.';
 import { db } from '../db/client';
 import { logs } from '../db/schema';
 import { LogLevel } from '../db/types';
-import { HttpError } from '../http/http-error';
 import { BaseLogger } from './base-logger';
 
 export class AuditLogger extends BaseLogger {
@@ -72,26 +71,14 @@ export class AuditLogger extends BaseLogger {
   error(params: LoggerParams) {
     if (!this.shouldLog('error')) return;
 
-    if (params.error instanceof HttpError) {
-      db.insert(logs)
-        .values({
-          timestamp: this.formatTimestamp(),
-          message: params.message,
-          level: 'error',
-          meta: params.meta ? this.safeStringify(params.meta) : null,
-          error: `[${params.error.getCode()}] ${params.error.message}`,
-        })
-        .run();
-    } else {
-      db.insert(logs)
-        .values({
-          timestamp: this.formatTimestamp(),
-          message: params.message,
-          level: 'error',
-          meta: params.meta ? this.safeStringify(params.meta) : null,
-          error: params.error?.message,
-        })
-        .run();
-    }
+    db.insert(logs)
+      .values({
+        timestamp: this.formatTimestamp(),
+        message: params.message,
+        level: 'error',
+        meta: params.meta ? this.safeStringify(params.meta) : null,
+        error: params.error?.message,
+      })
+      .run();
   }
 }

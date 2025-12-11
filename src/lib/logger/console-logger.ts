@@ -1,6 +1,5 @@
 import { LoggerParams } from '.';
 import { LogLevel } from '../db/types';
-import { HttpError } from '../http/http-error';
 import { BaseLogger } from './base-logger';
 
 export class ConsoleLogger extends BaseLogger {
@@ -38,14 +37,11 @@ export class ConsoleLogger extends BaseLogger {
 
   error(params: LoggerParams) {
     if (!this.shouldLog('error')) return;
-    if (params.error instanceof HttpError) {
-      console.error(
-        `[${this.formatTimestamp()}] [${params.error.getCode()}] ${params.error.message}`,
-        {
-          stack: params.error.stack,
-          meta: params.meta,
-        }
-      );
+    if (params.error instanceof Error) {
+      console.error(`[${this.formatTimestamp()}] ${params.error.message}`, {
+        stack: params.error.stack,
+        meta: params.meta,
+      });
     } else {
       console.error(
         `[${this.formatTimestamp()}] [ERROR] ${params.message}`,

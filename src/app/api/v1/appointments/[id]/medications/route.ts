@@ -15,10 +15,10 @@ export async function GET(req: Request, { params }: RouteParams) {
   const userRole = req.headers.get('x-user-role');
   const userId = parseInt(req.headers.get('x-user-id') ?? '0');
 
-  // Only patients and doctors can view medications
-  if (userRole !== 'patient' && userRole !== 'doctor') {
+  if (userRole !== 'patient' && userRole !== 'doctor' && userRole !== 'nurse') {
     logger.info({
-      message: 'Unauthorized: Only patients and doctors can view medications',
+      message:
+        'Unauthorized: Only patients, doctors, and nurses can view medications',
       meta: {
         'x-user-id': req.headers.get('x-user-id') ?? 'unknown',
         'x-user-role': userRole ?? 'unknown',
@@ -46,7 +46,6 @@ export async function GET(req: Request, { params }: RouteParams) {
     );
   }
 
-  // Fetch the appointment to verify access
   const appointment = db
     .select()
     .from(appointments)
@@ -65,9 +64,7 @@ export async function GET(req: Request, { params }: RouteParams) {
     );
   }
 
-  // RBAC: Verify access rights
   if (userRole === 'patient') {
-    // Patient can only view medications for their own appointments
     if (appointment[0].patientId !== userId) {
       logger.info({
         message: 'Patient attempting to view medications for another patient',
@@ -83,7 +80,6 @@ export async function GET(req: Request, { params }: RouteParams) {
       );
     }
   } else if (userRole === 'doctor') {
-    // Doctor can only view medications for their appointments
     if (appointment[0].doctorId !== userId) {
       logger.info({
         message: 'Doctor attempting to view medications for another doctor',
@@ -98,9 +94,30 @@ export async function GET(req: Request, { params }: RouteParams) {
         { status: STATUS.NOT_FOUND }
       );
     }
+  } else if (userRole === 'nurse') {
+    const nurse = db.select().from(users).where(eq(users.id, userId)).all();
+
+    if (
+      nurse.length === 0 ||
+      nurse[0].doctorId === null ||
+      nurse[0].doctorId !== appointment[0].doctorId
+    ) {
+      logger.info({
+        message: 'Nurse not authorized to view medications for this appointment',
+        meta: {
+          nurseId: userId,
+          nurseAssignedDoctorId: nurse[0]?.doctorId,
+          appointmentDoctorId: appointment[0].doctorId,
+        },
+      });
+
+      return NextResponse.json(
+        { error: 'Appointment not found' },
+        { status: STATUS.NOT_FOUND }
+      );
+    }
   }
 
-  // Fetch medications for the appointment
   const appointmentMedications = db
     .select()
     .from(medications)

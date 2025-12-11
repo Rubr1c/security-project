@@ -84,6 +84,7 @@ export async function PUT(req: Request, { params }: RouteParams) {
     .update(appointments)
     .set({
       diagnosis: result.output.diagnosis,
+      status: 'completed',
       updatedAt: new Date().toISOString(),
     })
     .where(eq(appointments.id, appointmentId));

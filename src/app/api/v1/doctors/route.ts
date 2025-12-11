@@ -64,12 +64,14 @@ export async function POST(req: Request) {
 }
 
 export async function GET(req: Request) {
-  if (req.headers.get('x-user-role') !== 'admin') {
+  const userRole = req.headers.get('x-user-role');
+
+  if (userRole !== 'admin' && userRole !== 'patient' && userRole !== 'nurse') {
     logger.info({
-      message: 'Unauthorized',
+      message: 'Unauthorized: Only admin, patients, and nurses can list doctors',
       meta: {
         'x-user-id': req.headers.get('x-user-id') ?? 'unknown',
-        'x-user-role': req.headers.get('x-user-role') ?? 'unknown',
+        'x-user-role': userRole ?? 'unknown',
       },
     });
 
@@ -86,7 +88,6 @@ export async function GET(req: Request) {
       name: users.name,
       role: users.role,
       createdAt: users.createdAt,
-      updatedAt: users.updatedAt,
     })
     .from(users)
     .where(eq(users.role, 'doctor'))
@@ -96,6 +97,7 @@ export async function GET(req: Request) {
     message: 'Doctors fetched',
     meta: {
       count: doctors.length,
+      requestedBy: userRole,
     },
   });
 

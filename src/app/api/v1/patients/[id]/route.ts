@@ -129,4 +129,3 @@ export async function GET(req: Request, { params }: RouteParams) {
     medications: patientMedications,
   });
 }
-

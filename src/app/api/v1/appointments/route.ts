@@ -103,10 +103,10 @@ export async function GET(req: Request) {
   const userRole = req.headers.get('x-user-role');
   const userId = parseInt(req.headers.get('x-user-id') ?? '0');
 
-  // Both patients and doctors can view their appointments
-  if (userRole !== 'patient' && userRole !== 'doctor') {
+  if (userRole !== 'patient' && userRole !== 'doctor' && userRole !== 'nurse') {
     logger.info({
-      message: 'Unauthorized: Only patients and doctors can view appointments',
+      message:
+        'Unauthorized: Only patients, doctors, and nurses can view appointments',
       meta: {
         'x-user-id': req.headers.get('x-user-id') ?? 'unknown',
         'x-user-role': userRole ?? 'unknown',
@@ -127,12 +127,28 @@ export async function GET(req: Request) {
       .from(appointments)
       .where(eq(appointments.patientId, userId))
       .all();
-  } else {
-    // Doctor - get all appointments assigned to them
+  } else if (userRole === 'doctor') {
     userAppointments = db
       .select()
       .from(appointments)
       .where(eq(appointments.doctorId, userId))
+      .all();
+  } else {
+    const nurse = db.select().from(users).where(eq(users.id, userId)).all();
+
+    if (nurse.length === 0 || nurse[0].doctorId === null) {
+      logger.info({
+        message: 'Nurse not assigned to a doctor',
+        meta: { nurseId: userId },
+      });
+
+      return NextResponse.json([]);
+    }
+
+    userAppointments = db
+      .select()
+      .from(appointments)
+      .where(eq(appointments.doctorId, nurse[0].doctorId))
       .all();
   }
 

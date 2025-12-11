@@ -54,7 +54,7 @@ export async function proxy(req: NextRequest) {
     },
   });
 
-  if (pathname.startsWith('/api/v1/auth')) {
+  if (pathname.startsWith('/api/v1/auth') || pathname.startsWith('/api/v1/seed')) {
     return NextResponse.next();
   }
 

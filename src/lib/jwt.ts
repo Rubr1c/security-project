@@ -15,7 +15,6 @@ export const jwt = {
       .setProtectedHeader({ alg: 'HS256' })
       .setIssuedAt()
       .setExpirationTime(exp)
-      .setNotBefore('2s')
       .sign(secret),
 
   verify: async <T extends JWTPayload>(token: string): Promise<T | null> => {
