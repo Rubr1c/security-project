@@ -10,7 +10,7 @@ import * as v from 'valibot';
 import { eq } from 'drizzle-orm';
 import { generateOtpCode, hashOtpCode, otpExpiresAtISO } from '@/lib/otp';
 import { sendOtpEmail } from '@/lib/email/send-otp';
-import { encrypt, hashEmail } from '@/lib/security/crypto';
+import { encrypt, hashEmail, BCRYPT_COST } from '@/lib/security/crypto';
 import { decryptUserFields } from '@/lib/security/fields';
 
 export async function POST(req: Request) {
@@ -81,7 +81,7 @@ export async function POST(req: Request) {
       email: encrypt(result.output.email),
       emailHash: emailHashValue,
       name: encrypt(result.output.name),
-      passwordHash: await bcrypt.hash(result.output.password, 10),
+      passwordHash: await bcrypt.hash(result.output.password, BCRYPT_COST),
       role: 'patient',
       emailVerifiedAt: null,
       otpHash: null,

@@ -23,13 +23,7 @@ export default function DoctorDashboardPage() {
   const user = useAuthStore((state) => state.user);
   const toast = useToast();
   const { appointmentsQuery, respondAppointmentMutation } = useAppointments();
-  const { patientsQuery, nursesQuery, unassignNurseMutation } = useUsers();
-
-  const patientsMap = useMemo(() => {
-    const map = new Map<number, string>();
-    patientsQuery.data?.forEach((patient) => map.set(patient.id, patient.name));
-    return map;
-  }, [patientsQuery.data]);
+  const { nursesQuery, unassignNurseMutation } = useUsers();
 
   const myNurses = useMemo(() => {
     if (!user?.id || !nursesQuery.data) return [];
@@ -81,13 +75,13 @@ export default function DoctorDashboardPage() {
       ) {
         patientMap.set(apt.patientId, {
           patientId: apt.patientId,
-          name: patientsMap.get(apt.patientId) ?? `Patient #${apt.patientId}`,
+          name: apt.patientName ?? `Patient #${apt.patientId}`,
           lastAppointment: apt,
         });
       }
     });
     return Array.from(patientMap.values());
-  }, [completedAppointments, patientsMap]);
+  }, [completedAppointments]);
 
   return (
     <DashboardLayout allowedRoles={['doctor']}>
@@ -171,7 +165,7 @@ export default function DoctorDashboardPage() {
                     appointment={appointment}
                     showPatient
                     patientName={
-                      patientsMap.get(appointment.patientId) ??
+                      appointment.patientName ??
                       `Patient #${appointment.patientId}`
                     }
                     actions={
@@ -229,7 +223,7 @@ export default function DoctorDashboardPage() {
                     appointment={appointment}
                     showPatient
                     patientName={
-                      patientsMap.get(appointment.patientId) ??
+                      appointment.patientName ??
                       `Patient #${appointment.patientId}`
                     }
                     actions={

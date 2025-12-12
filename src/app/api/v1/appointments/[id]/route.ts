@@ -94,6 +94,29 @@ export async function GET(_req: Request, { params }: RouteParams) {
         { status: STATUS.NOT_FOUND }
       );
     }
+  } else if (userRole === 'nurse') {
+    const nurse = db
+      .select({ doctorId: users.doctorId })
+      .from(users)
+      .where(eq(users.id, userId))
+      .get();
+
+    if (!nurse || nurse.doctorId !== appointment[0].doctorId) {
+      logger.info({
+        message: 'Nurse attempting to view appointment of unassigned doctor',
+        meta: {
+          nurseId: userId,
+          appointmentId: appointmentId,
+          appointmentDoctorId: appointment[0].doctorId,
+          nurseAssignedDoctorId: nurse?.doctorId,
+        },
+      });
+
+      return NextResponse.json(
+        { error: 'Appointment not found' },
+        { status: STATUS.NOT_FOUND }
+      );
+    }
   }
 
   const doctor = db

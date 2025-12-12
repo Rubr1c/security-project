@@ -2,7 +2,8 @@ import crypto from 'node:crypto';
 import bcrypt from 'bcrypt';
 
 export const OTP_CODE_LENGTH = 6;
-export const OTP_TTL_MS = 10 * 60 * 1000; // 10 minutes
+export const OTP_TTL_MINUTES = 10;
+export const OTP_TTL_MS = OTP_TTL_MINUTES * 60 * 1000;
 export const OTP_MAX_ATTEMPTS = 5;
 export const OTP_RESEND_COOLDOWN_MS = 30 * 1000; // 30 seconds
 

@@ -6,6 +6,7 @@ import { getSession } from '@/lib/auth/get-session';
 import { NextResponse } from 'next/server';
 import { eq } from 'drizzle-orm';
 import { decryptUserFields } from '@/lib/security/fields';
+import { encrypt, hashEmail } from '@/lib/security/crypto';
 import { cookies } from 'next/headers';
 
 const AUTH_COOKIE_NAME = 'auth-token';
@@ -84,11 +85,17 @@ export async function DELETE() {
   const randomSuffix = crypto.randomUUID();
 
   try {
+    const deletedEmailRaw = `deleted-${timestamp}-${randomSuffix}@healthcure.deleted`;
+
+    const encryptedEmail = encrypt(deletedEmailRaw);
+
+    const emailHash = hashEmail(deletedEmailRaw);
+
     db.update(users)
       .set({
         name: `Deleted User ${userId}`,
-        email: `deleted-${timestamp}-${randomSuffix}@healthcure.deleted`,
-        emailHash: `deleted-${timestamp}-${randomSuffix}@healthcure.deleted`,
+        email: encryptedEmail,
+        emailHash: emailHash,
         passwordHash: 'DELETED_ACCOUNT_NO_LOGIN',
         role: 'patient',
         otpHash: null,

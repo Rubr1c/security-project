@@ -8,7 +8,7 @@ export async function GET() {
   response.cookies.set('csrf-token', token, {
     path: '/',
     sameSite: 'strict',
-    httpOnly: false,
+    httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
   });
 

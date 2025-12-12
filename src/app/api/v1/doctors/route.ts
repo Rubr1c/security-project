@@ -97,5 +97,7 @@ export async function GET() {
     },
   });
 
-  return NextResponse.json(decryptUserRecords(doctors));
+  return NextResponse.json(
+    decryptUserRecords(doctors, ['id', 'email', 'name', 'role', 'createdAt'])
+  );
 }

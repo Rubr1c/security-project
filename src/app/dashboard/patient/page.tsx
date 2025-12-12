@@ -16,13 +16,7 @@ export default function PatientDashboardPage() {
   const [isBookingOpen, setIsBookingOpen] = useState(false);
   const { appointmentsQuery } = useAppointments();
   const { medicationsQuery } = useMedications();
-  const { doctorsQuery } = useUsers();
 
-  const doctorsMap = useMemo(() => {
-    const map = new Map<number, string>();
-    doctorsQuery.data?.forEach((doc) => map.set(doc.id, doc.name));
-    return map;
-  }, [doctorsQuery.data]);
 
   const sortedAppointments = useMemo(() => {
     const appointments = appointmentsQuery.data ?? [];
@@ -107,8 +101,7 @@ export default function PatientDashboardPage() {
                     appointment={appointment}
                     showDoctor
                     doctorName={
-                      doctorsMap.get(appointment.doctorId) ??
-                      `Doctor #${appointment.doctorId}`
+                      appointment.doctorName ?? `Doctor #${appointment.doctorId}`
                     }
                   />
                 ))}

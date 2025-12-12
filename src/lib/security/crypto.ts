@@ -1,23 +1,13 @@
 import crypto from 'crypto';
+import { env } from '../env';
 
 const ALGORITHM = 'aes-256-gcm';
 const IV_LENGTH = 12;
 const AUTH_TAG_LENGTH = 16;
+export const BCRYPT_COST = 10;
 
 function getEncryptionKey(): Buffer {
-  const key = process.env.ENCRYPTION_KEY;
-
-  if (!key) {
-    throw new Error(
-      'ENCRYPTION_KEY environment variable is required for encryption'
-    );
-  }
-
-  if (key.length !== 64) {
-    throw new Error('ENCRYPTION_KEY must be 64 hex characters (32 bytes)');
-  }
-
-  return Buffer.from(key, 'hex');
+  return Buffer.from(env.ENCRYPTION_KEY, 'hex');
 }
 
 export function encrypt(plaintext: string): string {
@@ -101,6 +91,6 @@ export function hashEmail(email: string): string {
     return email;
   }
   const normalized = email.toLowerCase().trim();
-  const peppered = `${normalized}${process.env.HASH_PEPPER}`;
+  const peppered = `${normalized}${env.HASH_PEPPER}`;
   return crypto.createHash('sha256').update(peppered).digest('hex');
 }

@@ -11,6 +11,10 @@ const envSchema = v.object({
   GMAIL_APP_PASSWORD: v.string(),
   APP_URL: v.string(),
   HASH_PEPPER: v.string(),
+  ENCRYPTION_KEY: v.pipe(
+    v.string(),
+    v.length(64, 'ENCRYPTION_KEY must be 64 hex characters')
+  ),
 });
 
 export const env = v.parse(envSchema, process.env);

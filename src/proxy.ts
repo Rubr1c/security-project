@@ -2,11 +2,14 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { logger } from './lib/logger';
 import { STATUS } from './lib/http/status-codes';
-import { jwt, JwtPayload } from './lib/jwt';
 import arcjet, { detectBot, shield, tokenBucket } from '@arcjet/next';
 import { env } from './lib/env';
 
 const AUTH_COOKIE_NAME = 'auth-token';
+
+const RATE_LIMIT_REFILL_RATE = 5;
+const RATE_LIMIT_CAPACITY = 15;
+const RATE_LIMIT_INTERVAL = 10;
 
 export const aj = arcjet({
   key: env.ARCJET_KEY,
@@ -14,13 +17,13 @@ export const aj = arcjet({
     shield({ mode: 'LIVE' }),
     detectBot({
       mode: 'LIVE',
-      allow: ['CATEGORY:SEARCH_ENGINE', 'CATEGORY:MONITOR', 'CATEGORY:PREVIEW'],
+      allow: ['CATEGORY:MONITOR'],
     }),
     tokenBucket({
       mode: 'LIVE',
-      refillRate: 5,
-      interval: 10,
-      capacity: 15,
+      refillRate: RATE_LIMIT_REFILL_RATE,
+      interval: RATE_LIMIT_INTERVAL,
+      capacity: RATE_LIMIT_CAPACITY,
     }),
   ],
 });

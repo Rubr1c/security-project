@@ -6,8 +6,9 @@ import { getSession, requireRole } from '@/lib/auth/get-session';
 import { createAppointmentSchema } from '@/lib/validation/appointment-schemas';
 import { NextResponse } from 'next/server';
 import * as v from 'valibot';
-import { eq, and } from 'drizzle-orm';
+import { eq, and, aliasedTable, getTableColumns } from 'drizzle-orm';
 import { decryptAppointmentRecords } from '@/lib/security/fields';
+import { decrypt } from '@/lib/security/crypto';
 
 export async function POST(req: Request) {
   const session = await requireRole('patient');
@@ -113,21 +114,28 @@ export async function GET() {
   }
 
   const { userId, role: userRole } = session;
+
+  const doctors = aliasedTable(users, 'doctors');
+  const patients = aliasedTable(users, 'patients');
+
+  let baseQuery = db
+    .select({
+      ...getTableColumns(appointments),
+      doctorName: doctors.name,
+      patientName: patients.name,
+    })
+    .from(appointments)
+    .leftJoin(doctors, eq(appointments.doctorId, doctors.id))
+    .leftJoin(patients, eq(appointments.patientId, patients.id));
+
   let userAppointments;
 
   if (userRole === 'patient') {
-    userAppointments = db
-      .select()
-      .from(appointments)
-      .where(eq(appointments.patientId, userId))
-      .all();
+    userAppointments = baseQuery.where(eq(appointments.patientId, userId)).all();
   } else if (userRole === 'doctor') {
-    userAppointments = db
-      .select()
-      .from(appointments)
-      .where(eq(appointments.doctorId, userId))
-      .all();
+    userAppointments = baseQuery.where(eq(appointments.doctorId, userId)).all();
   } else {
+    // Nurse
     const nurse = db
       .select({ id: users.id, doctorId: users.doctorId })
       .from(users)
@@ -143,9 +151,7 @@ export async function GET() {
       return NextResponse.json([]);
     }
 
-    userAppointments = db
-      .select()
-      .from(appointments)
+    userAppointments = baseQuery
       .where(eq(appointments.doctorId, nurse[0].doctorId))
       .all();
   }
@@ -156,8 +162,18 @@ export async function GET() {
       userId,
       role: userRole,
       count: userAppointments.length,
+      withNames: true,
     },
   });
 
-  return NextResponse.json(decryptAppointmentRecords(userAppointments));
+  const decryptedAppointments = decryptAppointmentRecords(userAppointments);
+  
+  // Manually decrypt the joined name fields
+  const finalAppointments = decryptedAppointments.map((apt) => ({
+    ...apt,
+    doctorName: apt.doctorName ? decrypt(apt.doctorName) : undefined,
+    patientName: apt.patientName ? decrypt(apt.patientName) : undefined,
+  }));
+
+  return NextResponse.json(finalAppointments);
 }

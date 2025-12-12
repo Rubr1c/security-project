@@ -119,5 +119,15 @@ export async function GET() {
     },
   });
 
-  return NextResponse.json(decryptUserRecords(nurses));
+  return NextResponse.json(
+    decryptUserRecords(nurses, [
+      'id',
+      'email',
+      'name',
+      'role',
+      'doctorId',
+      'createdAt',
+      'updatedAt',
+    ])
+  );
 }

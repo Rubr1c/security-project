@@ -1,6 +1,5 @@
 import * as v from 'valibot';
 
-//TODO: Remove admin role later
 export const roleEnum = v.picklist(['nurse', 'patient', 'admin', 'doctor']);
 
 export const passwordSchema = v.pipe(
@@ -19,7 +18,6 @@ export const createUserSchema = v.object({
     v.minLength(3, 'Name must be at least 3 characters')
   ),
   password: passwordSchema,
-  // role: roleEnum,
 });
 
 export const updateUserSchema = v.object({

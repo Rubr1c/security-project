@@ -10,7 +10,9 @@ import { logger } from '@/lib/logger';
 import { aj } from '@/proxy';
 import { generateOtpCode, hashOtpCode, otpExpiresAtISO } from '@/lib/otp';
 import { sendOtpEmail } from '@/lib/email/send-otp';
-import { decrypt, hashEmail } from '@/lib/security/crypto';
+import { decrypt, hashEmail, BCRYPT_COST } from '@/lib/security/crypto';
+
+const DUMMY_HASH = bcrypt.hashSync('dummy-password-for-timing-mitigation', BCRYPT_COST);
 
 export async function POST(req: Request) {
   const decision = await aj.protect(req, { requested: 5 });
@@ -70,12 +72,7 @@ export async function POST(req: Request) {
     .where(eq(users.emailHash, emailHashValue));
 
   if (!user) {
-    // Timing attack protection:
-    // Always perform a comparison to ensure the request takes the same amount of time
-    // irrespective of whether the user exists or not.
-    // We use a dummy hash that will never match valid input.
-    const dummyHash = '$2b$10$abcdefghijklmnopqrstuv'; // Invalid bcrypt hash
-    await bcrypt.compare(result.output.password, dummyHash);
+    await bcrypt.compare(result.output.password, DUMMY_HASH);
 
     logger.info({
       message: 'User not found during login attempt',
