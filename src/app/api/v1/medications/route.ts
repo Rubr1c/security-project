@@ -9,7 +9,6 @@ import { eq, inArray } from 'drizzle-orm';
 export async function GET() {
   const session = await getSession();
 
-  // Only patients and doctors can view medications
   if (!session || !['patient', 'doctor'].includes(session.role)) {
     logger.info({
       message: 'Unauthorized: Only patients and doctors can view medications',
@@ -23,7 +22,6 @@ export async function GET() {
 
   const { userId, role: userRole } = session;
 
-  // Get all appointments for this user based on role
   let userAppointments;
 
   if (userRole === 'patient') {
@@ -33,7 +31,6 @@ export async function GET() {
       .where(eq(appointments.patientId, userId))
       .all();
   } else {
-    // Doctor - get all their appointments
     userAppointments = db
       .select({ id: appointments.id })
       .from(appointments)
@@ -52,7 +49,6 @@ export async function GET() {
 
   const appointmentIds = userAppointments.map((a) => a.id);
 
-  // Fetch all medications for these appointments
   const userMedications = db
     .select({
       id: medications.id,

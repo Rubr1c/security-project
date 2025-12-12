@@ -48,10 +48,6 @@ const testAccounts = [
 ];
 
 export async function POST() {
-  // Security: seeding should never be public. Require admin auth and never
-  // return plaintext credentials.
-  //
-  // Note: This route is still useful in dev, but must be protected.
   const session = await requireRole('admin');
 
   if (!session) {
@@ -65,13 +61,11 @@ export async function POST() {
     );
   }
 
-  // This endpoint intentionally does NOT return the seed password.
   try {
     const passwordHash = await bcrypt.hash(TEST_PASSWORD, 10);
     const results: Array<{ email: string; status: string }> = [];
 
     for (const account of testAccounts) {
-      // Only select needed columns - avoid fetching sensitive fields
       const existing = db
         .select({ id: users.id })
         .from(users)

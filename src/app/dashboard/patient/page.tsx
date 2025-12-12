@@ -38,7 +38,6 @@ export default function PatientDashboardPage() {
       const byStatus = statusPriority[a.status] - statusPriority[b.status];
       if (byStatus !== 0) return byStatus;
 
-      // Tie-breaker: earlier dates first (stable, predictable ordering)
       return new Date(a.date).getTime() - new Date(b.date).getTime();
     });
   }, [appointmentsQuery.data]);

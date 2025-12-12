@@ -55,7 +55,6 @@ export async function PUT(req: Request, { params }: RouteParams) {
 
   const doctorId = session.userId;
 
-  // Verify the appointment exists and belongs to this doctor
   const appointment = db
     .select()
     .from(appointments)
@@ -79,7 +78,6 @@ export async function PUT(req: Request, { params }: RouteParams) {
     );
   }
 
-  // Atomic update scoped to this doctor's appointment
   const updateResult = await db
     .update(appointments)
     .set({

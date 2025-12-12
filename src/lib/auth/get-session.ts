@@ -9,10 +9,6 @@ export interface Session {
   role: UserRole;
 }
 
-/**
- * Verifies the auth cookie and returns the session.
- * Use this in route handlers instead of trusting x-user-id/x-user-role headers.
- */
 export async function getSession(): Promise<Session | null> {
   const cookieStore = await cookies();
   const token = cookieStore.get(AUTH_COOKIE_NAME)?.value;
@@ -33,9 +29,6 @@ export async function getSession(): Promise<Session | null> {
   };
 }
 
-/**
- * Requires a specific role. Returns session if authorized, null otherwise.
- */
 export async function requireRole(
   ...allowedRoles: UserRole[]
 ): Promise<Session | null> {

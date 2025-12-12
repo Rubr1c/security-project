@@ -27,7 +27,18 @@ export async function POST(req: Request) {
   }
 
   const { email, code } = parsed.output;
-  const [user] = await db.select().from(users).where(eq(users.email, email));
+  const [user] = await db
+    .select({
+      id: users.id,
+      email: users.email,
+      role: users.role,
+      emailVerifiedAt: users.emailVerifiedAt,
+      otpHash: users.otpHash,
+      otpExpiresAt: users.otpExpiresAt,
+      otpAttempts: users.otpAttempts,
+    })
+    .from(users)
+    .where(eq(users.email, email));
 
   if (!user) {
     return NextResponse.json(

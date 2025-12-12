@@ -58,7 +58,6 @@ export async function PUT(req: Request, { params }: RouteParams) {
 
   const doctorId = session.userId;
 
-  // Verify the appointment exists, belongs to this doctor, and is pending
   const appointment = db
     .select()
     .from(appointments)
@@ -99,7 +98,6 @@ export async function PUT(req: Request, { params }: RouteParams) {
 
   const newStatus = result.output.action === 'confirm' ? 'confirmed' : 'denied';
 
-  // Atomic update scoped to this doctor's pending appointment
   const updateResult = await db
     .update(appointments)
     .set({
@@ -115,7 +113,6 @@ export async function PUT(req: Request, { params }: RouteParams) {
     );
 
   if (updateResult.changes === 0) {
-    // Re-check to provide accurate error message
     const current = db
       .select({ status: appointments.status, doctorId: appointments.doctorId })
       .from(appointments)
@@ -138,7 +135,7 @@ export async function PUT(req: Request, { params }: RouteParams) {
 
     return NextResponse.json(
       { error: 'Failed to update appointment' },
-      { status: STATUS.INTERNAL_SERVER_ERROR }
+      { status: STATUS.INTERNAL_ERROR }
     );
   }
 

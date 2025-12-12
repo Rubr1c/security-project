@@ -37,7 +37,6 @@ export async function POST(req: Request) {
     );
   }
 
-  // Check if email already exists - only select id to avoid fetching sensitive fields
   const existingUser = db
     .select({ id: users.id })
     .from(users)

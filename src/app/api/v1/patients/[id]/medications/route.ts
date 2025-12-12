@@ -10,7 +10,6 @@ interface RouteParams {
   params: Promise<{ id: string }>;
 }
 
-// Returns medications for a patient, scoped to the requesting doctor's relationship.
 export async function GET(_req: Request, { params }: RouteParams) {
   const session = await requireRole('doctor');
 
@@ -37,7 +36,6 @@ export async function GET(_req: Request, { params }: RouteParams) {
     );
   }
 
-  // Verify patient exists and is assigned to this doctor
   const patient = db
     .select({ id: users.id })
     .from(users)

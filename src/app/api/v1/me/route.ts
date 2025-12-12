@@ -22,7 +22,6 @@ export async function GET() {
 
   const userId = session.userId;
 
-  // Fetch user profile (excluding password hash)
   const user = db
     .select({
       id: users.id,

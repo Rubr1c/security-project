@@ -13,7 +13,6 @@ interface RouteParams {
 export async function GET(_req: Request, { params }: RouteParams) {
   const session = await requireRole('doctor');
 
-  // Only doctors can view patient details
   if (!session) {
     logger.info({
       message: 'Unauthorized: Only doctors can view patient details',
@@ -42,7 +41,6 @@ export async function GET(_req: Request, { params }: RouteParams) {
     );
   }
 
-  // Verify the patient exists and is assigned to this doctor
   const patient = db
     .select({
       id: users.id,
@@ -75,7 +73,6 @@ export async function GET(_req: Request, { params }: RouteParams) {
     );
   }
 
-  // Fetch all appointments for this patient with this doctor
   const patientAppointments = db
     .select()
     .from(appointments)
@@ -87,7 +84,6 @@ export async function GET(_req: Request, { params }: RouteParams) {
     )
     .all();
 
-  // Fetch medications for all these appointments
   let patientMedications: {
     id: number;
     appointmentId: number;

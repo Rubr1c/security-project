@@ -52,7 +52,6 @@ export default function AdminDashboardPage() {
     },
     onError: (err) => {
       if (err instanceof ApiError && err.status === 409) {
-        // Show confirm popup instead of toast for the "has appointments" case.
         return;
       }
 

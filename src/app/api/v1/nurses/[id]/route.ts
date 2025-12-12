@@ -34,7 +34,6 @@ export async function DELETE(_req: Request, { params }: RouteParams) {
     );
   }
 
-  // Only select needed columns - avoid fetching sensitive fields
   const nurse = db
     .select({ id: users.id, role: users.role })
     .from(users)
@@ -48,7 +47,6 @@ export async function DELETE(_req: Request, { params }: RouteParams) {
     );
   }
 
-  // Constrain delete to role='nurse' for safety
   const deleteResult = db
     .delete(users)
     .where(and(eq(users.id, nurseId), eq(users.role, 'nurse')))

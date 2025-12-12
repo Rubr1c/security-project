@@ -18,7 +18,6 @@ import { sendOtpEmail } from '@/lib/email/send-otp';
 export async function PUT(req: Request) {
   const session = await getSession();
 
-  // User must be authenticated
   if (!session) {
     logger.info({
       message: 'Unauthorized: No valid session',
@@ -50,8 +49,19 @@ export async function PUT(req: Request) {
     code: v.pipe(v.string(), v.regex(/^\d{6}$/, 'Code must be 6 digits')),
   });
 
-  // Get current user
-  const [user] = await db.select().from(users).where(eq(users.id, userId));
+  const [user] = await db
+    .select({
+      id: users.id,
+      email: users.email,
+      passwordHash: users.passwordHash,
+      otpHash: users.otpHash,
+      otpExpiresAt: users.otpExpiresAt,
+      otpAttempts: users.otpAttempts,
+      pendingPasswordHash: users.pendingPasswordHash,
+      pendingPasswordExpiresAt: users.pendingPasswordExpiresAt,
+    })
+    .from(users)
+    .where(eq(users.id, userId));
 
   if (!user) {
     logger.info({
@@ -65,7 +75,6 @@ export async function PUT(req: Request) {
     );
   }
 
-  // VERIFY STEP: { code }
   const verifyParsed = v.safeParse(verifySchema, body);
   if (verifyParsed.success) {
     if (!user.pendingPasswordHash || !user.pendingPasswordExpiresAt) {
@@ -156,7 +165,6 @@ export async function PUT(req: Request) {
     );
   }
 
-  // REQUEST STEP: { oldPassword, newPassword } -> send OTP
   const requestParsed = v.safeParse(requestSchema, body);
   if (!requestParsed.success) {
     logger.info({

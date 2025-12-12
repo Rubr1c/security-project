@@ -93,7 +93,6 @@ export async function GET(_req: Request, { params }: RouteParams) {
       );
     }
   } else if (userRole === 'nurse') {
-    // Only select needed columns - avoid fetching sensitive fields
     const nurse = db
       .select({ id: users.id, doctorId: users.doctorId })
       .from(users)
@@ -183,7 +182,6 @@ export async function POST(req: Request, { params }: RouteParams) {
 
   const nurseId = session.userId;
 
-  // Only select needed columns - avoid fetching sensitive fields
   const nurse = db
     .select({ id: users.id, doctorId: users.doctorId })
     .from(users)
@@ -202,7 +200,6 @@ export async function POST(req: Request, { params }: RouteParams) {
     );
   }
 
-  // Verify the appointment exists and belongs to the nurse's assigned doctor
   const appointment = db
     .select()
     .from(appointments)
@@ -221,7 +218,6 @@ export async function POST(req: Request, { params }: RouteParams) {
     );
   }
 
-  // Verify the nurse is assigned to the doctor of this appointment
   if (appointment[0].doctorId !== nurse[0].doctorId) {
     logger.info({
       message: 'Nurse is not authorized to add medications to this appointment',

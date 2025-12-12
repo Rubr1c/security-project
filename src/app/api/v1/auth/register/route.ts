@@ -11,7 +11,6 @@ import { eq } from 'drizzle-orm';
 import { generateOtpCode, hashOtpCode, otpExpiresAtISO } from '@/lib/otp';
 import { sendOtpEmail } from '@/lib/email/send-otp';
 
-// Patient can register themselves
 export async function POST(req: Request) {
   const decision = await aj.protect(req, { requested: 7 });
 
@@ -98,7 +97,7 @@ export async function POST(req: Request) {
   if (!created) {
     return NextResponse.json(
       { error: 'Failed to create user' },
-      { status: STATUS.INTERNAL_SERVER_ERROR }
+      { status: STATUS.INTERNAL_ERROR }
     );
   }
 

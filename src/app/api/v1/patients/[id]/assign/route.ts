@@ -36,8 +36,6 @@ export async function POST(_req: Request, { params }: RouteParams) {
 
   const doctorId = session.userId;
 
-  // Atomic update: only assign if patient exists, is role='patient',
-  // and is either unassigned or already assigned to this doctor
   const updateResult = await db
     .update(users)
     .set({ doctorId: doctorId, updatedAt: new Date().toISOString() })
@@ -50,7 +48,6 @@ export async function POST(_req: Request, { params }: RouteParams) {
     );
 
   if (updateResult.changes === 0) {
-    // Could be: patient not found, not a patient role, or already assigned to another doctor
     const existingPatient = db
       .select({ id: users.id, role: users.role, doctorId: users.doctorId })
       .from(users)
@@ -76,7 +73,6 @@ export async function POST(_req: Request, { params }: RouteParams) {
       );
     }
 
-    // Patient is already assigned to another doctor
     logger.info({
       message: 'Patient already assigned to another doctor',
       meta: {

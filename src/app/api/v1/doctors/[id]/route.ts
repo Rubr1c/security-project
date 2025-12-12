@@ -34,7 +34,6 @@ export async function DELETE(req: Request, { params }: RouteParams) {
     );
   }
 
-  // Only select needed columns - avoid fetching passwordHash/otpHash etc.
   const doctor = db
     .select({ id: users.id, role: users.role })
     .from(users)
@@ -55,7 +54,6 @@ export async function DELETE(req: Request, { params }: RouteParams) {
 
   const nowIso = new Date().toISOString();
 
-  // Prevent deleting doctors that are still referenced by appointments (doctorId is NOT nullable)
   const appts = db
     .select({ id: appointments.id })
     .from(appointments)
@@ -77,9 +75,7 @@ export async function DELETE(req: Request, { params }: RouteParams) {
     );
   }
 
-  // Transaction to avoid partial deletes.
   sqlite.transaction(() => {
-    // Unassign nurses from this doctor (doctorId is nullable on users)
     db.update(users)
       .set({ doctorId: null, updatedAt: nowIso })
       .where(eq(users.doctorId, doctorId))
@@ -88,7 +84,6 @@ export async function DELETE(req: Request, { params }: RouteParams) {
     if (appts.length > 0) {
       const apptIds = appts.map((a) => a.id);
 
-      // Delete medications before deleting appointments (FK: medications -> appointments)
       db.delete(medications)
         .where(inArray(medications.appointmentId, apptIds))
         .run();
@@ -96,7 +91,6 @@ export async function DELETE(req: Request, { params }: RouteParams) {
       db.delete(appointments).where(inArray(appointments.id, apptIds)).run();
     }
 
-    // Constrain delete to role='doctor' for safety
     const deleteResult = db
       .delete(users)
       .where(and(eq(users.id, doctorId), eq(users.role, 'doctor')))

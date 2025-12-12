@@ -60,7 +60,6 @@ export async function POST(req: Request) {
     },
   });
 
-  // Only select needed columns - avoid fetching all sensitive fields
   const [user] = await db
     .select({
       id: users.id,

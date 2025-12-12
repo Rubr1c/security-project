@@ -36,7 +36,6 @@ export async function POST(req: Request) {
 
   const patientId = session.userId;
 
-  // Only select needed columns - avoid fetching sensitive fields
   const doctor = db
     .select({ id: users.id, role: users.role })
     .from(users)
@@ -55,7 +54,6 @@ export async function POST(req: Request) {
     );
   }
 
-  // Validate appointment date is in the future
   const appointmentDate = new Date(result.output.date);
   if (appointmentDate <= new Date()) {
     logger.info({
@@ -129,7 +127,6 @@ export async function GET() {
       .where(eq(appointments.doctorId, userId))
       .all();
   } else {
-    // Only select needed columns - avoid fetching sensitive fields
     const nurse = db
       .select({ id: users.id, doctorId: users.doctorId })
       .from(users)

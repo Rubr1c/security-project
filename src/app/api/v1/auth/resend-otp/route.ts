@@ -29,10 +29,16 @@ export async function POST(req: Request) {
   }
 
   const { email } = parsed.output;
-  const [user] = await db.select().from(users).where(eq(users.email, email));
+  const [user] = await db
+    .select({
+      id: users.id,
+      email: users.email,
+      otpLastSentAt: users.otpLastSentAt,
+    })
+    .from(users)
+    .where(eq(users.email, email));
 
   if (!user) {
-    // Don't reveal whether the user exists
     return NextResponse.json({ message: 'If the email exists, a code was sent.' });
   }
 

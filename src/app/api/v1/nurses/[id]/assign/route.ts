@@ -39,7 +39,6 @@ export async function PUT(_req: Request, { params }: RouteParams) {
     );
   }
 
-  // Only select needed columns - avoid fetching sensitive fields
   const nurse = db
     .select({ id: users.id, role: users.role, doctorId: users.doctorId })
     .from(users)
@@ -60,7 +59,6 @@ export async function PUT(_req: Request, { params }: RouteParams) {
 
   const doctorId = session.userId;
 
-  // Check if nurse is already assigned to another doctor
   if (nurse[0].doctorId !== null && nurse[0].doctorId !== doctorId) {
     logger.info({
       message: 'Nurse is already assigned to another doctor',
@@ -77,7 +75,6 @@ export async function PUT(_req: Request, { params }: RouteParams) {
     );
   }
 
-  // Atomic update scoped to nurse role and assignment state
   const updateResult = await db
     .update(users)
     .set({ doctorId: doctorId, updatedAt: new Date().toISOString() })
@@ -85,13 +82,11 @@ export async function PUT(_req: Request, { params }: RouteParams) {
       and(
         eq(users.id, nurseId),
         eq(users.role, 'nurse'),
-        // Only allow if unassigned or already assigned to this doctor
         or(isNull(users.doctorId), eq(users.doctorId, doctorId))
       )
     );
 
   if (updateResult.changes === 0) {
-    // The pre-check passed but update failed - likely a race condition or data changed
     logger.info({
       message: 'Nurse assignment failed - concurrent modification',
       meta: { nurseId, doctorId },
@@ -148,7 +143,6 @@ export async function DELETE(_req: Request, { params }: RouteParams) {
 
   const doctorId = session.userId;
 
-  // Only select needed columns - avoid fetching sensitive fields
   const nurse = db
     .select({ id: users.id, role: users.role, doctorId: users.doctorId })
     .from(users)
@@ -190,7 +184,6 @@ export async function DELETE(_req: Request, { params }: RouteParams) {
     );
   }
 
-  // Atomic update scoped to nurse role and this doctor
   const updateResult = await db
     .update(users)
     .set({ doctorId: null, updatedAt: new Date().toISOString() })

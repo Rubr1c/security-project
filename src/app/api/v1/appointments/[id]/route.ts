@@ -13,7 +13,6 @@ interface RouteParams {
 export async function GET(_req: Request, { params }: RouteParams) {
   const session = await getSession();
 
-  // Only patients and doctors can view appointment details
   if (!session || !['patient', 'doctor'].includes(session.role)) {
     logger.info({
       message:
@@ -43,7 +42,6 @@ export async function GET(_req: Request, { params }: RouteParams) {
     );
   }
 
-  // Fetch the appointment
   const appointment = db
     .select()
     .from(appointments)
@@ -62,9 +60,7 @@ export async function GET(_req: Request, { params }: RouteParams) {
     );
   }
 
-  // RBAC: Verify access rights
   if (userRole === 'patient') {
-    // Patient can only view their own appointments
     if (appointment[0].patientId !== userId) {
       logger.info({
         message: 'Patient attempting to view another patient appointment',
@@ -80,7 +76,6 @@ export async function GET(_req: Request, { params }: RouteParams) {
       );
     }
   } else if (userRole === 'doctor') {
-    // Doctor can only view appointments assigned to them
     if (appointment[0].doctorId !== userId) {
       logger.info({
         message: 'Doctor attempting to view another doctor appointment',
@@ -97,7 +92,6 @@ export async function GET(_req: Request, { params }: RouteParams) {
     }
   }
 
-  // Fetch doctor and patient names for the response
   const doctor = db
     .select({ id: users.id, name: users.name, email: users.email })
     .from(users)
