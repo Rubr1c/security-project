@@ -1,4 +1,4 @@
-import { db } from '@/lib/db/client';
+import { db, sqlite } from '@/lib/db/client';
 import { appointments, medications, users } from '@/lib/db/schema';
 import { STATUS } from '@/lib/http/status-codes';
 import { logger } from '@/lib/logger';
@@ -53,11 +53,7 @@ export async function DELETE(req: Request, { params }: RouteParams) {
     url.searchParams.get('force') === 'true' ||
     url.searchParams.get('force') === '1';
 
-  // Unassign nurses from this doctor (doctorId is nullable on users)
-  db.update(users)
-    .set({ doctorId: null, updatedAt: new Date().toISOString() })
-    .where(eq(users.doctorId, doctorId))
-    .run();
+  const nowIso = new Date().toISOString();
 
   // Prevent deleting doctors that are still referenced by appointments (doctorId is NOT nullable)
   const appts = db
@@ -66,8 +62,30 @@ export async function DELETE(req: Request, { params }: RouteParams) {
     .where(eq(appointments.doctorId, doctorId))
     .all();
 
-  if (appts.length > 0) {
-    if (force) {
+  if (appts.length > 0 && !force) {
+    logger.info({
+      message: 'Doctor delete blocked: doctor has appointments',
+      meta: { id: doctorId, appointmentCount: appts.length },
+    });
+
+    return NextResponse.json(
+      {
+        error:
+          'This doctor has appointments. Delete anyway to remove the doctor and all associated appointments/medications.',
+      },
+      { status: STATUS.CONFLICT }
+    );
+  }
+
+  // Transaction to avoid partial deletes.
+  sqlite.transaction(() => {
+    // Unassign nurses from this doctor (doctorId is nullable on users)
+    db.update(users)
+      .set({ doctorId: null, updatedAt: nowIso })
+      .where(eq(users.doctorId, doctorId))
+      .run();
+
+    if (appts.length > 0) {
       const apptIds = appts.map((a) => a.id);
 
       // Delete medications before deleting appointments (FK: medications -> appointments)
@@ -76,28 +94,10 @@ export async function DELETE(req: Request, { params }: RouteParams) {
         .run();
 
       db.delete(appointments).where(inArray(appointments.id, apptIds)).run();
-
-      logger.info({
-        message: 'Doctor cascade delete: removed appointments and medications',
-        meta: { id: doctorId, appointmentCount: apptIds.length },
-      });
-    } else {
-      logger.info({
-        message: 'Doctor delete blocked: doctor has appointments',
-        meta: { id: doctorId, appointmentCount: appts.length },
-      });
-
-      return NextResponse.json(
-        {
-          error:
-            'This doctor has appointments. Delete anyway to remove the doctor and all associated appointments/medications.',
-        },
-        { status: STATUS.CONFLICT }
-      );
     }
-  }
 
-  db.delete(users).where(eq(users.id, doctorId)).run();
+    db.delete(users).where(eq(users.id, doctorId)).run();
+  })();
 
   logger.info({
     message: 'Doctor deleted successfully',

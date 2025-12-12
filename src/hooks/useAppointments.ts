@@ -83,17 +83,28 @@ export const useAppointments = () => {
 };
 
 export const useAppointment = (id: number) => {
+  const token = useAuthStore((state) => state.token);
+  const user = useAuthStore((state) => state.user);
+  const hasHydrated = useAuthStore((state) => state._hasHydrated);
+
+  const canFetchAppointment = user?.role === 'patient' || user?.role === 'doctor';
   return useQuery({
     queryKey: ['appointments', id],
     queryFn: () => api.appointments.get(id),
-    enabled: !!id,
+    enabled: !!id && !!token && hasHydrated && canFetchAppointment,
   });
 };
 
 export const useAppointmentMedications = (appointmentId: number) => {
+  const token = useAuthStore((state) => state.token);
+  const user = useAuthStore((state) => state.user);
+  const hasHydrated = useAuthStore((state) => state._hasHydrated);
+
+  const canFetchAppointmentMeds =
+    user?.role === 'patient' || user?.role === 'doctor' || user?.role === 'nurse';
   return useQuery({
     queryKey: ['appointments', appointmentId, 'medications'],
     queryFn: () => api.appointments.getMedications(appointmentId),
-    enabled: !!appointmentId,
+    enabled: !!appointmentId && !!token && hasHydrated && canFetchAppointmentMeds,
   });
 };

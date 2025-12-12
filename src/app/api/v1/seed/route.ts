@@ -46,7 +46,27 @@ const testAccounts = [
   },
 ];
 
-export async function POST() {
+export async function POST(req: Request) {
+  // Security: seeding should never be public. Require admin auth and never
+  // return plaintext credentials.
+  //
+  // Note: This route is still useful in dev, but must be protected.
+  if (req.headers.get('x-user-role') !== 'admin') {
+    logger.info({
+      message: 'Unauthorized: Only admin can seed test accounts',
+      meta: {
+        'x-user-id': req.headers.get('x-user-id') ?? 'unknown',
+        'x-user-role': req.headers.get('x-user-role') ?? 'unknown',
+      },
+    });
+
+    return NextResponse.json(
+      { error: 'Unauthorized' },
+      { status: STATUS.UNAUTHORIZED }
+    );
+  }
+
+  // This endpoint intentionally does NOT return the seed password.
   try {
     const passwordHash = await bcrypt.hash(TEST_PASSWORD, 10);
     const results: Array<{ email: string; status: string }> = [];
@@ -59,7 +79,10 @@ export async function POST() {
         .all();
 
       if (existing.length > 0) {
-        results.push({ email: account.email, status: 'skipped (already exists)' });
+        results.push({
+          email: account.email,
+          status: 'skipped (already exists)',
+        });
         continue;
       }
 
@@ -82,7 +105,6 @@ export async function POST() {
 
     return NextResponse.json({
       message: 'Test accounts seeded successfully',
-      password: TEST_PASSWORD,
       accounts: testAccounts.map((acc) => ({
         email: acc.email,
         name: acc.name,
@@ -93,13 +115,12 @@ export async function POST() {
   } catch (error) {
     logger.error({
       message: 'Failed to seed test accounts',
-      error: error instanceof Error ? error.message : 'Unknown error',
+      error: error instanceof Error ? error : new Error('Unknown error'),
     });
 
     return NextResponse.json(
       { error: 'Failed to seed test accounts' },
-      { status: STATUS.INTERNAL_SERVER_ERROR }
+      { status: STATUS.INTERNAL_ERROR }
     );
   }
 }
-

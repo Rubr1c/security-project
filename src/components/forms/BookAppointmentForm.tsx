@@ -38,9 +38,9 @@ export function BookAppointmentForm({ onSuccess }: BookAppointmentFormProps) {
   });
 
   const onSubmit = (data: FormData) => {
-    const combined = `${data.date}T${data.time}`;
-    const dateObj = new Date(combined);
-    const isoDate = dateObj.toISOString().slice(0, 19);
+    // Keep the backend payload format (YYYY-MM-DDTHH:mm:ss) without timezone shifting.
+    // Using toISOString() would convert local time to UTC and shift the intended time.
+    const isoDate = `${data.date}T${data.time}:00`;
 
     createAppointmentMutation.mutate(
       { doctorId: data.doctorId, date: isoDate },

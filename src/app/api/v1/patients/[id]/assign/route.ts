@@ -35,6 +35,19 @@ export async function POST(
       { status: STATUS.NOT_FOUND }
     );
   }
+
+  // Ensure the target is actually a patient (prevents assigning nurses/admins/doctors by mistake)
+  if (patient[0].role !== 'patient') {
+    logger.info({
+      message: 'Assign patient rejected: target user is not a patient',
+      meta: { targetId: patientId, targetRole: patient[0].role },
+    });
+
+    return NextResponse.json(
+      { error: 'Target user is not a patient' },
+      { status: STATUS.BAD_REQUEST }
+    );
+  }
   //Impossible to have multiple patients with the same email
   if (patient.length > 1) {
     throw new Error('Multiple patients found');

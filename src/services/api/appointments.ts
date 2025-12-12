@@ -50,8 +50,4 @@ export const appointments = {
     );
     return response.data;
   },
-  delete: async (id: number) => {
-    const response = await apiClient.delete(`/appointments/${id}`);
-    return response.data;
-  },
 };

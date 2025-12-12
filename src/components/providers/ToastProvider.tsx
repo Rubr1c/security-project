@@ -93,7 +93,11 @@ function ToastViewport({
   onClose: (id: string) => void;
 }) {
   return (
-    <div className="fixed right-3 top-3 z-50 grid w-[360px] max-w-[calc(100vw-24px)] gap-3">
+    <div
+      className="fixed right-3 top-3 z-50 grid w-[360px] max-w-[calc(100vw-24px)] gap-3"
+      aria-live="polite"
+      aria-relevant="additions text"
+    >
       {toasts.map((t) => (
         <ToastCard key={t.id} toast={t} onClose={() => onClose(t.id)} />
       ))}

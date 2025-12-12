@@ -33,8 +33,15 @@ export function Modal({ isOpen, onClose, title, children }: ModalProps) {
   if (!isOpen) return null;
   if (typeof document === 'undefined') return null;
 
+  const titleId = `modal-title-${title.replaceAll(/\s+/g, '-').toLowerCase()}`;
+
   const modalContent = (
-    <div className="fixed inset-0 z-50">
+    <div
+      className="fixed inset-0 z-50"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby={titleId}
+    >
       <div
         className="absolute inset-0 bg-slate-950/20"
         onClick={onClose}
@@ -44,7 +51,10 @@ export function Modal({ isOpen, onClose, title, children }: ModalProps) {
       <div className="absolute inset-y-0 right-0 w-[480px] max-w-[92vw] border-l border-slate-200 bg-white">
         <div className="flex items-center justify-between border-b border-slate-200 px-6 py-3">
           <div className="min-w-0">
-            <p className="truncate text-sm font-semibold text-slate-950">
+            <p
+              id={titleId}
+              className="truncate text-sm font-semibold text-slate-950"
+            >
               {title}
             </p>
           </div>
@@ -52,6 +62,7 @@ export function Modal({ isOpen, onClose, title, children }: ModalProps) {
             onClick={onClose}
             className="grid h-9 w-9 place-items-center border border-slate-300 bg-white text-slate-700 hover:bg-slate-50"
             aria-label="Close"
+            autoFocus
           >
             <X className="h-4 w-4" />
           </button>

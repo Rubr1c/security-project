@@ -61,10 +61,7 @@ export async function proxy(req: NextRequest) {
     '/api/v1/auth/resend-otp',
   ];
 
-  if (
-    publicAuthPaths.some((p) => pathname.startsWith(p)) ||
-    pathname.startsWith('/api/v1/seed')
-  ) {
+  if (publicAuthPaths.some((p) => pathname.startsWith(p))) {
     return NextResponse.next();
   }
 
