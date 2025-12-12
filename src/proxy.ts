@@ -67,6 +67,20 @@ export async function proxy(req: NextRequest) {
     return NextResponse.next();
   }
 
+  const stateChangingMethods = ['POST', 'PUT', 'DELETE', 'PATCH'];
+  if (stateChangingMethods.includes(req.method)) {
+    const cookieToken = req.cookies.get('csrf-token')?.value;
+    const headerToken = req.headers.get('x-csrf-token');
+
+    if (!cookieToken || !headerToken || cookieToken !== headerToken) {
+      logger.warn({ message: 'CSRF token validation failed', meta: { pathname } });
+      return NextResponse.json(
+        { error: 'Forbidden: Invalid CSRF token' },
+        { status: STATUS.FORBIDDEN }
+      );
+    }
+  }
+
   logger.info({
     message: 'Authorizing User',
   });

@@ -1,21 +1,16 @@
 import { apiClient } from './client';
 import * as v from 'valibot';
-import { loginSchema, createUserSchema } from '@/lib/validation/user-schemas';
-
-type LoginInput = v.InferInput<typeof loginSchema>;
-type RegisterInput = v.InferInput<typeof createUserSchema>;
-
-const otpVerifySchema = v.object({
-  email: v.pipe(v.string(), v.email()),
-  code: v.pipe(v.string(), v.regex(/^\d{6}$/, 'Code must be 6 digits')),
-});
-
-const otpResendSchema = v.object({
-  email: v.pipe(v.string(), v.email()),
-});
-
-type OtpVerifyInput = v.InferInput<typeof otpVerifySchema>;
-type OtpResendInput = v.InferInput<typeof otpResendSchema>;
+import { LoginInput, RegisterInput } from '@/lib/validation/user-schemas';
+import {
+  otpVerifySchema,
+  otpResendSchema,
+  changePasswordRequestSchema,
+  changePasswordVerifySchema,
+  OtpVerifyInput,
+  OtpResendInput,
+  ChangePasswordRequestInput,
+  ChangePasswordVerifyInput,
+} from '@/lib/validation/auth-schemas';
 
 export interface OtpRequiredResponse {
   otpRequired: true;
@@ -29,22 +24,6 @@ export type RegisterResponse = OtpRequiredResponse | { message: string };
 export interface OtpVerifyResponse {
   success: true;
 }
-
-const changePasswordRequestSchema = v.object({
-  oldPassword: v.pipe(v.string(), v.minLength(1, 'Old password is required')),
-  newPassword: v.pipe(v.string(), v.minLength(1, 'New password is required')),
-});
-
-const changePasswordVerifySchema = v.object({
-  code: v.pipe(v.string(), v.regex(/^\d{6}$/, 'Code must be 6 digits')),
-});
-
-type ChangePasswordRequestInput = v.InferInput<
-  typeof changePasswordRequestSchema
->;
-type ChangePasswordVerifyInput = v.InferInput<
-  typeof changePasswordVerifySchema
->;
 
 export type ChangePasswordResponse =
   | { otpRequired: true; email: string }

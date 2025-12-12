@@ -41,3 +41,6 @@ export const changePasswordSchema = v.object({
   oldPassword: v.pipe(v.string(), v.minLength(1, 'Old password is required')),
   newPassword: passwordSchema,
 });
+
+export type LoginInput = v.InferInput<typeof loginSchema>;
+export type RegisterInput = v.InferInput<typeof createUserSchema>;

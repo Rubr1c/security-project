@@ -1,17 +1,12 @@
 import { apiClient } from './client';
-import * as v from 'valibot';
 import {
-  createAppointmentSchema,
-  updateDiagnosisSchema,
-  appointmentResponseSchema,
+  CreateAppointmentInput,
+  UpdateDiagnosisInput,
+  AppointmentResponseInput,
 } from '@/lib/validation/appointment-schemas';
-import { addMedicationSchema } from '@/lib/validation/medication-schemas';
+import { AddMedicationInput } from '@/lib/validation/medication-schemas';
 import { Appointment, Medication } from '@/lib/db/types';
 
-type CreateAppointmentInput = v.InferInput<typeof createAppointmentSchema>;
-type UpdateDiagnosisInput = v.InferInput<typeof updateDiagnosisSchema>;
-type AppointmentResponseInput = v.InferInput<typeof appointmentResponseSchema>;
-type AddMedicationInput = v.InferInput<typeof addMedicationSchema>;
 
 export const appointments = {
   list: async () => {

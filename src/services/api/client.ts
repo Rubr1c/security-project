@@ -11,12 +11,29 @@ export class ApiError extends Error {
   }
 }
 
+function getCookie(name: string): string | undefined {
+  if (typeof document === 'undefined') return undefined;
+  const match = document.cookie.match(new RegExp(`(^| )${name}=([^;]+)`));
+  return match ? match[2] : undefined;
+}
+
 export const apiClient = axios.create({
   baseURL: '/api/v1',
   headers: {
     'Content-Type': 'application/json',
   },
   withCredentials: true,
+});
+
+apiClient.interceptors.request.use((config) => {
+  const stateChangingMethods = ['post', 'put', 'delete', 'patch'];
+  if (stateChangingMethods.includes(config.method?.toLowerCase() || '')) {
+    const csrfToken = getCookie('csrf-token');
+    if (csrfToken) {
+      config.headers['x-csrf-token'] = csrfToken;
+    }
+  }
+  return config;
 });
 
 apiClient.interceptors.response.use(

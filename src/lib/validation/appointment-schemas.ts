@@ -30,3 +30,7 @@ export const updateDiagnosisSchema = v.object({
     v.maxLength(5000, 'Diagnosis must be less than 5000 characters')
   ),
 });
+
+export type CreateAppointmentInput = v.InferInput<typeof createAppointmentSchema>;
+export type UpdateDiagnosisInput = v.InferInput<typeof updateDiagnosisSchema>;
+export type AppointmentResponseInput = v.InferInput<typeof appointmentResponseSchema>;

@@ -17,3 +17,5 @@ export const addMedicationSchema = v.object({
     v.maxLength(1000, 'Instructions must be less than 1000 characters')
   ),
 });
+
+export type AddMedicationInput = v.InferInput<typeof addMedicationSchema>;
