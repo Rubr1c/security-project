@@ -10,6 +10,10 @@ import {
   OtpResendInput,
   ChangePasswordRequestInput,
   ChangePasswordVerifyInput,
+  ForgotPasswordInput,
+  ResetPasswordInput,
+  forgotPasswordSchema,
+  resetPasswordSchema,
 } from '@/lib/validation/auth-schemas';
 
 export interface OtpRequiredResponse {
@@ -75,6 +79,20 @@ export const auth = {
   },
   me: async () => {
     const response = await apiClient.get('/me');
+    return response.data;
+  },
+  forgotPassword: async (data: ForgotPasswordInput) => {
+    const response = await apiClient.post<{ message: string }>(
+      '/auth/forgot-password',
+      v.parse(forgotPasswordSchema, data)
+    );
+    return response.data;
+  },
+  resetPassword: async (data: ResetPasswordInput) => {
+    const response = await apiClient.post<{ message: string }>(
+      '/auth/reset-password',
+      v.parse(resetPasswordSchema, data)
+    );
     return response.data;
   },
 };

@@ -5,6 +5,6 @@ export default {
   out: './migrations',
   dialect: 'sqlite',
   dbCredentials: {
-    url: './db.sqlite',
+    url: 'C:/Users/aliza/Programming/JS/security-project/security-project/db.sqlite',
   },
 } satisfies Config;

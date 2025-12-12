@@ -7,6 +7,8 @@ import { useAuth } from '@/hooks/useAuth';
 import { Button, Input } from '@/components/ui';
 import * as v from 'valibot';
 
+import Link from 'next/link';
+
 type LoginFormData = v.InferInput<typeof loginSchema>;
 
 export function LoginForm() {
@@ -15,10 +17,13 @@ export function LoginForm() {
   const {
     register,
     handleSubmit,
+    watch,
     formState: { errors },
   } = useForm<LoginFormData>({
     resolver: valibotResolver(loginSchema),
   });
+
+  const emailValue = watch('email');
 
   const onSubmit = (data: LoginFormData) => {
     loginMutation.mutate(data);
@@ -46,6 +51,17 @@ export function LoginForm() {
           error={errors.password?.message}
           autoComplete="current-password"
         />
+
+        <div className="flex justify-end">
+          <Link
+             href={`/auth/forgot-password${
+               emailValue ? `?email=${encodeURIComponent(emailValue)}` : ''
+             }`}
+            className="text-sm font-medium text-teal-600 hover:text-teal-500"
+          >
+            Forgot password?
+          </Link>
+        </div>
       </div>
 
       {loginMutation.isError && (

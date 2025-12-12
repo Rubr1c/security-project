@@ -22,3 +22,15 @@ export type OtpVerifyInput = v.InferInput<typeof otpVerifySchema>;
 export type OtpResendInput = v.InferInput<typeof otpResendSchema>;
 export type ChangePasswordRequestInput = v.InferInput<typeof changePasswordRequestSchema>;
 export type ChangePasswordVerifyInput = v.InferInput<typeof changePasswordVerifySchema>;
+
+export const forgotPasswordSchema = v.object({
+  email: v.pipe(v.string(), v.email()),
+});
+
+export const resetPasswordSchema = v.object({
+  token: v.string(),
+  password: v.pipe(v.string(), v.minLength(8, 'Password must be at least 8 characters')),
+});
+
+export type ForgotPasswordInput = v.InferInput<typeof forgotPasswordSchema>;
+export type ResetPasswordInput = v.InferInput<typeof resetPasswordSchema>;

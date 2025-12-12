@@ -57,6 +57,13 @@
       "when": 1765562817616,
       "tag": "0007_add-email-hash",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "6",
+      "when": 1765572907310,
+      "tag": "0008_tidy_slapstick",
+      "breakpoints": true
     }
   ]
 }

@@ -70,6 +70,14 @@ export const useAuth = () => {
     mutationFn: api.auth.changePasswordVerify,
   });
 
+  const forgotPasswordMutation = useMutation({
+    mutationFn: api.auth.forgotPassword,
+  });
+
+  const resetPasswordMutation = useMutation({
+    mutationFn: api.auth.resetPassword,
+  });
+
   const userQuery = useQuery({
     queryKey: ['user', 'me'],
     queryFn: async () => {
@@ -97,6 +105,8 @@ export const useAuth = () => {
     resendOtpMutation,
     changePasswordRequestMutation,
     changePasswordVerifyMutation,
+    forgotPasswordMutation,
+    resetPasswordMutation,
     userQuery,
     user,
     setUser,

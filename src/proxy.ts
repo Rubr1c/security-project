@@ -61,6 +61,8 @@ export async function proxy(req: NextRequest) {
     '/api/v1/auth/register',
     '/api/v1/auth/verify-otp',
     '/api/v1/auth/resend-otp',
+    '/api/v1/auth/forgot-password',
+    '/api/v1/auth/reset-password',
   ];
 
   if (publicAuthPaths.some((p) => pathname.startsWith(p))) {
@@ -114,14 +116,12 @@ export async function proxy(req: NextRequest) {
   });
 
   const requestHeaders = new Headers(req.headers);
-  requestHeaders.set('x-user-id', decoded.userId.toString());
-  requestHeaders.set('x-user-role', decoded.role);
 
   logger.info({
     message: 'Request headers set',
     meta: {
-      'x-user-id': decoded.userId.toString(),
-      'x-user-role': decoded.role,
+      userId: decoded.userId.toString(),
+      role: decoded.role,
     },
   });
 
