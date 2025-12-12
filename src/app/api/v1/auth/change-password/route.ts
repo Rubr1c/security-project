@@ -2,6 +2,7 @@ import { db } from '@/lib/db/client';
 import { users } from '@/lib/db/schema';
 import { STATUS } from '@/lib/http/status-codes';
 import { logger } from '@/lib/logger';
+import { getSession } from '@/lib/auth/get-session';
 import { NextResponse } from 'next/server';
 import bcrypt from 'bcrypt';
 import * as v from 'valibot';
@@ -15,16 +16,12 @@ import {
 import { sendOtpEmail } from '@/lib/email/send-otp';
 
 export async function PUT(req: Request) {
-  const userIdHeader = req.headers.get('x-user-id');
-  const userRole = req.headers.get('x-user-role');
+  const session = await getSession();
 
-  // User must be authenticated (have valid x-user-id header)
-  if (!userIdHeader) {
+  // User must be authenticated
+  if (!session) {
     logger.info({
-      message: 'Unauthorized: No user ID in request',
-      meta: {
-        'x-user-role': userRole ?? 'unknown',
-      },
+      message: 'Unauthorized: No valid session',
     });
 
     return NextResponse.json(
@@ -33,19 +30,7 @@ export async function PUT(req: Request) {
     );
   }
 
-  const userId = parseInt(userIdHeader);
-
-  if (isNaN(userId) || userId <= 0) {
-    logger.info({
-      message: 'Invalid user ID',
-      meta: { userIdHeader },
-    });
-
-    return NextResponse.json(
-      { error: 'Invalid user ID' },
-      { status: STATUS.BAD_REQUEST }
-    );
-  }
+  const { userId, role: userRole } = session;
 
   const body = await req.json();
 

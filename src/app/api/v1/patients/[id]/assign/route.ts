@@ -1,21 +1,21 @@
 import { STATUS } from '@/lib/http/status-codes';
 import { logger } from '@/lib/logger';
+import { requireRole } from '@/lib/auth/get-session';
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db/client';
 import { users } from '@/lib/db/schema';
-import { eq } from 'drizzle-orm';
+import { eq, and, isNull, or } from 'drizzle-orm';
 
-export async function POST(
-  req: Request,
-  { params }: { params: { id: string } }
-) {
-  if (req.headers.get('x-user-role') !== 'doctor') {
+interface RouteParams {
+  params: Promise<{ id: string }>;
+}
+
+export async function POST(_req: Request, { params }: RouteParams) {
+  const session = await requireRole('doctor');
+
+  if (!session) {
     logger.info({
       message: 'Unauthorized',
-      meta: {
-        'x-user-id': req.headers.get('x-user-id') ?? 'unknown',
-        'x-user-role': req.headers.get('x-user-role') ?? 'unknown',
-      },
     });
 
     return NextResponse.json(
@@ -24,45 +24,76 @@ export async function POST(
     );
   }
 
-  const patientId = parseInt(params.id);
+  const { id } = await params;
+  const patientId = parseInt(id);
 
-  const patient = db.select().from(users).where(eq(users.id, patientId)).all();
-
-  if (patient.length === 0) {
-    logger.info({ message: 'Patient not found', meta: patientId });
+  if (isNaN(patientId) || patientId <= 0) {
     return NextResponse.json(
-      { error: 'Patient not found' },
-      { status: STATUS.NOT_FOUND }
-    );
-  }
-
-  // Ensure the target is actually a patient (prevents assigning nurses/admins/doctors by mistake)
-  if (patient[0].role !== 'patient') {
-    logger.info({
-      message: 'Assign patient rejected: target user is not a patient',
-      meta: { targetId: patientId, targetRole: patient[0].role },
-    });
-
-    return NextResponse.json(
-      { error: 'Target user is not a patient' },
+      { error: 'Invalid patient ID' },
       { status: STATUS.BAD_REQUEST }
     );
   }
-  //Impossible to have multiple patients with the same email
-  if (patient.length > 1) {
-    throw new Error('Multiple patients found');
-  }
 
-  const doctorId = parseInt(req.headers.get('x-user-id') ?? '0');
+  const doctorId = session.userId;
 
-  await db
+  // Atomic update: only assign if patient exists, is role='patient',
+  // and is either unassigned or already assigned to this doctor
+  const updateResult = await db
     .update(users)
-    .set({ doctorId: doctorId })
-    .where(eq(users.id, patient[0].id));
+    .set({ doctorId: doctorId, updatedAt: new Date().toISOString() })
+    .where(
+      and(
+        eq(users.id, patientId),
+        eq(users.role, 'patient'),
+        or(isNull(users.doctorId), eq(users.doctorId, doctorId))
+      )
+    );
+
+  if (updateResult.changes === 0) {
+    // Could be: patient not found, not a patient role, or already assigned to another doctor
+    const existingPatient = db
+      .select({ id: users.id, role: users.role, doctorId: users.doctorId })
+      .from(users)
+      .where(eq(users.id, patientId))
+      .all();
+
+    if (existingPatient.length === 0) {
+      logger.info({ message: 'Patient not found', meta: { patientId } });
+      return NextResponse.json(
+        { error: 'Patient not found' },
+        { status: STATUS.NOT_FOUND }
+      );
+    }
+
+    if (existingPatient[0].role !== 'patient') {
+      logger.info({
+        message: 'Assign patient rejected: target user is not a patient',
+        meta: { targetId: patientId, targetRole: existingPatient[0].role },
+      });
+      return NextResponse.json(
+        { error: 'Target user is not a patient' },
+        { status: STATUS.BAD_REQUEST }
+      );
+    }
+
+    // Patient is already assigned to another doctor
+    logger.info({
+      message: 'Patient already assigned to another doctor',
+      meta: {
+        patientId,
+        currentDoctorId: existingPatient[0].doctorId,
+        requestingDoctorId: doctorId,
+      },
+    });
+    return NextResponse.json(
+      { error: 'Patient is already assigned to another doctor' },
+      { status: STATUS.CONFLICT }
+    );
+  }
 
   logger.info({
     message: 'Patient assigned to doctor',
-    meta: { patientId: patient[0].id, doctorId: doctorId },
+    meta: { patientId, doctorId },
   });
 
   return NextResponse.json(

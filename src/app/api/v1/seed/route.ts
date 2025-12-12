@@ -2,6 +2,7 @@ import { db } from '@/lib/db/client';
 import { users } from '@/lib/db/schema';
 import { STATUS } from '@/lib/http/status-codes';
 import { logger } from '@/lib/logger';
+import { requireRole } from '@/lib/auth/get-session';
 import bcrypt from 'bcrypt';
 import { NextResponse } from 'next/server';
 import { eq } from 'drizzle-orm';
@@ -46,18 +47,16 @@ const testAccounts = [
   },
 ];
 
-export async function POST(req: Request) {
+export async function POST() {
   // Security: seeding should never be public. Require admin auth and never
   // return plaintext credentials.
   //
   // Note: This route is still useful in dev, but must be protected.
-  if (req.headers.get('x-user-role') !== 'admin') {
+  const session = await requireRole('admin');
+
+  if (!session) {
     logger.info({
       message: 'Unauthorized: Only admin can seed test accounts',
-      meta: {
-        'x-user-id': req.headers.get('x-user-id') ?? 'unknown',
-        'x-user-role': req.headers.get('x-user-role') ?? 'unknown',
-      },
     });
 
     return NextResponse.json(
@@ -72,8 +71,9 @@ export async function POST(req: Request) {
     const results: Array<{ email: string; status: string }> = [];
 
     for (const account of testAccounts) {
+      // Only select needed columns - avoid fetching sensitive fields
       const existing = db
-        .select()
+        .select({ id: users.id })
         .from(users)
         .where(eq(users.email, account.email))
         .all();

@@ -2,6 +2,7 @@ import { db } from '@/lib/db/client';
 import { appointments, medications, users } from '@/lib/db/schema';
 import { STATUS } from '@/lib/http/status-codes';
 import { logger } from '@/lib/logger';
+import { requireRole } from '@/lib/auth/get-session';
 import { NextResponse } from 'next/server';
 import { and, eq, inArray } from 'drizzle-orm';
 
@@ -10,17 +11,12 @@ interface RouteParams {
 }
 
 // Returns medications for a patient, scoped to the requesting doctor's relationship.
-export async function GET(req: Request, { params }: RouteParams) {
-  const userRole = req.headers.get('x-user-role');
-  const doctorId = parseInt(req.headers.get('x-user-id') ?? '0');
+export async function GET(_req: Request, { params }: RouteParams) {
+  const session = await requireRole('doctor');
 
-  if (userRole !== 'doctor') {
+  if (!session) {
     logger.info({
       message: 'Unauthorized: Only doctors can view patient medications',
-      meta: {
-        'x-user-id': req.headers.get('x-user-id') ?? 'unknown',
-        'x-user-role': userRole ?? 'unknown',
-      },
     });
 
     return NextResponse.json(
@@ -28,6 +24,8 @@ export async function GET(req: Request, { params }: RouteParams) {
       { status: STATUS.UNAUTHORIZED }
     );
   }
+
+  const doctorId = session.userId;
 
   const { id } = await params;
   const patientId = parseInt(id);

@@ -6,6 +6,8 @@ import { jwt, JwtPayload } from './lib/jwt';
 import arcjet, { detectBot, shield, tokenBucket } from '@arcjet/next';
 import { env } from './lib/env';
 
+const AUTH_COOKIE_NAME = 'auth-token';
+
 export const aj = arcjet({
   key: env.ARCJET_KEY,
   rules: [
@@ -69,10 +71,10 @@ export async function proxy(req: NextRequest) {
     message: 'Authorizing User',
   });
 
-  const token = req.headers.get('authorization')?.split(' ')[1];
+  const token = req.cookies.get(AUTH_COOKIE_NAME)?.value;
   if (!token) {
     logger.info({
-      message: 'No token found',
+      message: 'No auth cookie found',
     });
     return NextResponse.json(
       { error: 'Unauthorized' },

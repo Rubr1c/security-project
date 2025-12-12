@@ -11,11 +11,10 @@ interface UserData {
 }
 
 interface AuthState {
-  token: string | null;
   user: UserData | null;
   isAuthenticated: boolean;
   _hasHydrated: boolean;
-  login: (token: string) => void;
+  setAuthenticated: (authenticated: boolean) => void;
   setUser: (user: UserData) => void;
   logout: () => void;
   setHasHydrated: (state: boolean) => void;
@@ -24,13 +23,13 @@ interface AuthState {
 export const useAuthStore = create<AuthState>()(
   persist(
     (set) => ({
-      token: null,
       user: null,
       isAuthenticated: false,
       _hasHydrated: false,
-      login: (token: string) => set({ token, isAuthenticated: true }),
-      setUser: (user: UserData) => set({ user }),
-      logout: () => set({ token: null, user: null, isAuthenticated: false }),
+      setAuthenticated: (authenticated: boolean) =>
+        set({ isAuthenticated: authenticated }),
+      setUser: (user: UserData) => set({ user, isAuthenticated: true }),
+      logout: () => set({ user: null, isAuthenticated: false }),
       setHasHydrated: (state: boolean) => set({ _hasHydrated: state }),
     }),
     {

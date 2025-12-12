@@ -4,7 +4,7 @@ import { useAuthStore } from '@/store/auth';
 
 export const useAppointments = () => {
   const queryClient = useQueryClient();
-  const token = useAuthStore((state) => state.token);
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const user = useAuthStore((state) => state.user);
   const hasHydrated = useAuthStore((state) => state._hasHydrated);
 
@@ -16,7 +16,7 @@ export const useAppointments = () => {
   const appointmentsQuery = useQuery({
     queryKey: ['appointments'],
     queryFn: api.appointments.list,
-    enabled: !!token && hasHydrated && canFetchAppointments,
+    enabled: isAuthenticated && hasHydrated && canFetchAppointments,
   });
 
   const createAppointmentMutation = useMutation({
@@ -83,28 +83,35 @@ export const useAppointments = () => {
 };
 
 export const useAppointment = (id: number) => {
-  const token = useAuthStore((state) => state.token);
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const user = useAuthStore((state) => state.user);
   const hasHydrated = useAuthStore((state) => state._hasHydrated);
 
-  const canFetchAppointment = user?.role === 'patient' || user?.role === 'doctor';
+  const canFetchAppointment =
+    user?.role === 'patient' || user?.role === 'doctor';
   return useQuery({
     queryKey: ['appointments', id],
     queryFn: () => api.appointments.get(id),
-    enabled: !!id && !!token && hasHydrated && canFetchAppointment,
+    enabled: !!id && isAuthenticated && hasHydrated && canFetchAppointment,
   });
 };
 
 export const useAppointmentMedications = (appointmentId: number) => {
-  const token = useAuthStore((state) => state.token);
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const user = useAuthStore((state) => state.user);
   const hasHydrated = useAuthStore((state) => state._hasHydrated);
 
   const canFetchAppointmentMeds =
-    user?.role === 'patient' || user?.role === 'doctor' || user?.role === 'nurse';
+    user?.role === 'patient' ||
+    user?.role === 'doctor' ||
+    user?.role === 'nurse';
   return useQuery({
     queryKey: ['appointments', appointmentId, 'medications'],
     queryFn: () => api.appointments.getMedications(appointmentId),
-    enabled: !!appointmentId && !!token && hasHydrated && canFetchAppointmentMeds,
+    enabled:
+      !!appointmentId &&
+      isAuthenticated &&
+      hasHydrated &&
+      canFetchAppointmentMeds,
   });
 };

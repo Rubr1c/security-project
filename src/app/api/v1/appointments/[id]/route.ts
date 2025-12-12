@@ -2,6 +2,7 @@ import { db } from '@/lib/db/client';
 import { appointments, users } from '@/lib/db/schema';
 import { STATUS } from '@/lib/http/status-codes';
 import { logger } from '@/lib/logger';
+import { getSession } from '@/lib/auth/get-session';
 import { NextResponse } from 'next/server';
 import { eq } from 'drizzle-orm';
 
@@ -9,19 +10,14 @@ interface RouteParams {
   params: Promise<{ id: string }>;
 }
 
-export async function GET(req: Request, { params }: RouteParams) {
-  const userRole = req.headers.get('x-user-role');
-  const userId = parseInt(req.headers.get('x-user-id') ?? '0');
+export async function GET(_req: Request, { params }: RouteParams) {
+  const session = await getSession();
 
   // Only patients and doctors can view appointment details
-  if (userRole !== 'patient' && userRole !== 'doctor') {
+  if (!session || !['patient', 'doctor'].includes(session.role)) {
     logger.info({
       message:
         'Unauthorized: Only patients and doctors can view appointment details',
-      meta: {
-        'x-user-id': req.headers.get('x-user-id') ?? 'unknown',
-        'x-user-role': userRole ?? 'unknown',
-      },
     });
 
     return NextResponse.json(
@@ -29,6 +25,8 @@ export async function GET(req: Request, { params }: RouteParams) {
       { status: STATUS.UNAUTHORIZED }
     );
   }
+
+  const { userId, role: userRole } = session;
 
   const { id } = await params;
   const appointmentId = parseInt(id);

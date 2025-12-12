@@ -2,19 +2,18 @@ import { db } from '@/lib/db/client';
 import { appointments, users } from '@/lib/db/schema';
 import { STATUS } from '@/lib/http/status-codes';
 import { logger } from '@/lib/logger';
+import { getSession, requireRole } from '@/lib/auth/get-session';
 import { createAppointmentSchema } from '@/lib/validation/appointment-schemas';
 import { NextResponse } from 'next/server';
 import * as v from 'valibot';
 import { eq, and } from 'drizzle-orm';
 
 export async function POST(req: Request) {
-  if (req.headers.get('x-user-role') !== 'patient') {
+  const session = await requireRole('patient');
+
+  if (!session) {
     logger.info({
       message: 'Unauthorized: Only patients can request appointments',
-      meta: {
-        'x-user-id': req.headers.get('x-user-id') ?? 'unknown',
-        'x-user-role': req.headers.get('x-user-role') ?? 'unknown',
-      },
     });
 
     return NextResponse.json(
@@ -35,11 +34,11 @@ export async function POST(req: Request) {
     );
   }
 
-  const patientId = parseInt(req.headers.get('x-user-id') ?? '0');
+  const patientId = session.userId;
 
-  // Verify the doctor exists and is actually a doctor
+  // Only select needed columns - avoid fetching sensitive fields
   const doctor = db
-    .select()
+    .select({ id: users.id, role: users.role })
     .from(users)
     .where(and(eq(users.id, result.output.doctorId), eq(users.role, 'doctor')))
     .all();
@@ -99,18 +98,13 @@ export async function POST(req: Request) {
   );
 }
 
-export async function GET(req: Request) {
-  const userRole = req.headers.get('x-user-role');
-  const userId = parseInt(req.headers.get('x-user-id') ?? '0');
+export async function GET() {
+  const session = await getSession();
 
-  if (userRole !== 'patient' && userRole !== 'doctor' && userRole !== 'nurse') {
+  if (!session || !['patient', 'doctor', 'nurse'].includes(session.role)) {
     logger.info({
       message:
         'Unauthorized: Only patients, doctors, and nurses can view appointments',
-      meta: {
-        'x-user-id': req.headers.get('x-user-id') ?? 'unknown',
-        'x-user-role': userRole ?? 'unknown',
-      },
     });
 
     return NextResponse.json(
@@ -119,6 +113,7 @@ export async function GET(req: Request) {
     );
   }
 
+  const { userId, role: userRole } = session;
   let userAppointments;
 
   if (userRole === 'patient') {
@@ -134,7 +129,12 @@ export async function GET(req: Request) {
       .where(eq(appointments.doctorId, userId))
       .all();
   } else {
-    const nurse = db.select().from(users).where(eq(users.id, userId)).all();
+    // Only select needed columns - avoid fetching sensitive fields
+    const nurse = db
+      .select({ id: users.id, doctorId: users.doctorId })
+      .from(users)
+      .where(eq(users.id, userId))
+      .all();
 
     if (nurse.length === 0 || nurse[0].doctorId === null) {
       logger.info({

@@ -4,10 +4,7 @@ import { useAuthStore } from '@/store/auth';
 import { useRouter } from 'next/navigation';
 import type { UserRole } from '@/lib/db/types';
 import { getRoleRoute } from '@/lib/routes';
-import type {
-  LoginResponse,
-  RegisterResponse,
-} from '@/services/api/auth';
+import type { LoginResponse, RegisterResponse } from '@/services/api/auth';
 
 interface UserResponse {
   id: number;
@@ -20,10 +17,9 @@ interface UserResponse {
 export const useAuth = () => {
   const queryClient = useQueryClient();
   const router = useRouter();
-  const { login, setUser, logout, token, user } = useAuthStore();
+  const { setUser, logout, user, isAuthenticated } = useAuthStore();
 
-  const completeLogin = async (newToken: string) => {
-    login(newToken);
+  const completeLogin = async () => {
     try {
       const userData = (await api.auth.me()) as UserResponse;
       setUser(userData);
@@ -37,10 +33,6 @@ export const useAuth = () => {
     mutationFn: api.auth.login,
     onSuccess: async (data) => {
       const res = data as LoginResponse;
-      if ('token' in res && res.token) {
-        await completeLogin(res.token);
-        return;
-      }
       if ('otpRequired' in res && res.otpRequired) {
         router.push(`/otp?email=${encodeURIComponent(res.email)}`);
       }
@@ -61,8 +53,8 @@ export const useAuth = () => {
 
   const verifyOtpMutation = useMutation({
     mutationFn: api.auth.verifyOtp,
-    onSuccess: async (data) => {
-      await completeLogin(data.token);
+    onSuccess: async () => {
+      await completeLogin();
     },
   });
 
@@ -84,10 +76,15 @@ export const useAuth = () => {
       const response = await api.auth.me();
       return response as UserResponse;
     },
-    enabled: !!token,
+    enabled: isAuthenticated,
   });
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    try {
+      await api.auth.logout();
+    } catch {
+      // Continue with local logout even if API fails
+    }
     logout();
     queryClient.clear();
     router.push('/login');
@@ -104,6 +101,6 @@ export const useAuth = () => {
     user,
     setUser,
     logout: handleLogout,
-    isAuthenticated: !!token,
+    isAuthenticated,
   };
 };

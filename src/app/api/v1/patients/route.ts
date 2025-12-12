@@ -4,15 +4,14 @@ import { NextResponse } from 'next/server';
 import { eq, and } from 'drizzle-orm';
 import { STATUS } from '@/lib/http/status-codes';
 import { logger } from '@/lib/logger';
+import { requireRole } from '@/lib/auth/get-session';
 
-export async function GET(req: Request) {
-  if (req.headers.get('x-user-role') !== 'doctor') {
+export async function GET() {
+  const session = await requireRole('doctor');
+
+  if (!session) {
     logger.info({
       message: 'Unauthorized',
-      meta: {
-        'x-user-id': req.headers.get('x-user-id') ?? 'unknown',
-        'x-user-role': req.headers.get('x-user-role') ?? 'unknown',
-      },
     });
 
     return NextResponse.json(
@@ -21,7 +20,7 @@ export async function GET(req: Request) {
     );
   }
 
-  const doctorId = parseInt(req.headers.get('x-user-id') ?? '0');
+  const doctorId = session.userId;
 
   logger.info({
     message: 'Fetching patients',

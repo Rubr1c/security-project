@@ -2,21 +2,20 @@ import { db } from '@/lib/db/client';
 import { users } from '@/lib/db/schema';
 import { STATUS } from '@/lib/http/status-codes';
 import { logger } from '@/lib/logger';
+import { requireRole } from '@/lib/auth/get-session';
 import { NextResponse } from 'next/server';
-import { eq, and } from 'drizzle-orm';
+import { eq, and, or, isNull } from 'drizzle-orm';
 
 interface RouteParams {
   params: Promise<{ id: string }>;
 }
 
-export async function PUT(req: Request, { params }: RouteParams) {
-  if (req.headers.get('x-user-role') !== 'doctor') {
+export async function PUT(_req: Request, { params }: RouteParams) {
+  const session = await requireRole('doctor');
+
+  if (!session) {
     logger.info({
       message: 'Unauthorized: Only doctor can assign nurses',
-      meta: {
-        'x-user-id': req.headers.get('x-user-id') ?? 'unknown',
-        'x-user-role': req.headers.get('x-user-role') ?? 'unknown',
-      },
     });
 
     return NextResponse.json(
@@ -40,9 +39,9 @@ export async function PUT(req: Request, { params }: RouteParams) {
     );
   }
 
-  // Verify the user being assigned is actually a nurse
+  // Only select needed columns - avoid fetching sensitive fields
   const nurse = db
-    .select()
+    .select({ id: users.id, role: users.role, doctorId: users.doctorId })
     .from(users)
     .where(and(eq(users.id, nurseId), eq(users.role, 'nurse')))
     .all();
@@ -59,7 +58,7 @@ export async function PUT(req: Request, { params }: RouteParams) {
     );
   }
 
-  const doctorId = parseInt(req.headers.get('x-user-id') ?? '0');
+  const doctorId = session.userId;
 
   // Check if nurse is already assigned to another doctor
   if (nurse[0].doctorId !== null && nurse[0].doctorId !== doctorId) {
@@ -78,10 +77,31 @@ export async function PUT(req: Request, { params }: RouteParams) {
     );
   }
 
-  await db
+  // Atomic update scoped to nurse role and assignment state
+  const updateResult = await db
     .update(users)
     .set({ doctorId: doctorId, updatedAt: new Date().toISOString() })
-    .where(eq(users.id, nurseId));
+    .where(
+      and(
+        eq(users.id, nurseId),
+        eq(users.role, 'nurse'),
+        // Only allow if unassigned or already assigned to this doctor
+        or(isNull(users.doctorId), eq(users.doctorId, doctorId))
+      )
+    );
+
+  if (updateResult.changes === 0) {
+    // The pre-check passed but update failed - likely a race condition or data changed
+    logger.info({
+      message: 'Nurse assignment failed - concurrent modification',
+      meta: { nurseId, doctorId },
+    });
+
+    return NextResponse.json(
+      { error: 'Nurse assignment failed. Please try again.' },
+      { status: STATUS.CONFLICT }
+    );
+  }
 
   logger.info({
     message: 'Nurse assigned to doctor',
@@ -97,14 +117,12 @@ export async function PUT(req: Request, { params }: RouteParams) {
   );
 }
 
-export async function DELETE(req: Request, { params }: RouteParams) {
-  if (req.headers.get('x-user-role') !== 'doctor') {
+export async function DELETE(_req: Request, { params }: RouteParams) {
+  const session = await requireRole('doctor');
+
+  if (!session) {
     logger.info({
       message: 'Unauthorized: Only doctor can unassign nurses',
-      meta: {
-        'x-user-id': req.headers.get('x-user-id') ?? 'unknown',
-        'x-user-role': req.headers.get('x-user-role') ?? 'unknown',
-      },
     });
 
     return NextResponse.json(
@@ -128,17 +146,11 @@ export async function DELETE(req: Request, { params }: RouteParams) {
     );
   }
 
-  const doctorId = parseInt(req.headers.get('x-user-id') ?? '0');
-  if (!doctorId) {
-    return NextResponse.json(
-      { error: 'Unauthorized' },
-      { status: STATUS.UNAUTHORIZED }
-    );
-  }
+  const doctorId = session.userId;
 
-  // Verify the user is a nurse and currently assigned to this doctor
+  // Only select needed columns - avoid fetching sensitive fields
   const nurse = db
-    .select()
+    .select({ id: users.id, role: users.role, doctorId: users.doctorId })
     .from(users)
     .where(and(eq(users.id, nurseId), eq(users.role, 'nurse')))
     .all();
@@ -178,10 +190,29 @@ export async function DELETE(req: Request, { params }: RouteParams) {
     );
   }
 
-  await db
+  // Atomic update scoped to nurse role and this doctor
+  const updateResult = await db
     .update(users)
     .set({ doctorId: null, updatedAt: new Date().toISOString() })
-    .where(eq(users.id, nurseId));
+    .where(
+      and(
+        eq(users.id, nurseId),
+        eq(users.role, 'nurse'),
+        eq(users.doctorId, doctorId)
+      )
+    );
+
+  if (updateResult.changes === 0) {
+    logger.info({
+      message: 'Nurse unassignment failed - not assigned to this doctor',
+      meta: { nurseId, doctorId },
+    });
+
+    return NextResponse.json(
+      { error: 'Nurse unassignment failed' },
+      { status: STATUS.CONFLICT }
+    );
+  }
 
   logger.info({
     message: 'Nurse unassigned from doctor',

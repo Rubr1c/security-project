@@ -2,6 +2,7 @@ import { db } from '@/lib/db/client';
 import { appointments } from '@/lib/db/schema';
 import { STATUS } from '@/lib/http/status-codes';
 import { logger } from '@/lib/logger';
+import { requireRole } from '@/lib/auth/get-session';
 import { updateDiagnosisSchema } from '@/lib/validation/appointment-schemas';
 import { NextResponse } from 'next/server';
 import * as v from 'valibot';
@@ -12,13 +13,11 @@ interface RouteParams {
 }
 
 export async function PUT(req: Request, { params }: RouteParams) {
-  if (req.headers.get('x-user-role') !== 'doctor') {
+  const session = await requireRole('doctor');
+
+  if (!session) {
     logger.info({
       message: 'Unauthorized: Only doctors can update diagnosis',
-      meta: {
-        'x-user-id': req.headers.get('x-user-id') ?? 'unknown',
-        'x-user-role': req.headers.get('x-user-role') ?? 'unknown',
-      },
     });
 
     return NextResponse.json(
@@ -54,7 +53,7 @@ export async function PUT(req: Request, { params }: RouteParams) {
     );
   }
 
-  const doctorId = parseInt(req.headers.get('x-user-id') ?? '0');
+  const doctorId = session.userId;
 
   // Verify the appointment exists and belongs to this doctor
   const appointment = db
@@ -80,14 +79,29 @@ export async function PUT(req: Request, { params }: RouteParams) {
     );
   }
 
-  await db
+  // Atomic update scoped to this doctor's appointment
+  const updateResult = await db
     .update(appointments)
     .set({
       diagnosis: result.output.diagnosis,
       status: 'completed',
       updatedAt: new Date().toISOString(),
     })
-    .where(eq(appointments.id, appointmentId));
+    .where(
+      and(eq(appointments.id, appointmentId), eq(appointments.doctorId, doctorId))
+    );
+
+  if (updateResult.changes === 0) {
+    logger.info({
+      message: 'Diagnosis update failed - appointment not found or not owned by doctor',
+      meta: { appointmentId, doctorId },
+    });
+
+    return NextResponse.json(
+      { error: 'Appointment not found' },
+      { status: STATUS.NOT_FOUND }
+    );
+  }
 
   logger.info({
     message: 'Diagnosis updated successfully',

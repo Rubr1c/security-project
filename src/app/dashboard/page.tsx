@@ -9,15 +9,15 @@ import { LoadingSpinner } from '@/components/ui';
 
 export default function DashboardRedirectPage() {
   const router = useRouter();
-  const { token, user } = useAuthStore();
+  const { isAuthenticated, user } = useAuthStore();
   const { userQuery, setUser } = useAuth();
 
   useEffect(() => {
-    if (!token) {
+    if (!isAuthenticated) {
       router.replace('/login');
       return;
     }
-  }, [token, router]);
+  }, [isAuthenticated, router]);
 
   useEffect(() => {
     if (userQuery.data && !user) {

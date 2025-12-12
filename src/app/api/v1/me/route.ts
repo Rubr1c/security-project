@@ -2,19 +2,16 @@ import { db } from '@/lib/db/client';
 import { users } from '@/lib/db/schema';
 import { STATUS } from '@/lib/http/status-codes';
 import { logger } from '@/lib/logger';
+import { getSession } from '@/lib/auth/get-session';
 import { NextResponse } from 'next/server';
 import { eq } from 'drizzle-orm';
 
-export async function GET(req: Request) {
-  const userIdHeader = req.headers.get('x-user-id');
-  const userRole = req.headers.get('x-user-role');
+export async function GET() {
+  const session = await getSession();
 
-  if (!userIdHeader) {
+  if (!session) {
     logger.info({
-      message: 'Unauthorized: No user ID in request',
-      meta: {
-        'x-user-role': userRole ?? 'unknown',
-      },
+      message: 'Unauthorized: No valid session',
     });
 
     return NextResponse.json(
@@ -23,19 +20,7 @@ export async function GET(req: Request) {
     );
   }
 
-  const userId = parseInt(userIdHeader);
-
-  if (isNaN(userId) || userId <= 0) {
-    logger.info({
-      message: 'Invalid user ID',
-      meta: { userIdHeader },
-    });
-
-    return NextResponse.json(
-      { error: 'Invalid user ID' },
-      { status: STATUS.BAD_REQUEST }
-    );
-  }
+  const userId = session.userId;
 
   // Fetch user profile (excluding password hash)
   const user = db

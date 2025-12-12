@@ -60,8 +60,13 @@ export async function POST(req: Request) {
     },
   });
 
+  // Only select needed columns - avoid fetching all sensitive fields
   const [user] = await db
-    .select()
+    .select({
+      id: users.id,
+      email: users.email,
+      passwordHash: users.passwordHash,
+    })
     .from(users)
     .where(eq(users.email, result.output.email));
 

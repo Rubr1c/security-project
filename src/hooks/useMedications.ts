@@ -3,7 +3,7 @@ import { api } from '@/services/api';
 import { useAuthStore } from '@/store/auth';
 
 export const useMedications = () => {
-  const token = useAuthStore((state) => state.token);
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const user = useAuthStore((state) => state.user);
   const hasHydrated = useAuthStore((state) => state._hasHydrated);
 
@@ -13,7 +13,7 @@ export const useMedications = () => {
   const medicationsQuery = useQuery({
     queryKey: ['medications'],
     queryFn: api.medications.list,
-    enabled: !!token && hasHydrated && canFetchMedications,
+    enabled: isAuthenticated && hasHydrated && canFetchMedications,
   });
 
   return {

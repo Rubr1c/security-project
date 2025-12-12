@@ -2,6 +2,7 @@ import { db, sqlite } from '@/lib/db/client';
 import { appointments, medications, users } from '@/lib/db/schema';
 import { STATUS } from '@/lib/http/status-codes';
 import { logger } from '@/lib/logger';
+import { requireRole } from '@/lib/auth/get-session';
 import { NextResponse } from 'next/server';
 import { and, eq, inArray } from 'drizzle-orm';
 
@@ -10,13 +11,11 @@ interface RouteParams {
 }
 
 export async function DELETE(req: Request, { params }: RouteParams) {
-  if (req.headers.get('x-user-role') !== 'admin') {
+  const session = await requireRole('admin');
+
+  if (!session) {
     logger.info({
       message: 'Unauthorized: Only admin can delete doctors',
-      meta: {
-        'x-user-id': req.headers.get('x-user-id') ?? 'unknown',
-        'x-user-role': req.headers.get('x-user-role') ?? 'unknown',
-      },
     });
 
     return NextResponse.json(
@@ -35,8 +34,9 @@ export async function DELETE(req: Request, { params }: RouteParams) {
     );
   }
 
+  // Only select needed columns - avoid fetching passwordHash/otpHash etc.
   const doctor = db
-    .select()
+    .select({ id: users.id, role: users.role })
     .from(users)
     .where(and(eq(users.id, doctorId), eq(users.role, 'doctor')))
     .all();
@@ -96,14 +96,22 @@ export async function DELETE(req: Request, { params }: RouteParams) {
       db.delete(appointments).where(inArray(appointments.id, apptIds)).run();
     }
 
-    db.delete(users).where(eq(users.id, doctorId)).run();
+    // Constrain delete to role='doctor' for safety
+    const deleteResult = db
+      .delete(users)
+      .where(and(eq(users.id, doctorId), eq(users.role, 'doctor')))
+      .run();
+
+    if (deleteResult.changes === 0) {
+      throw new Error('Doctor not found or already deleted');
+    }
   })();
 
   logger.info({
     message: 'Doctor deleted successfully',
     meta: {
       id: doctorId,
-      deletedBy: req.headers.get('x-user-id') ?? 'unknown',
+      deletedBy: session.userId,
     },
   });
 

@@ -28,14 +28,14 @@ export function DashboardLayout({
 }: DashboardLayoutProps) {
   const router = useRouter();
   const pathname = usePathname();
-  const { isAuthenticated, token, user, _hasHydrated } = useAuthStore();
+  const { isAuthenticated, user, _hasHydrated } = useAuthStore();
   const { userQuery, setUser, logout } = useAuth();
 
   useEffect(() => {
-    if (_hasHydrated && !token) {
+    if (_hasHydrated && !isAuthenticated) {
       router.replace('/login');
     }
-  }, [token, router, _hasHydrated]);
+  }, [isAuthenticated, router, _hasHydrated]);
 
   useEffect(() => {
     if (userQuery.data && !user) {
@@ -53,7 +53,7 @@ export function DashboardLayout({
   }, [user, allowedRoles, router, pathname]);
 
   const showFullPageLoading =
-    !_hasHydrated || !isAuthenticated || !token || userQuery.isPending || !user;
+    !_hasHydrated || !isAuthenticated || userQuery.isPending || !user;
 
   if (showFullPageLoading) {
     return (

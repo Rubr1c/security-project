@@ -4,7 +4,7 @@ import { useAuthStore } from '@/store/auth';
 
 export const useUsers = () => {
   const queryClient = useQueryClient();
-  const token = useAuthStore((state) => state.token);
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const user = useAuthStore((state) => state.user);
   const hasHydrated = useAuthStore((state) => state._hasHydrated);
 
@@ -18,19 +18,19 @@ export const useUsers = () => {
   const doctorsQuery = useQuery({
     queryKey: ['users', 'doctors'],
     queryFn: api.users.listDoctors,
-    enabled: !!token && hasHydrated && canFetchDoctors,
+    enabled: isAuthenticated && hasHydrated && canFetchDoctors,
   });
 
   const nursesQuery = useQuery({
     queryKey: ['users', 'nurses'],
     queryFn: api.users.listNurses,
-    enabled: !!token && hasHydrated && canFetchNurses,
+    enabled: isAuthenticated && hasHydrated && canFetchNurses,
   });
 
   const patientsQuery = useQuery({
     queryKey: ['users', 'patients'],
     queryFn: api.users.listPatients,
-    enabled: !!token && hasHydrated && canFetchPatients,
+    enabled: isAuthenticated && hasHydrated && canFetchPatients,
   });
 
   const assignNurseMutation = useMutation({

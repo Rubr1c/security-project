@@ -2,6 +2,7 @@ import { db } from '@/lib/db/client';
 import { appointments, medications, users } from '@/lib/db/schema';
 import { STATUS } from '@/lib/http/status-codes';
 import { logger } from '@/lib/logger';
+import { getSession, requireRole } from '@/lib/auth/get-session';
 import { addMedicationSchema } from '@/lib/validation/medication-schemas';
 import { NextResponse } from 'next/server';
 import * as v from 'valibot';
@@ -11,18 +12,13 @@ interface RouteParams {
   params: Promise<{ id: string }>;
 }
 
-export async function GET(req: Request, { params }: RouteParams) {
-  const userRole = req.headers.get('x-user-role');
-  const userId = parseInt(req.headers.get('x-user-id') ?? '0');
+export async function GET(_req: Request, { params }: RouteParams) {
+  const session = await getSession();
 
-  if (userRole !== 'patient' && userRole !== 'doctor' && userRole !== 'nurse') {
+  if (!session || !['patient', 'doctor', 'nurse'].includes(session.role)) {
     logger.info({
       message:
         'Unauthorized: Only patients, doctors, and nurses can view medications',
-      meta: {
-        'x-user-id': req.headers.get('x-user-id') ?? 'unknown',
-        'x-user-role': userRole ?? 'unknown',
-      },
     });
 
     return NextResponse.json(
@@ -30,6 +26,8 @@ export async function GET(req: Request, { params }: RouteParams) {
       { status: STATUS.UNAUTHORIZED }
     );
   }
+
+  const { userId, role: userRole } = session;
 
   const { id } = await params;
   const appointmentId = parseInt(id);
@@ -95,7 +93,12 @@ export async function GET(req: Request, { params }: RouteParams) {
       );
     }
   } else if (userRole === 'nurse') {
-    const nurse = db.select().from(users).where(eq(users.id, userId)).all();
+    // Only select needed columns - avoid fetching sensitive fields
+    const nurse = db
+      .select({ id: users.id, doctorId: users.doctorId })
+      .from(users)
+      .where(eq(users.id, userId))
+      .all();
 
     if (
       nurse.length === 0 ||
@@ -138,13 +141,11 @@ export async function GET(req: Request, { params }: RouteParams) {
 }
 
 export async function POST(req: Request, { params }: RouteParams) {
-  if (req.headers.get('x-user-role') !== 'nurse') {
+  const session = await requireRole('nurse');
+
+  if (!session) {
     logger.info({
       message: 'Unauthorized: Only nurses can add medications',
-      meta: {
-        'x-user-id': req.headers.get('x-user-id') ?? 'unknown',
-        'x-user-role': req.headers.get('x-user-role') ?? 'unknown',
-      },
     });
 
     return NextResponse.json(
@@ -180,10 +181,14 @@ export async function POST(req: Request, { params }: RouteParams) {
     );
   }
 
-  const nurseId = parseInt(req.headers.get('x-user-id') ?? '0');
+  const nurseId = session.userId;
 
-  // Get the nurse to find their assigned doctor
-  const nurse = db.select().from(users).where(eq(users.id, nurseId)).all();
+  // Only select needed columns - avoid fetching sensitive fields
+  const nurse = db
+    .select({ id: users.id, doctorId: users.doctorId })
+    .from(users)
+    .where(eq(users.id, nurseId))
+    .all();
 
   if (nurse.length === 0 || nurse[0].doctorId === null) {
     logger.info({

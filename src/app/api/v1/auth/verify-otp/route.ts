@@ -7,6 +7,8 @@ import { STATUS } from '@/lib/http/status-codes';
 import { logger } from '@/lib/logger';
 import { OTP_MAX_ATTEMPTS, isExpired, verifyOtpCode } from '@/lib/otp';
 import { jwt } from '@/lib/jwt';
+import { cookies } from 'next/headers';
+import { env } from '@/lib/env';
 
 const verifySchema = v.object({
   email: v.pipe(v.string(), v.email()),
@@ -95,12 +97,17 @@ export async function POST(req: Request) {
     meta: { userId: user.id, email },
   });
 
-  return NextResponse.json(
-    {
-      token: await jwt.sign({ userId: user.id, role: user.role }),
-    },
-    { status: STATUS.OK }
-  );
+  const token = await jwt.sign({ userId: user.id, role: user.role });
+  const isProduction = env.NODE_ENV === 'production';
+
+  const cookieStore = await cookies();
+  cookieStore.set('auth-token', token, {
+    httpOnly: true,
+    secure: isProduction,
+    sameSite: 'lax',
+    path: '/',
+    maxAge: 60 * 60,
+  });
+
+  return NextResponse.json({ success: true }, { status: STATUS.OK });
 }
-
-
