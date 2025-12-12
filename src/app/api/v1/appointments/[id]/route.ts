@@ -2,7 +2,7 @@ import { db } from '@/lib/db/client';
 import { appointments, users } from '@/lib/db/schema';
 import { STATUS } from '@/lib/http/status-codes';
 import { logger } from '@/lib/logger';
-import { getSession } from '@/lib/auth/get-session';
+import { getSession, requireRole } from '@/lib/auth/get-session';
 import { NextResponse } from 'next/server';
 import { eq } from 'drizzle-orm';
 import {
@@ -15,9 +15,9 @@ interface RouteParams {
 }
 
 export async function GET(_req: Request, { params }: RouteParams) {
-  const session = await getSession();
+  const session = await requireRole('patient', 'doctor', 'nurse');
 
-  if (!session || !['patient', 'doctor', 'nurse'].includes(session.role)) {
+  if (!session) {
     logger.info({
       message:
         'Unauthorized: Only patients and doctors can view appointment details',

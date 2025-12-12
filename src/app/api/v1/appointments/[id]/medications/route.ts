@@ -15,9 +15,9 @@ interface RouteParams {
 }
 
 export async function GET(_req: Request, { params }: RouteParams) {
-  const session = await getSession();
+  const session = await requireRole('patient', 'doctor', 'nurse');
 
-  if (!session || !['patient', 'doctor', 'nurse'].includes(session.role)) {
+  if (!session) {
     logger.info({
       message:
         'Unauthorized: Only patients, doctors, and nurses can view medications',
@@ -143,11 +143,11 @@ export async function GET(_req: Request, { params }: RouteParams) {
 }
 
 export async function POST(req: Request, { params }: RouteParams) {
-  const session = await requireRole('nurse');
+  const session = await requireRole('doctor', 'nurse');
 
   if (!session) {
     logger.info({
-      message: 'Unauthorized: Only nurses can add medications',
+      message: 'Unauthorized: Only doctors and nurses can add medications',
     });
 
     return NextResponse.json(
@@ -183,25 +183,8 @@ export async function POST(req: Request, { params }: RouteParams) {
     );
   }
 
-  const nurseId = session.userId;
-
-  const nurse = db
-    .select({ id: users.id, doctorId: users.doctorId })
-    .from(users)
-    .where(eq(users.id, nurseId))
-    .all();
-
-  if (nurse.length === 0 || nurse[0].doctorId === null) {
-    logger.info({
-      message: 'Nurse not found or not assigned to a doctor',
-      meta: { nurseId },
-    });
-
-    return NextResponse.json(
-      { error: 'Nurse is not assigned to a doctor' },
-      { status: STATUS.FORBIDDEN }
-    );
-  }
+  const userId = session.userId;
+  const userRole = session.role;
 
   const appointment = db
     .select()
@@ -221,20 +204,57 @@ export async function POST(req: Request, { params }: RouteParams) {
     );
   }
 
-  if (appointment[0].doctorId !== nurse[0].doctorId) {
-    logger.info({
-      message: 'Nurse is not authorized to add medications to this appointment',
-      meta: {
-        nurseId,
-        nurseAssignedDoctorId: nurse[0].doctorId,
-        appointmentDoctorId: appointment[0].doctorId,
-      },
-    });
+  if (userRole === 'doctor') {
+    if (appointment[0].doctorId !== userId) {
+      logger.info({
+        message: 'Doctor attempting to add medication to another doctor\'s appointment',
+        meta: {
+          requestingDoctorId: userId,
+          appointmentDoctorId: appointment[0].doctorId,
+        },
+      });
 
-    return NextResponse.json(
-      { error: 'Not authorized to add medications to this appointment' },
-      { status: STATUS.FORBIDDEN }
-    );
+      return NextResponse.json(
+        { error: 'Not authorized to add medications to this appointment' },
+        { status: STATUS.FORBIDDEN }
+      );
+    }
+  } else {
+    // Nurse
+    const nurse = db
+      .select({ id: users.id, doctorId: users.doctorId })
+      .from(users)
+      .where(eq(users.id, userId))
+      .all();
+
+    if (nurse.length === 0 || nurse[0].doctorId === null) {
+      logger.info({
+        message: 'Nurse not found or not assigned to a doctor',
+        meta: { nurseId: userId },
+      });
+
+      return NextResponse.json(
+        { error: 'Nurse is not assigned to a doctor' },
+        { status: STATUS.FORBIDDEN }
+      );
+    }
+
+    if (appointment[0].doctorId !== nurse[0].doctorId) {
+      logger.info({
+        message:
+          'Nurse is not authorized to add medications to this appointment',
+        meta: {
+          nurseId: userId,
+          nurseAssignedDoctorId: nurse[0].doctorId,
+          appointmentDoctorId: appointment[0].doctorId,
+        },
+      });
+
+      return NextResponse.json(
+        { error: 'Not authorized to add medications to this appointment' },
+        { status: STATUS.FORBIDDEN }
+      );
+    }
   }
 
   const insertResult = db
@@ -242,7 +262,7 @@ export async function POST(req: Request, { params }: RouteParams) {
     .values({
       appointmentId,
       name: encrypt(result.output.name),
-      dosage: result.output.dosage,
+      dosage: encrypt(result.output.dosage),
       instructions: encrypt(result.output.instructions),
     })
     .run();
@@ -252,7 +272,8 @@ export async function POST(req: Request, { params }: RouteParams) {
     meta: {
       medicationId: insertResult.lastInsertRowid,
       appointmentId,
-      nurseId,
+      userId,
+      role: userRole,
       name: result.output.name,
     },
   });

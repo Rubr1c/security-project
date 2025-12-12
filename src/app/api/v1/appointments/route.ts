@@ -99,9 +99,9 @@ export async function POST(req: Request) {
 }
 
 export async function GET() {
-  const session = await getSession();
+  const session = await requireRole('patient', 'doctor', 'nurse');
 
-  if (!session || !['patient', 'doctor', 'nurse'].includes(session.role)) {
+  if (!session) {
     logger.info({
       message:
         'Unauthorized: Only patients, doctors, and nurses can view appointments',

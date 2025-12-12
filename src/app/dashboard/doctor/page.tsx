@@ -6,6 +6,7 @@ import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { AppointmentCard } from '@/components/cards/AppointmentCard';
 import { DiagnosisForm } from '@/components/forms/DiagnosisForm';
 import { NurseAssignmentForm } from '@/components/forms/NurseAssignmentForm';
+import { AddMedicationForm } from '@/components/forms/AddMedicationForm';
 import { Button, Modal, EmptyState, LoadingSpinner } from '@/components/ui';
 import { useAppointments } from '@/hooks/useAppointments';
 import { useUsers } from '@/hooks/useUsers';
@@ -19,6 +20,7 @@ export default function DoctorDashboardPage() {
     useState<Appointment | null>(null);
   const [diagnosisModalOpen, setDiagnosisModalOpen] = useState(false);
   const [assignNurseModalOpen, setAssignNurseModalOpen] = useState(false);
+  const [addMedicationModalOpen, setAddMedicationModalOpen] = useState(false);
 
   const user = useAuthStore((state) => state.user);
   const toast = useToast();
@@ -49,6 +51,11 @@ export default function DoctorDashboardPage() {
   const openDiagnosisModal = (appointment: Appointment) => {
     setSelectedAppointment(appointment);
     setDiagnosisModalOpen(true);
+  };
+
+  const openAddMedicationModal = (appointment: Appointment) => {
+    setSelectedAppointment(appointment);
+    setAddMedicationModalOpen(true);
   };
 
   const pendingAppointments = appointmentsQuery.data?.filter(
@@ -227,13 +234,22 @@ export default function DoctorDashboardPage() {
                       `Patient #${appointment.patientId}`
                     }
                     actions={
-                      <Button
-                        size="sm"
-                        variant="secondary"
-                        onClick={() => openDiagnosisModal(appointment)}
-                      >
-                        Complete
-                      </Button>
+                      <>
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          onClick={() => openAddMedicationModal(appointment)}
+                        >
+                          Add Meds
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          onClick={() => openDiagnosisModal(appointment)}
+                        >
+                          Complete
+                        </Button>
+                      </>
                     }
                   />
                 ))}
@@ -396,6 +412,24 @@ export default function DoctorDashboardPage() {
           <NurseAssignmentForm
             onSuccess={() => setAssignNurseModalOpen(false)}
           />
+        </Modal>
+
+        <Modal
+          isOpen={addMedicationModalOpen}
+          onClose={() => setAddMedicationModalOpen(false)}
+          title="Add Medication"
+        >
+          {selectedAppointment && (
+            <div className="grid gap-6">
+              <p className="text-sm leading-6 text-slate-700">
+                Prescribe medication for this appointment.
+              </p>
+              <AddMedicationForm
+                appointmentId={selectedAppointment.id}
+                onSuccess={() => setAddMedicationModalOpen(false)}
+              />
+            </div>
+          )}
         </Modal>
       </div>
     </DashboardLayout>

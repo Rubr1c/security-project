@@ -88,7 +88,9 @@ export const useAppointment = (id: number) => {
   const hasHydrated = useAuthStore((state) => state._hasHydrated);
 
   const canFetchAppointment =
-    user?.role === 'patient' || user?.role === 'doctor';
+    user?.role === 'patient' ||
+    user?.role === 'doctor' ||
+    user?.role === 'nurse';
   return useQuery({
     queryKey: ['appointments', id],
     queryFn: () => api.appointments.get(id),

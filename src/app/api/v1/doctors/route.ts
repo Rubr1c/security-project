@@ -63,9 +63,9 @@ export async function POST(req: Request) {
 }
 
 export async function GET() {
-  const session = await getSession();
+  const session = await requireRole('admin', 'patient', 'nurse');
 
-  if (!session || !['admin', 'patient', 'nurse'].includes(session.role)) {
+  if (!session) {
     logger.info({
       message:
         'Unauthorized: Only admin, patients, and nurses can list doctors',
