@@ -10,6 +10,7 @@ import { logger } from '@/lib/logger';
 import { aj } from '@/proxy';
 import { generateOtpCode, hashOtpCode, otpExpiresAtISO } from '@/lib/otp';
 import { sendOtpEmail } from '@/lib/email/send-otp';
+import { decrypt, hashEmail } from '@/lib/security/crypto';
 
 export async function POST(req: Request) {
   const decision = await aj.protect(req, { requested: 5 });
@@ -60,6 +61,8 @@ export async function POST(req: Request) {
     },
   });
 
+  const emailHashValue = hashEmail(result.output.email);
+
   const [user] = await db
     .select({
       id: users.id,
@@ -67,7 +70,7 @@ export async function POST(req: Request) {
       passwordHash: users.passwordHash,
     })
     .from(users)
-    .where(eq(users.email, result.output.email));
+    .where(eq(users.emailHash, emailHashValue));
 
   if (!user) {
     logger.info({
@@ -118,8 +121,10 @@ export async function POST(req: Request) {
     })
     .where(eq(users.id, user.id));
 
+  const decryptedEmail = decrypt(user.email);
+
   await sendOtpEmail({
-    to: user.email,
+    to: decryptedEmail,
     code,
     expiresMinutes: 10,
   });
@@ -135,8 +140,9 @@ export async function POST(req: Request) {
   return NextResponse.json(
     {
       otpRequired: true,
-      email: user.email,
+      email: decryptedEmail,
     },
     { status: STATUS.OK }
   );
 }
+

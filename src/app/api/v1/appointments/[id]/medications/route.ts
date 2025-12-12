@@ -7,6 +7,8 @@ import { addMedicationSchema } from '@/lib/validation/medication-schemas';
 import { NextResponse } from 'next/server';
 import * as v from 'valibot';
 import { eq } from 'drizzle-orm';
+import { encrypt } from '@/lib/security/crypto';
+import { decryptMedicationRecords } from '@/lib/security/fields';
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -136,7 +138,7 @@ export async function GET(_req: Request, { params }: RouteParams) {
     },
   });
 
-  return NextResponse.json(appointmentMedications);
+  return NextResponse.json(decryptMedicationRecords(appointmentMedications));
 }
 
 export async function POST(req: Request, { params }: RouteParams) {
@@ -238,9 +240,9 @@ export async function POST(req: Request, { params }: RouteParams) {
     .insert(medications)
     .values({
       appointmentId,
-      name: result.output.name,
+      name: encrypt(result.output.name),
       dosage: result.output.dosage,
-      instructions: result.output.instructions,
+      instructions: encrypt(result.output.instructions),
     })
     .run();
 

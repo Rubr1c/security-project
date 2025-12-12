@@ -12,6 +12,7 @@ import {
   otpExpiresAtISO,
 } from '@/lib/otp';
 import { sendOtpEmail } from '@/lib/email/send-otp';
+import { hashEmail, decrypt } from '@/lib/security/crypto';
 
 const resendSchema = v.object({
   email: v.pipe(v.string(), v.email()),
@@ -29,6 +30,8 @@ export async function POST(req: Request) {
   }
 
   const { email } = parsed.output;
+  const emailHashValue = hashEmail(email);
+
   const [user] = await db
     .select({
       id: users.id,
@@ -36,7 +39,7 @@ export async function POST(req: Request) {
       otpLastSentAt: users.otpLastSentAt,
     })
     .from(users)
-    .where(eq(users.email, email));
+    .where(eq(users.emailHash, emailHashValue));
 
   if (!user) {
     return NextResponse.json({ message: 'If the email exists, a code was sent.' });
@@ -69,7 +72,7 @@ export async function POST(req: Request) {
     })
     .where(eq(users.id, user.id));
 
-  await sendOtpEmail({ to: user.email, code, expiresMinutes: 10 });
+  await sendOtpEmail({ to: decrypt(user.email), code, expiresMinutes: 10 });
 
   logger.info({
     message: 'OTP resent',

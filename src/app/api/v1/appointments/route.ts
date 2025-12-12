@@ -7,6 +7,7 @@ import { createAppointmentSchema } from '@/lib/validation/appointment-schemas';
 import { NextResponse } from 'next/server';
 import * as v from 'valibot';
 import { eq, and } from 'drizzle-orm';
+import { decryptAppointmentRecords } from '@/lib/security/fields';
 
 export async function POST(req: Request) {
   const session = await requireRole('patient');
@@ -158,5 +159,6 @@ export async function GET() {
     },
   });
 
-  return NextResponse.json(userAppointments);
+  return NextResponse.json(decryptAppointmentRecords(userAppointments));
 }
+

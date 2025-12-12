@@ -14,6 +14,7 @@ import {
   verifyOtpCode,
 } from '@/lib/otp';
 import { sendOtpEmail } from '@/lib/email/send-otp';
+import { decrypt } from '@/lib/security/crypto';
 
 export async function PUT(req: Request) {
   const session = await getSession();
@@ -218,7 +219,9 @@ export async function PUT(req: Request) {
     })
     .where(eq(users.id, user.id));
 
-  await sendOtpEmail({ to: user.email, code, expiresMinutes: 10 });
+  const decryptedEmail = decrypt(user.email);
+
+  await sendOtpEmail({ to: decryptedEmail, code, expiresMinutes: 10 });
 
   logger.info({
     message: 'Change password OTP sent',
@@ -226,7 +229,7 @@ export async function PUT(req: Request) {
   });
 
   return NextResponse.json(
-    { otpRequired: true, email: user.email },
+    { otpRequired: true, email: decryptedEmail },
     { status: STATUS.OK }
   );
 }

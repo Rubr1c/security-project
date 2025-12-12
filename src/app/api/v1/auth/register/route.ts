@@ -10,6 +10,8 @@ import * as v from 'valibot';
 import { eq } from 'drizzle-orm';
 import { generateOtpCode, hashOtpCode, otpExpiresAtISO } from '@/lib/otp';
 import { sendOtpEmail } from '@/lib/email/send-otp';
+import { encrypt, hashEmail } from '@/lib/security/crypto';
+import { decryptUserFields } from '@/lib/security/fields';
 
 export async function POST(req: Request) {
   const decision = await aj.protect(req, { requested: 7 });
@@ -54,10 +56,12 @@ export async function POST(req: Request) {
     );
   }
 
+  const emailHashValue = hashEmail(result.output.email);
+
   const existing = await db
     .select({ id: users.id })
     .from(users)
-    .where(eq(users.email, result.output.email));
+    .where(eq(users.emailHash, emailHashValue));
 
   if (existing.length > 0) {
     logger.info({
@@ -75,8 +79,9 @@ export async function POST(req: Request) {
 
   db.insert(users)
     .values({
-      email: result.output.email,
-      name: result.output.name,
+      email: encrypt(result.output.email),
+      emailHash: emailHashValue,
+      name: encrypt(result.output.name),
       passwordHash: await bcrypt.hash(result.output.password, 10),
       role: 'patient',
       emailVerifiedAt: null,
@@ -92,9 +97,11 @@ export async function POST(req: Request) {
   const [created] = await db
     .select({ id: users.id, email: users.email })
     .from(users)
-    .where(eq(users.email, result.output.email));
+    .where(eq(users.emailHash, emailHashValue));
 
-  if (!created) {
+  const decryptedCreated = created ? decryptUserFields(created) : null;
+
+  if (!decryptedCreated) {
     return NextResponse.json(
       { error: 'Failed to create user' },
       { status: STATUS.INTERNAL_ERROR }
@@ -117,7 +124,7 @@ export async function POST(req: Request) {
     .where(eq(users.id, created.id));
 
   await sendOtpEmail({
-    to: created.email,
+    to: decryptedCreated.email,
     code,
     expiresMinutes: 10,
   });

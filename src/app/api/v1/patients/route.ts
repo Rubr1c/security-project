@@ -5,6 +5,7 @@ import { eq, and } from 'drizzle-orm';
 import { STATUS } from '@/lib/http/status-codes';
 import { logger } from '@/lib/logger';
 import { requireRole } from '@/lib/auth/get-session';
+import { decryptUserRecords } from '@/lib/security/fields';
 
 export async function GET() {
   const session = await requireRole('doctor');
@@ -50,5 +51,6 @@ export async function GET() {
     },
   });
 
-  return NextResponse.json(patients);
+  return NextResponse.json(decryptUserRecords(patients));
 }
+

@@ -7,6 +7,7 @@ import { updateDiagnosisSchema } from '@/lib/validation/appointment-schemas';
 import { NextResponse } from 'next/server';
 import * as v from 'valibot';
 import { eq, and } from 'drizzle-orm';
+import { encrypt } from '@/lib/security/crypto';
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -81,7 +82,7 @@ export async function PUT(req: Request, { params }: RouteParams) {
   const updateResult = await db
     .update(appointments)
     .set({
-      diagnosis: result.output.diagnosis,
+      diagnosis: encrypt(result.output.diagnosis),
       status: 'completed',
       updatedAt: new Date().toISOString(),
     })

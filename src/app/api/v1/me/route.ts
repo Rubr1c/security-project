@@ -5,6 +5,7 @@ import { logger } from '@/lib/logger';
 import { getSession } from '@/lib/auth/get-session';
 import { NextResponse } from 'next/server';
 import { eq } from 'drizzle-orm';
+import { decryptUserFields } from '@/lib/security/fields';
 
 export async function GET() {
   const session = await getSession();
@@ -53,5 +54,6 @@ export async function GET() {
     meta: { userId },
   });
 
-  return NextResponse.json(user[0]);
+  return NextResponse.json(decryptUserFields(user[0]));
 }
+

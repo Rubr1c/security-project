@@ -5,6 +5,7 @@ import { logger } from '@/lib/logger';
 import { getSession } from '@/lib/auth/get-session';
 import { NextResponse } from 'next/server';
 import { eq, inArray } from 'drizzle-orm';
+import { decryptMedicationRecords } from '@/lib/security/fields';
 
 export async function GET() {
   const session = await getSession();
@@ -71,5 +72,6 @@ export async function GET() {
     },
   });
 
-  return NextResponse.json(userMedications);
+  return NextResponse.json(decryptMedicationRecords(userMedications));
 }
+

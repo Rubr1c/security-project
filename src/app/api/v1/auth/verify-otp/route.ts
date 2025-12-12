@@ -9,6 +9,7 @@ import { OTP_MAX_ATTEMPTS, isExpired, verifyOtpCode } from '@/lib/otp';
 import { jwt } from '@/lib/jwt';
 import { cookies } from 'next/headers';
 import { env } from '@/lib/env';
+import { hashEmail } from '@/lib/security/crypto';
 
 const verifySchema = v.object({
   email: v.pipe(v.string(), v.email()),
@@ -27,6 +28,8 @@ export async function POST(req: Request) {
   }
 
   const { email, code } = parsed.output;
+  const emailHashValue = hashEmail(email);
+
   const [user] = await db
     .select({
       id: users.id,
@@ -38,7 +41,7 @@ export async function POST(req: Request) {
       otpAttempts: users.otpAttempts,
     })
     .from(users)
-    .where(eq(users.email, email));
+    .where(eq(users.emailHash, emailHashValue));
 
   if (!user) {
     return NextResponse.json(

@@ -5,6 +5,11 @@ import { logger } from '@/lib/logger';
 import { requireRole } from '@/lib/auth/get-session';
 import { NextResponse } from 'next/server';
 import { eq, and, inArray } from 'drizzle-orm';
+import {
+  decryptUserFields,
+  decryptAppointmentRecords,
+  decryptMedicationRecords,
+} from '@/lib/security/fields';
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -118,8 +123,9 @@ export async function GET(_req: Request, { params }: RouteParams) {
   });
 
   return NextResponse.json({
-    ...patient[0],
-    appointments: patientAppointments,
-    medications: patientMedications,
+    ...decryptUserFields(patient[0]),
+    appointments: decryptAppointmentRecords(patientAppointments),
+    medications: decryptMedicationRecords(patientMedications),
   });
 }
+

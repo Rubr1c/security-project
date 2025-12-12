@@ -8,6 +8,8 @@ import { NextResponse } from 'next/server';
 import bcrypt from 'bcrypt';
 import * as v from 'valibot';
 import { eq } from 'drizzle-orm';
+import { encrypt, hashEmail } from '@/lib/security/crypto';
+import { decryptUserRecords } from '@/lib/security/fields';
 
 export async function POST(req: Request) {
   const session = await requireRole('admin');
@@ -39,8 +41,9 @@ export async function POST(req: Request) {
 
   db.insert(users)
     .values({
-      email: result.output.email,
-      name: result.output.name,
+      email: encrypt(result.output.email),
+      emailHash: hashEmail(result.output.email),
+      name: encrypt(result.output.name),
       passwordHash: await bcrypt.hash(result.output.password, 10),
       role: 'doctor',
     })
@@ -94,5 +97,6 @@ export async function GET() {
     },
   });
 
-  return NextResponse.json(doctors);
+  return NextResponse.json(decryptUserRecords(doctors));
 }
+

@@ -5,6 +5,7 @@ import { logger } from '@/lib/logger';
 import { requireRole } from '@/lib/auth/get-session';
 import { NextResponse } from 'next/server';
 import { and, eq, inArray } from 'drizzle-orm';
+import { decryptMedicationRecords } from '@/lib/security/fields';
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -80,7 +81,5 @@ export async function GET(_req: Request, { params }: RouteParams) {
     meta: { doctorId, patientId, appointmentCount: apptIds.length, medicationCount: meds.length },
   });
 
-  return NextResponse.json(meds);
+  return NextResponse.json(decryptMedicationRecords(meds));
 }
-
-
