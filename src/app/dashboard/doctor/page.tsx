@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
+import Link from 'next/link';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { AppointmentCard } from '@/components/cards/AppointmentCard';
 import { DiagnosisForm } from '@/components/forms/DiagnosisForm';
@@ -336,31 +337,37 @@ export default function DoctorDashboardPage() {
           ) : (
             <div className="grid gap-6 md:grid-cols-2">
               {uniquePatientHistory.map((patient) => (
-                <div key={patient.patientId} className="border border-slate-200 bg-white p-6">
-                  <div className="flex items-start justify-between gap-6">
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-semibold text-slate-950">
-                        {patient.name}
-                      </p>
-                      <p className="text-sm text-slate-700">
-                        Last visit {new Date(patient.lastAppointment.date).toLocaleDateString()}
-                      </p>
+                <Link
+                  key={patient.patientId}
+                  href={`/dashboard/doctor/patients/${patient.patientId}`}
+                  className="block transition hover:opacity-95"
+                >
+                  <div className="border border-slate-200 bg-white p-6 hover:border-teal-400">
+                    <div className="flex items-start justify-between gap-6">
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-semibold text-slate-950">
+                          {patient.name}
+                        </p>
+                        <p className="text-sm text-slate-700">
+                          Last visit {new Date(patient.lastAppointment.date).toLocaleDateString()}
+                        </p>
+                      </div>
+                      <span className="grid h-9 w-9 place-items-center border border-slate-300 bg-white text-sm font-semibold text-teal-800">
+                        {patient.name.charAt(0).toUpperCase()}
+                      </span>
                     </div>
-                    <span className="grid h-9 w-9 place-items-center border border-slate-300 bg-white text-sm font-semibold text-teal-800">
-                      {patient.name.charAt(0).toUpperCase()}
-                    </span>
+                    {patient.lastAppointment.diagnosis && (
+                      <div className="mt-6 border-l-4 border-teal-600 bg-slate-50 p-6">
+                        <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">
+                          Latest diagnosis
+                        </p>
+                        <p className="mt-2 text-sm leading-6 text-slate-900">
+                          {patient.lastAppointment.diagnosis}
+                        </p>
+                      </div>
+                    )}
                   </div>
-                  {patient.lastAppointment.diagnosis && (
-                    <div className="mt-6 border-l-4 border-teal-600 bg-slate-50 p-6">
-                      <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">
-                        Latest diagnosis
-                      </p>
-                      <p className="mt-2 text-sm leading-6 text-slate-900">
-                        {patient.lastAppointment.diagnosis}
-                      </p>
-                    </div>
-                  )}
-                </div>
+                </Link>
               ))}
             </div>
           )}

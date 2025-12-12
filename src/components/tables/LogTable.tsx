@@ -122,6 +122,15 @@ function MetaDetails({ meta }: { meta: string }) {
   const requestHeaders = readRecord(parsed, 'headers');
   const queryParams = readRecord(parsed, 'queryParams');
 
+  const auditItems: Array<{ label: string; value: string }> = [
+    { label: 'Event', value: toDisplayValue(parsed.event) },
+    { label: 'Actor ID', value: toDisplayValue(parsed.actorId) },
+    { label: 'Patient ID', value: toDisplayValue(parsed.patientId) },
+    { label: 'Resource', value: toDisplayValue(parsed.resource) },
+    { label: 'Target User', value: toDisplayValue(parsed.targetUserId) },
+    { label: 'Reason', value: toDisplayValue(parsed.reason) },
+  ].filter((item) => item.value !== '—');
+
   const requestItems: Array<{ label: string; value: string }> = [
     { label: 'Method', value: toDisplayValue(parsed.method) },
     { label: 'Path', value: toDisplayValue(parsed.pathname) },
@@ -138,6 +147,16 @@ function MetaDetails({ meta }: { meta: string }) {
 
   return (
     <div className="grid gap-6">
+      {auditItems.length > 0 && (
+        <MetaSection title="Audit Context">
+          <div>
+            {auditItems.map((item) => (
+              <MetaRow key={item.label} label={item.label} value={item.value} />
+            ))}
+          </div>
+        </MetaSection>
+      )}
+
       <MetaSection title="Request">
         <div>
           {requestItems.map((item) => (

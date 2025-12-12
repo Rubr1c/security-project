@@ -65,8 +65,7 @@ export async function POST(req: Request) {
 
   if (existing.length > 0) {
     logger.info({
-      message: 'Email already exists',
-      meta: { email: result.output.email },
+      message: 'Email already exists during registration attempt',
     });
 
     return NextResponse.json(
@@ -131,9 +130,6 @@ export async function POST(req: Request) {
 
   logger.info({
     message: 'User created, OTP sent',
-    meta: {
-      email: result.output.email,
-    },
   });
 
   return NextResponse.json(

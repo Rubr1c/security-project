@@ -4,6 +4,18 @@ import { logs } from '../db/schema';
 import { LogLevel } from '../db/types';
 import { BaseLogger } from './base-logger';
 
+export type AuditEventType = 
+  | 'PHI_ACCESS' 
+  | 'DATA_EXPORT' 
+  | 'ACCOUNT_DELETION' 
+  | 'SECURITY_ALERT';
+
+export interface AuditLogMeta {
+  event: AuditEventType;
+  actorId: number | string;
+  [key: string]: unknown;
+}
+
 export class AuditLogger extends BaseLogger {
   /**
    * Creates a console logger.
@@ -80,5 +92,56 @@ export class AuditLogger extends BaseLogger {
         error: params.error?.message,
       })
       .run();
+  }
+
+  /**
+   * Logs PHI access by a doctor/staff.
+   */
+  logPhiAccess(actorId: number | string, patientId: number | string, resource: string, resourceId: number | string) {
+    const meta: AuditLogMeta = {
+      event: 'PHI_ACCESS',
+      actorId,
+      patientId,
+      resource,
+      resourceId,
+    };
+    
+    this.info({
+      message: `Doctor ${actorId} viewed ${resource} ${resourceId} for Patient ${patientId}`,
+      meta,
+    });
+  }
+
+  /**
+   * Logs a user exporting their data.
+   */
+  logDataExport(userId: number | string, targetUserId: number | string) {
+    const meta: AuditLogMeta = {
+      event: 'DATA_EXPORT',
+      actorId: userId,
+      targetUserId,
+    };
+
+    this.info({
+      message: `User ${userId} exported data for User ${targetUserId}`,
+      meta,
+    });
+  }
+
+  /**
+   * Logs account deletion.
+   */
+  logAccountDeletion(userId: number | string, reason?: string) {
+    const meta: AuditLogMeta = {
+      event: 'ACCOUNT_DELETION',
+      actorId: userId,
+      reason,
+      finalStateTimestamp: new Date().toISOString(),
+    };
+
+    this.info({
+      message: `Account deletion for User ${userId}`,
+      meta,
+    });
   }
 }

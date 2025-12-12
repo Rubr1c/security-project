@@ -55,10 +55,7 @@ export async function POST(req: Request) {
   }
 
   logger.info({
-    message: 'Fetching user from database',
-    meta: {
-      email: result.output.email,
-    },
+    message: 'Fetching user from database for login attempt',
   });
 
   const emailHashValue = hashEmail(result.output.email);
@@ -74,10 +71,7 @@ export async function POST(req: Request) {
 
   if (!user) {
     logger.info({
-      message: 'User not found',
-      meta: {
-        email: result.output.email,
-      },
+      message: 'User not found during login attempt',
     });
 
     return NextResponse.json(
@@ -94,9 +88,7 @@ export async function POST(req: Request) {
   if (!passwordMatched) {
     logger.info({
       message: 'Invalid password',
-      meta: {
-        email: result.output.email,
-      },
+      meta: { userId: user.id },
     });
 
     return NextResponse.json(
@@ -132,7 +124,6 @@ export async function POST(req: Request) {
   logger.info({
     message: 'OTP sent for login',
     meta: {
-      email: result.output.email,
       userId: user.id,
     },
   });

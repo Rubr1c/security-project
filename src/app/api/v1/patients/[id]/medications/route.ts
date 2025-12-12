@@ -38,11 +38,9 @@ export async function GET(_req: Request, { params }: RouteParams) {
   }
 
   const patient = db
-    .select({ id: users.id })
+    .select({ id: users.id, doctorId: users.doctorId })
     .from(users)
-    .where(
-      and(eq(users.id, patientId), eq(users.role, 'patient'), eq(users.doctorId, doctorId))
-    )
+    .where(and(eq(users.id, patientId), eq(users.role, 'patient')))
     .all();
 
   if (patient.length === 0) {
@@ -55,8 +53,22 @@ export async function GET(_req: Request, { params }: RouteParams) {
   const appts = db
     .select({ id: appointments.id })
     .from(appointments)
-    .where(and(eq(appointments.patientId, patientId), eq(appointments.doctorId, doctorId)))
+    .where(
+      and(
+        eq(appointments.patientId, patientId),
+        eq(appointments.doctorId, doctorId)
+      )
+    )
     .all();
+
+  const isAssigned = patient[0].doctorId === doctorId;
+
+  if (!isAssigned && appts.length === 0) {
+    return NextResponse.json(
+      { error: 'Patient not found' },
+      { status: STATUS.NOT_FOUND }
+    );
+  }
 
   if (appts.length === 0) {
     return NextResponse.json([]);
@@ -76,10 +88,7 @@ export async function GET(_req: Request, { params }: RouteParams) {
     .where(inArray(medications.appointmentId, apptIds))
     .all();
 
-  logger.info({
-    message: 'Patient medications fetched',
-    meta: { doctorId, patientId, appointmentCount: apptIds.length, medicationCount: meds.length },
-  });
+  logger.getAuditLogger()?.logPhiAccess(doctorId, patientId, 'Patient Medications', patientId);
 
   return NextResponse.json(decryptMedicationRecords(meds));
 }

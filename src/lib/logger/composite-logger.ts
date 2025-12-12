@@ -1,6 +1,7 @@
 import { Logger, LoggerParams } from '.';
 import { LogLevel } from '../db/types';
 import { BaseLogger } from './base-logger';
+import { AuditLogger } from './audit-logger';
 
 export class CompositeLogger extends BaseLogger {
   /**
@@ -11,6 +12,10 @@ export class CompositeLogger extends BaseLogger {
   constructor(loggers: Logger[], level?: LogLevel) {
     super({ level });
     this.loggers = loggers;
+  }
+
+  getAuditLogger(): AuditLogger | undefined {
+    return this.loggers.find((l) => l instanceof AuditLogger) as AuditLogger | undefined;
   }
 
   debug(params: LoggerParams) {

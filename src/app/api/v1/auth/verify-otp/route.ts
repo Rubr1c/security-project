@@ -85,7 +85,7 @@ export async function POST(req: Request) {
 
     logger.info({
       message: 'Invalid OTP attempt',
-      meta: { userId: user.id, email },
+      meta: { userId: user.id },
     });
 
     return NextResponse.json(
@@ -108,7 +108,7 @@ export async function POST(req: Request) {
 
   logger.info({
     message: 'OTP verified',
-    meta: { userId: user.id, email },
+    meta: { userId: user.id },
   });
 
   const token = await jwt.sign({ userId: user.id, role: user.role });

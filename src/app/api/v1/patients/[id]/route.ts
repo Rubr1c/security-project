@@ -57,19 +57,13 @@ export async function GET(_req: Request, { params }: RouteParams) {
       updatedAt: users.updatedAt,
     })
     .from(users)
-    .where(
-      and(
-        eq(users.id, patientId),
-        eq(users.role, 'patient'),
-        eq(users.doctorId, userId)
-      )
-    )
+    .where(and(eq(users.id, patientId), eq(users.role, 'patient')))
     .all();
 
   if (patient.length === 0) {
     logger.info({
-      message: 'Patient not found or not assigned to this doctor',
-      meta: { patientId, doctorId: userId },
+      message: 'Patient not found',
+      meta: { patientId },
     });
 
     return NextResponse.json(
@@ -88,6 +82,21 @@ export async function GET(_req: Request, { params }: RouteParams) {
       )
     )
     .all();
+
+  const isAssigned = patient[0].doctorId === userId;
+  const hasHistory = patientAppointments.length > 0;
+
+  if (!isAssigned && !hasHistory) {
+    logger.info({
+      message: 'Unauthorized: Doctor has no relationship with patient',
+      meta: { patientId, doctorId: userId },
+    });
+
+    return NextResponse.json(
+      { error: 'Patient not found' },
+      { status: STATUS.NOT_FOUND }
+    );
+  }
 
   let patientMedications: {
     id: number;
@@ -112,15 +121,8 @@ export async function GET(_req: Request, { params }: RouteParams) {
       .all();
   }
 
-  logger.info({
-    message: 'Patient details fetched',
-    meta: {
-      patientId,
-      doctorId: userId,
-      appointmentCount: patientAppointments.length,
-      medicationCount: patientMedications.length,
-    },
-  });
+
+  logger.getAuditLogger()?.logPhiAccess(userId, patientId, 'Patient Record', patientId);
 
   return NextResponse.json({
     ...decryptUserFields(patient[0]),
