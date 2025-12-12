@@ -47,12 +47,12 @@ export function CreateNurseForm({ onSuccess }: CreateNurseFormProps) {
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+    <form onSubmit={handleSubmit(onSubmit)} className="grid gap-6">
       <Input
         {...register('name')}
         id="name"
         type="text"
-        label="Full Name"
+        label="Name"
         placeholder="Jane Doe"
         error={errors.name?.message}
       />
@@ -61,7 +61,7 @@ export function CreateNurseForm({ onSuccess }: CreateNurseFormProps) {
         {...register('email')}
         id="email"
         type="email"
-        label="Email Address"
+        label="Email"
         placeholder="nurse@hospital.com"
         error={errors.email?.message}
       />
@@ -71,31 +71,27 @@ export function CreateNurseForm({ onSuccess }: CreateNurseFormProps) {
         id="password"
         type="password"
         label="Password"
-        placeholder="Enter password"
+        placeholder="At least 8 characters"
         error={errors.password?.message}
       />
 
-      <Button
-        type="submit"
-        isLoading={createNurseMutation.isPending}
-        className="w-full"
-      >
-        Create Nurse
-      </Button>
-
       {createNurseMutation.isError && (
-        <p className="text-center text-sm text-red-600">
+        <div className="border border-red-300 bg-red-50 p-3 text-sm font-medium text-red-800">
           {createNurseMutation.error instanceof Error
             ? createNurseMutation.error.message
             : 'Failed to create nurse'}
-        </p>
+        </div>
       )}
 
       {createNurseMutation.isSuccess && (
-        <p className="text-center text-sm text-emerald-600">
+        <div className="border border-teal-200 bg-teal-50 p-3 text-sm font-medium text-teal-800">
           Nurse created successfully
-        </p>
+        </div>
       )}
+
+      <Button type="submit" isLoading={createNurseMutation.isPending}>
+        Create nurse
+      </Button>
     </form>
   );
 }

@@ -9,7 +9,9 @@ export const useUsers = () => {
   const hasHydrated = useAuthStore((state) => state._hasHydrated);
 
   const canFetchDoctors =
-    user?.role === 'admin' || user?.role === 'patient' || user?.role === 'nurse';
+    user?.role === 'admin' ||
+    user?.role === 'patient' ||
+    user?.role === 'nurse';
   const canFetchNurses = user?.role === 'admin' || user?.role === 'doctor';
   const canFetchPatients = user?.role === 'doctor';
 
@@ -38,10 +40,18 @@ export const useUsers = () => {
     },
   });
 
+  const unassignNurseMutation = useMutation({
+    mutationFn: (nurseId: number) => api.users.unassignNurseFromDoctor(nurseId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['users', 'nurses'] });
+    },
+  });
+
   return {
     doctorsQuery,
     nursesQuery,
     patientsQuery,
     assignNurseMutation,
+    unassignNurseMutation,
   };
 };

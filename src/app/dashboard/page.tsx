@@ -4,14 +4,8 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/auth';
 import { useAuth } from '@/hooks/useAuth';
-import type { UserRole } from '@/lib/db/types';
-
-const roleRouteMap: Record<UserRole, string> = {
-  patient: '/dashboard/patient',
-  doctor: '/dashboard/doctor',
-  admin: '/dashboard/admin',
-  nurse: '/dashboard/nurse',
-};
+import { getRoleRoute } from '@/lib/routes';
+import { LoadingSpinner } from '@/components/ui';
 
 export default function DashboardRedirectPage() {
   const router = useRouter();
@@ -33,17 +27,26 @@ export default function DashboardRedirectPage() {
 
   useEffect(() => {
     if (user) {
-      router.replace(roleRouteMap[user.role]);
+      router.replace(getRoleRoute(user.role));
     }
   }, [user, router]);
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-950">
-      <div className="flex flex-col items-center gap-4">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-amber-500 border-t-transparent" />
-        <p className="text-slate-400">Redirecting to your dashboard...</p>
+    <div className="min-h-dvh bg-white">
+      <div className="grid min-h-dvh place-items-center px-6">
+        <div className="w-full max-w-sm border border-slate-200 bg-white p-6">
+          <div className="flex items-center justify-between">
+            <p className="text-sm font-semibold text-slate-950">Redirecting</p>
+            <LoadingSpinner size="sm" />
+          </div>
+          <div className="mt-6 h-1 w-full bg-slate-100">
+            <div className="h-1 w-2/3 bg-teal-600" />
+          </div>
+          <p className="mt-3 text-sm text-slate-600">
+            Sending you to the correct workspace for your role.
+          </p>
+        </div>
       </div>
     </div>
   );
 }
-

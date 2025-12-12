@@ -3,6 +3,7 @@
 import { useUsers } from '@/hooks/useUsers';
 import { Button, Select } from '@/components/ui';
 import { useState } from 'react';
+import { useToast } from '@/components/providers/ToastProvider';
 
 interface NurseAssignmentFormProps {
   onSuccess?: () => void;
@@ -11,6 +12,7 @@ interface NurseAssignmentFormProps {
 export function NurseAssignmentForm({ onSuccess }: NurseAssignmentFormProps) {
   const { nursesQuery, assignNurseMutation } = useUsers();
   const [selectedNurseId, setSelectedNurseId] = useState<string>('');
+  const toast = useToast();
 
   const availableNurses =
     nursesQuery.data?.filter((nurse) => nurse.doctorId === null) ?? [];
@@ -23,14 +25,15 @@ export function NurseAssignmentForm({ onSuccess }: NurseAssignmentFormProps) {
       onSuccess: () => {
         setSelectedNurseId('');
         onSuccess?.();
+        toast.success('Nurse assigned', 'The nurse is now assigned to you.');
       },
     });
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="grid gap-6">
       <Select
-        label="Select Nurse"
+        label="Nurse"
         value={selectedNurseId}
         onChange={(e) => setSelectedNurseId(e.target.value)}
         disabled={nursesQuery.isPending}
@@ -44,27 +47,26 @@ export function NurseAssignmentForm({ onSuccess }: NurseAssignmentFormProps) {
       </Select>
 
       {availableNurses.length === 0 && !nursesQuery.isPending && (
-        <p className="text-sm text-slate-500">
+        <div className="border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700">
           No available nurses. All nurses are already assigned.
-        </p>
+        </div>
+      )}
+
+      {assignNurseMutation.isError && (
+        <div className="border border-red-300 bg-red-50 p-3 text-sm font-medium text-red-800">
+          {assignNurseMutation.error instanceof Error
+            ? assignNurseMutation.error.message
+            : 'Failed to assign nurse'}
+        </div>
       )}
 
       <Button
         type="submit"
         isLoading={assignNurseMutation.isPending}
         disabled={!selectedNurseId || assignNurseMutation.isPending}
-        className="w-full"
       >
-        Assign Nurse
+        Assign nurse
       </Button>
-
-      {assignNurseMutation.isError && (
-        <p className="text-center text-sm text-red-600">
-          {assignNurseMutation.error instanceof Error
-            ? assignNurseMutation.error.message
-            : 'Failed to assign nurse'}
-        </p>
-      )}
     </form>
   );
 }

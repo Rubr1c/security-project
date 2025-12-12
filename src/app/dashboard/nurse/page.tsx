@@ -5,10 +5,6 @@ import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { MedicationCard } from '@/components/cards/MedicationCard';
 import { AddMedicationForm } from '@/components/forms/AddMedicationForm';
 import {
-  Card,
-  CardHeader,
-  CardContent,
-  CardTitle,
   Button,
   Modal,
   EmptyState,
@@ -21,7 +17,7 @@ import {
 import { useUsers } from '@/hooks/useUsers';
 import { useAuthStore } from '@/store/auth';
 import type { Appointment } from '@/lib/db/types';
-import { Stethoscope, ClipboardList, Plus, Eye, Pill } from 'lucide-react';
+import { Stethoscope, Plus, Eye, Pill } from 'lucide-react';
 
 export default function NurseDashboardPage() {
   const [selectedAppointment, setSelectedAppointment] =
@@ -64,148 +60,148 @@ export default function NurseDashboardPage() {
 
   return (
     <DashboardLayout allowedRoles={['nurse']}>
-      <div className="space-y-8">
-        <div>
-          <h1 className="text-2xl font-semibold text-slate-800">
-            Nurse Dashboard
+      <div className="grid gap-9">
+        <div className="border-l-4 border-teal-600 pl-6">
+          <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">
+            Nurse
+          </p>
+          <h1 className="mt-2 text-3xl font-extrabold tracking-tight text-slate-950">
+            Medication queue
           </h1>
-          <p className="mt-1 text-slate-500">
-            Manage medications for your assigned doctor&apos;s patients
+          <p className="mt-3 text-sm leading-6 text-slate-700">
+            Add medications to completed appointments for your assigned doctor.
           </p>
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Card>
-            <CardContent className="flex items-center gap-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-emerald-50">
-                <Stethoscope className="h-6 w-6 text-emerald-600" />
-              </div>
-              <div>
-                <p className="text-lg font-semibold text-slate-800">
-                  {assignedDoctor?.name ?? 'Not Assigned'}
-                </p>
-                <p className="text-sm text-slate-500">Assigned Doctor</p>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="flex items-center gap-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-blue-50">
-                <ClipboardList className="h-6 w-6 text-blue-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-semibold text-slate-800">
-                  {doctorAppointments.length}
-                </p>
-                <p className="text-sm text-slate-500">Completed Appointments</p>
-              </div>
-            </CardContent>
-          </Card>
+        <div className="grid gap-6 border border-slate-200 bg-white p-6 md:grid-cols-2">
+          <div className="border border-slate-200 bg-slate-50 p-6">
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">
+              Assigned doctor
+            </p>
+            <div className="mt-3 flex items-center justify-between gap-6">
+              <p className="truncate text-sm font-extrabold tracking-tight text-slate-950">
+                {assignedDoctor?.name ?? 'Not assigned'}
+              </p>
+              <span className="grid h-9 w-9 place-items-center border border-slate-300 bg-white text-teal-700">
+                <Stethoscope className="h-4 w-4" />
+              </span>
+            </div>
+            <p className="mt-3 text-sm text-slate-700">
+              {assignedDoctor?.email ?? 'Ask an admin to assign you.'}
+            </p>
+          </div>
+
+          <div className="border border-slate-200 bg-slate-50 p-6">
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">
+              Completed appointments
+            </p>
+            <p className="mt-2 text-2xl font-extrabold tracking-tight text-slate-950">
+              {doctorAppointments.length}
+            </p>
+            <p className="mt-3 text-sm text-slate-700">
+              These are eligible for medication entries.
+            </p>
+          </div>
         </div>
 
         {!user?.doctorId ? (
-          <Card>
-            <CardContent className="py-12">
-              <EmptyState
-                icon={<Stethoscope className="h-6 w-6" />}
-                title="Not assigned to a doctor"
-                description="You need to be assigned to a doctor before you can manage patient medications"
-              />
-            </CardContent>
-          </Card>
+          <EmptyState
+            icon={<Stethoscope className="h-5 w-5" />}
+            title="No doctor assignment"
+            description="You need an assigned doctor before managing medications."
+          />
         ) : (
-          <Card>
-            <CardHeader>
-              <CardTitle>Completed Appointments</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {appointmentsQuery.isPending ? (
-                <div className="flex justify-center py-8">
-                  <LoadingSpinner />
-                </div>
-              ) : appointmentsQuery.isError ? (
-                <div className="py-8 text-center text-red-600">
-                  Failed to load appointments
-                </div>
-              ) : doctorAppointments.length === 0 ? (
-                <EmptyState
-                  icon={<ClipboardList className="h-6 w-6" />}
-                  title="No completed appointments"
-                  description="Completed appointments from your assigned doctor will appear here"
-                />
-              ) : (
-                <div className="space-y-4">
-                  {doctorAppointments.map((appointment) => (
-                    <div
-                      key={appointment.id}
-                      className="rounded-lg border border-gray-200 bg-white p-4"
-                    >
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <p className="font-medium text-slate-800">
-                            {patientsMap.get(appointment.patientId) ??
-                              `Patient #${appointment.patientId}`}
-                          </p>
-                          <p className="text-sm text-slate-500">
-                            {new Date(appointment.date).toLocaleDateString()} at{' '}
-                            {new Date(appointment.date).toLocaleTimeString([], {
-                              hour: '2-digit',
-                              minute: '2-digit',
-                            })}
-                          </p>
-                        </div>
-                        <div className="flex gap-2">
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() =>
-                              openViewMedicationsModal(appointment)
-                            }
-                          >
-                            <Eye className="h-4 w-4" />
-                            View Meds
-                          </Button>
-                          <Button
-                            size="sm"
-                            onClick={() => openAddMedicationModal(appointment)}
-                          >
-                            <Plus className="h-4 w-4" />
-                            Add Medication
-                          </Button>
-                        </div>
+          <section className="grid gap-6">
+            <div className="flex items-center justify-between border-b border-slate-200 pb-3">
+              <p className="text-sm font-semibold text-slate-950">
+                Completed appointments
+              </p>
+              <span className="text-xs font-semibold uppercase tracking-wide text-slate-600">
+                Add / review meds
+              </span>
+            </div>
+
+            {appointmentsQuery.isPending ? (
+              <div className="grid place-items-center border border-slate-200 bg-white p-6">
+                <LoadingSpinner />
+              </div>
+            ) : appointmentsQuery.isError ? (
+              <div className="border border-red-300 bg-red-50 p-6 text-sm font-semibold text-red-800">
+                Failed to load appointments
+              </div>
+            ) : doctorAppointments.length === 0 ? (
+              <EmptyState
+                icon={<Pill className="h-5 w-5" />}
+                title="No completed appointments"
+                description="Once completed, appointments show up here."
+              />
+            ) : (
+              <div className="grid gap-6">
+                {doctorAppointments.map((appointment) => (
+                  <div key={appointment.id} className="border border-slate-200 bg-white p-6">
+                    <div className="flex flex-wrap items-start justify-between gap-6">
+                      <div className="min-w-0">
+                        <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">
+                          Patient
+                        </p>
+                        <p className="mt-2 truncate text-sm font-extrabold tracking-tight text-slate-950">
+                          {patientsMap.get(appointment.patientId) ??
+                            `Patient #${appointment.patientId}`}
+                        </p>
+                        <p className="mt-2 text-sm text-slate-700">
+                          {new Date(appointment.date).toLocaleString()}
+                        </p>
                       </div>
-                      {appointment.diagnosis && (
-                        <div className="mt-3 rounded-md bg-gray-50 p-3">
-                          <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
-                            Diagnosis
-                          </p>
-                          <p className="mt-1 text-sm text-slate-700">
-                            {appointment.diagnosis}
-                          </p>
-                        </div>
-                      )}
+                      <div className="flex flex-wrap gap-3">
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          onClick={() => openViewMedicationsModal(appointment)}
+                        >
+                          <Eye className="h-4 w-4" />
+                          View meds
+                        </Button>
+                        <Button
+                          size="sm"
+                          onClick={() => openAddMedicationModal(appointment)}
+                        >
+                          <Plus className="h-4 w-4" />
+                          Add medication
+                        </Button>
+                      </div>
                     </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
+
+                    {appointment.diagnosis && (
+                      <div className="mt-6 border-l-4 border-teal-600 bg-slate-50 p-6">
+                        <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">
+                          Diagnosis
+                        </p>
+                        <p className="mt-2 text-sm leading-6 text-slate-900">
+                          {appointment.diagnosis}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
         )}
 
         <Modal
           isOpen={addMedicationModalOpen}
           onClose={() => setAddMedicationModalOpen(false)}
-          title="Add Medication"
+          title="Add medication"
         >
           {selectedAppointment && (
-            <div className="space-y-4">
-              <div className="rounded-md bg-gray-50 p-3">
-                <p className="text-sm text-slate-500">
-                  Patient:{' '}
-                  <span className="font-medium text-slate-800">
-                    {patientsMap.get(selectedAppointment.patientId) ??
-                      `Patient #${selectedAppointment.patientId}`}
-                  </span>
+            <div className="grid gap-6">
+              <div className="border border-slate-200 bg-slate-50 p-6">
+                <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">
+                  Patient
+                </p>
+                <p className="mt-2 text-sm font-extrabold tracking-tight text-slate-950">
+                  {patientsMap.get(selectedAppointment.patientId) ??
+                    `Patient #${selectedAppointment.patientId}`}
                 </p>
               </div>
               <AddMedicationForm
@@ -235,7 +231,7 @@ function MedicationsListModal({ appointmentId }: { appointmentId: number }) {
 
   if (medicationsQuery.isPending) {
     return (
-      <div className="flex justify-center py-8">
+      <div className="grid place-items-center border border-slate-200 bg-white p-6">
         <LoadingSpinner />
       </div>
     );
@@ -243,7 +239,7 @@ function MedicationsListModal({ appointmentId }: { appointmentId: number }) {
 
   if (medicationsQuery.isError) {
     return (
-      <div className="py-8 text-center text-red-600">
+      <div className="border border-red-300 bg-red-50 p-6 text-sm font-semibold text-red-800">
         Failed to load medications
       </div>
     );
@@ -252,15 +248,15 @@ function MedicationsListModal({ appointmentId }: { appointmentId: number }) {
   if (!medicationsQuery.data?.length) {
     return (
       <EmptyState
-        icon={<Pill className="h-6 w-6" />}
+        icon={<Pill className="h-5 w-5" />}
         title="No medications"
-        description="No medications have been added to this appointment"
+        description="Nothing added for this appointment yet."
       />
     );
   }
 
   return (
-    <div className="space-y-3">
+    <div className="grid gap-6">
       {medicationsQuery.data.map((medication) => (
         <MedicationCard key={medication.id} medication={medication} />
       ))}

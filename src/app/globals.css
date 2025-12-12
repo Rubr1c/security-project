@@ -2,6 +2,14 @@
 
 @layer base {
   body {
-    @apply bg-gray-50 text-slate-800 antialiased;
+    @apply bg-white text-slate-950 antialiased;
+  }
+
+  button:not(:disabled) {
+    cursor: pointer;
+  }
+
+  button:disabled {
+    cursor: not-allowed;
   }
 }

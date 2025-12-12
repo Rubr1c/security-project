@@ -9,7 +9,9 @@
     "lint": "eslint",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "seed": "bun run scripts/seed-test-accounts.ts"
+    "seed": "bun run scripts/seed-test-accounts.ts",
+    "update:users": "bun run scripts/update-user-emails.ts",
+    "db:migrate": "bunx drizzle-kit migrate"
   },
   "dependencies": {
     "@arcjet/inspect": "^1.0.0-beta.15",
@@ -24,6 +26,7 @@
     "jose": "^6.1.1",
     "lucide-react": "^0.560.0",
     "next": "16.0.7",
+    "nodemailer": "^7.0.11",
     "react": "19.2.0",
     "react-dom": "19.2.0",
     "react-hook-form": "^7.68.0",

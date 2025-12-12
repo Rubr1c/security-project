@@ -36,6 +36,20 @@
       "when": 1764782980988,
       "tag": "0004_ambitious_mindworm",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1765541524156,
+      "tag": "0005_add_email_otp_2fa",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1765542701511,
+      "tag": "0006_add_pending_password_change",
+      "breakpoints": true
     }
   ]
 }

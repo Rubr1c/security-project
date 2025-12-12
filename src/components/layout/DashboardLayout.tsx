@@ -2,22 +2,25 @@
 
 import { useEffect, type ReactNode } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
+import Link from 'next/link';
 import { useAuthStore } from '@/store/auth';
 import { useAuth } from '@/hooks/useAuth';
-import { LogOut, User } from 'lucide-react';
+import {
+  LogOut,
+  User,
+  LayoutDashboard,
+  Shield,
+  Stethoscope,
+  ClipboardList,
+} from 'lucide-react';
 import type { UserRole } from '@/lib/db/types';
+import { getRoleRoute } from '@/lib/routes';
+import { Button, LoadingSpinner } from '@/components/ui';
 
 interface DashboardLayoutProps {
   children: ReactNode;
   allowedRoles: UserRole[];
 }
-
-const roleRouteMap: Record<UserRole, string> = {
-  patient: '/dashboard/patient',
-  doctor: '/dashboard/doctor',
-  admin: '/dashboard/admin',
-  nurse: '/dashboard/nurse',
-};
 
 export function DashboardLayout({
   children,
@@ -42,112 +45,180 @@ export function DashboardLayout({
 
   useEffect(() => {
     if (user && !allowedRoles.includes(user.role)) {
-      const correctRoute = roleRouteMap[user.role];
+      const correctRoute = getRoleRoute(user.role);
       if (pathname !== correctRoute) {
         router.replace(correctRoute);
       }
     }
   }, [user, allowedRoles, router, pathname]);
 
-  if (!_hasHydrated) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-50">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-emerald-600 border-t-transparent" />
-      </div>
-    );
-  }
+  const showFullPageLoading =
+    !_hasHydrated || !isAuthenticated || !token || userQuery.isPending || !user;
 
-  if (!isAuthenticated || !token) {
+  if (showFullPageLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-50">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-emerald-600 border-t-transparent" />
-      </div>
-    );
-  }
-
-  if (userQuery.isPending) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-50">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-emerald-600 border-t-transparent" />
+      <div className="min-h-dvh bg-white">
+        <div className="grid min-h-dvh place-items-center px-6">
+          <div className="w-full max-w-sm border border-slate-200 bg-white p-6">
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-semibold text-slate-950">Loading</p>
+              <LoadingSpinner size="sm" />
+            </div>
+            <div className="mt-6 h-1 w-full bg-slate-100">
+              <div className="h-1 w-1/2 bg-teal-600" />
+            </div>
+            <p className="mt-3 text-sm text-slate-600">
+              Restoring session and syncing permissions.
+            </p>
+          </div>
+        </div>
       </div>
     );
   }
 
   if (userQuery.isError) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-gray-50">
-        <p className="text-red-600">Failed to load user data</p>
-        <button
-          onClick={logout}
-          className="rounded-lg bg-emerald-600 px-4 py-2 font-medium text-white transition hover:bg-emerald-700"
-        >
-          Return to Login
-        </button>
-      </div>
-    );
-  }
-
-  if (!user) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-50">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-emerald-600 border-t-transparent" />
+      <div className="min-h-dvh bg-white">
+        <div className="grid min-h-dvh place-items-center px-6">
+          <div className="w-full max-w-md border border-slate-200 bg-white p-6">
+            <div className="flex items-start justify-between gap-6">
+              <div className="space-y-2">
+                <p className="text-sm font-semibold text-slate-950">
+                  Session error
+                </p>
+                <p className="text-sm text-slate-600">
+                  We couldn&apos;t load your user profile. Sign in again.
+                </p>
+              </div>
+              <div className="grid h-9 w-9 place-items-center border border-slate-200 bg-slate-50 text-teal-700">
+                <Shield className="h-4 w-4" />
+              </div>
+            </div>
+            <div className="mt-6 flex flex-col gap-3">
+              <Button onClick={logout}>Return to login</Button>
+              <button
+                className="text-left text-sm font-semibold text-teal-700 hover:text-teal-800"
+                onClick={() => window.location.reload()}
+              >
+                Reload page
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
 
   if (!allowedRoles.includes(user.role)) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-gray-50">
-        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-red-50">
-          <User className="h-8 w-8 text-red-600" />
+      <div className="min-h-dvh bg-white">
+        <div className="grid min-h-dvh place-items-center px-6">
+          <div className="w-full max-w-md border border-slate-200 bg-white p-6">
+            <div className="flex items-start justify-between gap-6">
+              <div className="space-y-2">
+                <p className="text-sm font-semibold text-slate-950">
+                  Not allowed
+                </p>
+                <p className="text-sm text-slate-600">
+                  This page isn&apos;t available for your role.
+                </p>
+              </div>
+              <div className="grid h-9 w-9 place-items-center border border-slate-200 bg-slate-50 text-slate-700">
+                <User className="h-4 w-4" />
+              </div>
+            </div>
+            <div className="mt-6">
+              <Button onClick={() => router.replace(getRoleRoute(user.role))}>
+                Go to my dashboard
+              </Button>
+            </div>
+          </div>
         </div>
-        <h1 className="text-xl font-semibold text-slate-800">Access Denied</h1>
-        <p className="text-slate-500">
-          You don&apos;t have permission to access this page
-        </p>
-        <button
-          onClick={() => router.replace(roleRouteMap[user.role])}
-          className="rounded-lg bg-emerald-600 px-4 py-2 font-medium text-white transition hover:bg-emerald-700"
-        >
-          Go to Your Dashboard
-        </button>
       </div>
     );
   }
 
+  const roleLabel = user.role.toUpperCase();
+  const roleIcon =
+    user.role === 'admin'
+      ? Shield
+      : user.role === 'doctor'
+        ? Stethoscope
+        : user.role === 'nurse'
+          ? ClipboardList
+          : LayoutDashboard;
+
+  const RoleIcon = roleIcon;
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      <nav className="border-b border-gray-200 bg-white">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-600">
-              <span className="text-lg font-bold text-white">HC</span>
-            </div>
-            <span className="text-xl font-semibold text-slate-800">
-              HealthCare
-            </span>
+    <div className="min-h-dvh bg-white">
+      <div className="flex min-h-dvh">
+        {/* left rail */}
+        <aside className="w-16 border-r border-slate-200 bg-white">
+          <div className="flex h-16 items-center justify-center border-b border-slate-200">
+            <Link
+              href={getRoleRoute(user.role)}
+              className="grid h-9 w-9 place-items-center border border-slate-300 bg-white text-teal-700 hover:bg-slate-50"
+              aria-label="Dashboard"
+            >
+              <RoleIcon className="h-4 w-4" />
+            </Link>
           </div>
-          <div className="flex items-center gap-6">
-            <div className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-100 text-sm font-semibold text-emerald-700">
-                {user.name.charAt(0).toUpperCase()}
-              </div>
-              <div className="text-sm">
-                <p className="font-medium text-slate-800">{user.name}</p>
-                <p className="text-slate-500 capitalize">{user.role}</p>
-              </div>
-            </div>
+          <div className="flex flex-col gap-3 px-3 py-6">
+            <Link
+              href={getRoleRoute(user.role)}
+              className={`grid h-10 w-10 place-items-center border text-slate-700 hover:bg-slate-50 ${
+                pathname === getRoleRoute(user.role)
+                  ? 'border-teal-300 bg-teal-50 text-teal-800'
+                  : 'border-slate-300 bg-white'
+              }`}
+              aria-label="Home"
+            >
+              <LayoutDashboard className="h-4 w-4" />
+            </Link>
+
             <button
               onClick={logout}
-              className="flex items-center gap-2 rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-slate-600 transition hover:bg-gray-50"
+              className="grid h-10 w-10 place-items-center border border-slate-300 bg-white text-slate-700 hover:bg-slate-50"
+              aria-label="Logout"
             >
               <LogOut className="h-4 w-4" />
-              Logout
             </button>
           </div>
+        </aside>
+
+        {/* main */}
+        <div className="flex min-w-0 flex-1 flex-col">
+          <header className="border-b border-slate-200 bg-white">
+            <div className="flex items-center justify-between px-6 py-3">
+              <div className="min-w-0">
+                <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">
+                  {roleLabel}
+                </p>
+                <p className="truncate text-sm font-semibold text-slate-950">
+                  {user.name}
+                </p>
+              </div>
+              <div className="flex items-center gap-3">
+                <span className="hidden text-sm text-slate-600 sm:block">
+                  {user.email}
+                </span>
+                <Link
+                  href="/account"
+                  className="grid h-9 w-9 place-items-center border border-slate-300 bg-white text-sm font-semibold text-teal-800 hover:bg-slate-50"
+                  aria-label="Account"
+                >
+                  {user.name.charAt(0).toUpperCase()}
+                </Link>
+              </div>
+            </div>
+          </header>
+
+          <main className="min-w-0 flex-1 px-6 py-6">
+            <div className="mx-auto w-full max-w-[1200px]">{children}</div>
+          </main>
         </div>
-      </nav>
-      <main className="mx-auto max-w-7xl px-4 py-8">{children}</main>
+      </div>
     </div>
   );
 }

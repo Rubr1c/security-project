@@ -7,8 +7,9 @@ import { NextResponse } from 'next/server';
 import bcrypt from 'bcrypt';
 import * as v from 'valibot';
 import { logger } from '@/lib/logger';
-import { jwt } from '@/lib/jwt';
 import { aj } from '@/proxy';
+import { generateOtpCode, hashOtpCode, otpExpiresAtISO } from '@/lib/otp';
+import { sendOtpEmail } from '@/lib/email/send-otp';
 
 export async function POST(req: Request) {
   const decision = await aj.protect(req, { requested: 5 });
@@ -97,16 +98,40 @@ export async function POST(req: Request) {
     );
   }
 
+  const code = generateOtpCode();
+  const otpHash = await hashOtpCode(code);
+  const expiresAt = otpExpiresAtISO();
+  const nowIso = new Date().toISOString();
+
+  await db
+    .update(users)
+    .set({
+      otpHash,
+      otpExpiresAt: expiresAt,
+      otpAttempts: 0,
+      otpLastSentAt: nowIso,
+      updatedAt: nowIso,
+    })
+    .where(eq(users.id, user.id));
+
+  await sendOtpEmail({
+    to: user.email,
+    code,
+    expiresMinutes: 10,
+  });
+
   logger.info({
-    message: 'User logged in successfully',
+    message: 'OTP sent for login',
     meta: {
       email: result.output.email,
+      userId: user.id,
     },
   });
 
   return NextResponse.json(
     {
-      token: await jwt.sign({ userId: user.id, role: user.role }),
+      otpRequired: true,
+      email: user.email,
     },
     { status: STATUS.OK }
   );

@@ -2,11 +2,17 @@ import { db } from '@/lib/db/client';
 import { users } from '@/lib/db/schema';
 import { STATUS } from '@/lib/http/status-codes';
 import { logger } from '@/lib/logger';
-import { changePasswordSchema } from '@/lib/validation/user-schemas';
 import { NextResponse } from 'next/server';
 import bcrypt from 'bcrypt';
 import * as v from 'valibot';
 import { eq } from 'drizzle-orm';
+import {
+  generateOtpCode,
+  hashOtpCode,
+  isExpired,
+  verifyOtpCode,
+} from '@/lib/otp';
+import { sendOtpEmail } from '@/lib/email/send-otp';
 
 export async function PUT(req: Request) {
   const userIdHeader = req.headers.get('x-user-id');
@@ -42,37 +48,27 @@ export async function PUT(req: Request) {
   }
 
   const body = await req.json();
-  const result = v.safeParse(changePasswordSchema, body);
 
-  if (!result.success) {
-    logger.info({
-      message: 'Invalid change password request',
-      meta: { userId },
-    });
+  const requestSchema = v.object({
+    oldPassword: v.pipe(v.string(), v.minLength(1, 'Old password is required')),
+    newPassword: v.pipe(
+      v.string(),
+      v.minLength(8, 'Password must be at least 8 characters'),
+      v.regex(
+        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]+$/,
+        'Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character (@$!%*?&)'
+      )
+    ),
+  });
 
-    return NextResponse.json(
-      { error: result.issues[0].message },
-      { status: STATUS.BAD_REQUEST }
-    );
-  }
-
-  // Verify old password and new password are different
-  if (result.output.oldPassword === result.output.newPassword) {
-    logger.info({
-      message: 'New password must be different from old password',
-      meta: { userId },
-    });
-
-    return NextResponse.json(
-      { error: 'New password must be different from old password' },
-      { status: STATUS.BAD_REQUEST }
-    );
-  }
+  const verifySchema = v.object({
+    code: v.pipe(v.string(), v.regex(/^\d{6}$/, 'Code must be 6 digits')),
+  });
 
   // Get current user
-  const user = db.select().from(users).where(eq(users.id, userId)).all();
+  const [user] = await db.select().from(users).where(eq(users.id, userId));
 
-  if (user.length === 0) {
+  if (!user) {
     logger.info({
       message: 'User not found',
       meta: { userId },
@@ -84,43 +80,160 @@ export async function PUT(req: Request) {
     );
   }
 
-  // Verify old password with bcrypt
-  const passwordMatched = await bcrypt.compare(
-    result.output.oldPassword,
-    user[0].passwordHash
-  );
+  // VERIFY STEP: { code }
+  const verifyParsed = v.safeParse(verifySchema, body);
+  if (verifyParsed.success) {
+    if (!user.pendingPasswordHash || !user.pendingPasswordExpiresAt) {
+      return NextResponse.json(
+        { error: 'No pending password change request.' },
+        { status: STATUS.BAD_REQUEST }
+      );
+    }
 
-  if (!passwordMatched) {
+    if (isExpired(user.pendingPasswordExpiresAt)) {
+      await db
+        .update(users)
+        .set({
+          pendingPasswordHash: null,
+          pendingPasswordExpiresAt: null,
+          otpHash: null,
+          otpExpiresAt: null,
+          otpLastSentAt: null,
+          otpAttempts: 0,
+          updatedAt: new Date().toISOString(),
+        })
+        .where(eq(users.id, user.id));
+
+      return NextResponse.json(
+        { error: 'Password change request expired. Start again.' },
+        { status: STATUS.BAD_REQUEST }
+      );
+    }
+
+    if (!user.otpHash || !user.otpExpiresAt) {
+      return NextResponse.json(
+        { error: 'No active code. Request a new code.' },
+        { status: STATUS.BAD_REQUEST }
+      );
+    }
+
+    if (user.otpAttempts >= 5) {
+      return NextResponse.json(
+        { error: 'Too many attempts. Request a new code.' },
+        { status: STATUS.TOO_MANY_REQUESTS }
+      );
+    }
+
+    if (isExpired(user.otpExpiresAt)) {
+      return NextResponse.json(
+        { error: 'Code expired. Request a new code.' },
+        { status: STATUS.BAD_REQUEST }
+      );
+    }
+
+    const ok = await verifyOtpCode(verifyParsed.output.code, user.otpHash);
+    const nowIso = new Date().toISOString();
+
+    if (!ok) {
+      await db
+        .update(users)
+        .set({ otpAttempts: user.otpAttempts + 1, updatedAt: nowIso })
+        .where(eq(users.id, user.id));
+
+      return NextResponse.json(
+        { error: 'Invalid code' },
+        { status: STATUS.BAD_REQUEST }
+      );
+    }
+
+    await db
+      .update(users)
+      .set({
+        passwordHash: user.pendingPasswordHash,
+        pendingPasswordHash: null,
+        pendingPasswordExpiresAt: null,
+        otpHash: null,
+        otpExpiresAt: null,
+        otpLastSentAt: null,
+        otpAttempts: 0,
+        updatedAt: nowIso,
+      })
+      .where(eq(users.id, user.id));
+
     logger.info({
-      message: 'Invalid old password',
+      message: 'Password changed (OTP verified)',
+      meta: { userId: user.id, role: userRole },
+    });
+
+    return NextResponse.json(
+      { message: 'Password changed successfully' },
+      { status: STATUS.OK }
+    );
+  }
+
+  // REQUEST STEP: { oldPassword, newPassword } -> send OTP
+  const requestParsed = v.safeParse(requestSchema, body);
+  if (!requestParsed.success) {
+    logger.info({
+      message: 'Invalid change password request',
       meta: { userId },
     });
 
+    return NextResponse.json(
+      { error: requestParsed.issues[0].message },
+      { status: STATUS.BAD_REQUEST }
+    );
+  }
+
+  if (requestParsed.output.oldPassword === requestParsed.output.newPassword) {
+    return NextResponse.json(
+      { error: 'New password must be different from old password' },
+      { status: STATUS.BAD_REQUEST }
+    );
+  }
+
+  const oldOk = await bcrypt.compare(
+    requestParsed.output.oldPassword,
+    user.passwordHash
+  );
+  if (!oldOk) {
     return NextResponse.json(
       { error: 'Invalid old password' },
       { status: STATUS.UNAUTHORIZED }
     );
   }
 
-  // Hash and save new password
-  const newPasswordHash = await bcrypt.hash(result.output.newPassword, 10);
+  const pendingPasswordHash = await bcrypt.hash(
+    requestParsed.output.newPassword,
+    10
+  );
+  const code = generateOtpCode();
+  const otpHash = await hashOtpCode(code);
+  const nowIso = new Date().toISOString();
+  const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString();
 
   await db
     .update(users)
     .set({
-      passwordHash: newPasswordHash,
-      updatedAt: new Date().toISOString(),
+      pendingPasswordHash,
+      pendingPasswordExpiresAt: expiresAt,
+      otpHash,
+      otpExpiresAt: expiresAt,
+      otpAttempts: 0,
+      otpLastSentAt: nowIso,
+      updatedAt: nowIso,
     })
-    .where(eq(users.id, userId));
+    .where(eq(users.id, user.id));
+
+  await sendOtpEmail({ to: user.email, code, expiresMinutes: 10 });
 
   logger.info({
-    message: 'Password changed successfully',
-    meta: { userId },
+    message: 'Change password OTP sent',
+    meta: { userId: user.id, role: userRole },
   });
 
   return NextResponse.json(
-    { message: 'Password changed successfully' },
+    { otpRequired: true, email: user.email },
     { status: STATUS.OK }
   );
 }
-

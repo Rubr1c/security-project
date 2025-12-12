@@ -20,6 +20,18 @@ export const users = sqliteTable(
 
     doctorId: integer('doctor_id').default(sql`NULL`),
 
+    emailVerifiedAt: text('email_verified_at').default(sql`NULL`),
+
+    otpHash: text('otp_hash').default(sql`NULL`),
+    otpExpiresAt: text('otp_expires_at').default(sql`NULL`),
+    otpLastSentAt: text('otp_last_sent_at').default(sql`NULL`),
+    otpAttempts: integer('otp_attempts').notNull().default(0),
+
+    pendingPasswordHash: text('pending_password_hash').default(sql`NULL`),
+    pendingPasswordExpiresAt: text('pending_password_expires_at').default(
+      sql`NULL`
+    ),
+
     createdAt: text('created_at')
       .default(sql`CURRENT_TIMESTAMP`)
       .notNull(),

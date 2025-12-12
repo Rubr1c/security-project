@@ -1,6 +1,6 @@
 'use client';
 
-import { useSyncExternalStore, useEffect, type ReactNode } from 'react';
+import { useEffect, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 
@@ -11,19 +11,7 @@ interface ModalProps {
   children: ReactNode;
 }
 
-const emptySubscribe = () => () => {};
-
-function useIsMounted() {
-  return useSyncExternalStore(
-    emptySubscribe,
-    () => true,
-    () => false
-  );
-}
-
 export function Modal({ isOpen, onClose, title, children }: ModalProps) {
-  const isMounted = useIsMounted();
-
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
@@ -42,26 +30,36 @@ export function Modal({ isOpen, onClose, title, children }: ModalProps) {
     };
   }, [isOpen, onClose]);
 
-  if (!isOpen || !isMounted) return null;
+  if (!isOpen) return null;
+  if (typeof document === 'undefined') return null;
 
   const modalContent = (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center">
+    <div className="fixed inset-0 z-50">
       <div
-        className="fixed inset-0 bg-black/40"
+        className="absolute inset-0 bg-slate-950/20"
         onClick={onClose}
         aria-hidden="true"
       />
-      <div className="relative z-10 mx-4 w-full max-w-lg rounded-lg border border-gray-200 bg-white shadow-xl">
-        <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4">
-          <h2 className="text-lg font-semibold text-slate-800">{title}</h2>
+
+      <div className="absolute inset-y-0 right-0 w-[480px] max-w-[92vw] border-l border-slate-200 bg-white">
+        <div className="flex items-center justify-between border-b border-slate-200 px-6 py-3">
+          <div className="min-w-0">
+            <p className="truncate text-sm font-semibold text-slate-950">
+              {title}
+            </p>
+          </div>
           <button
             onClick={onClose}
-            className="rounded-lg p-1 text-slate-400 transition hover:bg-gray-100 hover:text-slate-600"
+            className="grid h-9 w-9 place-items-center border border-slate-300 bg-white text-slate-700 hover:bg-slate-50"
+            aria-label="Close"
           >
-            <X className="h-5 w-5" />
+            <X className="h-4 w-4" />
           </button>
         </div>
-        <div className="max-h-[70vh] overflow-y-auto p-6">{children}</div>
+
+        <div className="h-[calc(100dvh-49px)] overflow-y-auto px-6 py-6">
+          {children}
+        </div>
       </div>
     </div>
   );

@@ -12,59 +12,59 @@ interface UserTableProps {
 
 export function UserTable({ users, onDelete, isDeleting }: UserTableProps) {
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full">
+    <div className="overflow-x-auto border border-slate-200 bg-white">
+      <table className="w-full border-collapse">
         <thead>
-          <tr className="border-b border-gray-100 bg-gray-50">
-            <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-slate-500">
+          <tr className="border-b border-slate-200">
+            <th className="px-3 py-3 text-left text-[11px] font-semibold uppercase tracking-wide text-slate-600">
               ID
             </th>
-            <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-slate-500">
+            <th className="px-3 py-3 text-left text-[11px] font-semibold uppercase tracking-wide text-slate-600">
               Name
             </th>
-            <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-slate-500">
+            <th className="px-3 py-3 text-left text-[11px] font-semibold uppercase tracking-wide text-slate-600">
               Email
             </th>
-            <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-slate-500">
+            <th className="px-3 py-3 text-left text-[11px] font-semibold uppercase tracking-wide text-slate-600">
               Role
             </th>
-            <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-slate-500">
+            <th className="px-3 py-3 text-left text-[11px] font-semibold uppercase tracking-wide text-slate-600">
               Created
             </th>
             {onDelete && (
-              <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-slate-500">
+              <th className="px-3 py-3 text-right text-[11px] font-semibold uppercase tracking-wide text-slate-600">
                 Actions
               </th>
             )}
           </tr>
         </thead>
-        <tbody className="divide-y divide-gray-100">
+        <tbody className="divide-y divide-slate-200">
           {users.map((user) => (
-            <tr key={user.id} className="transition hover:bg-gray-50">
-              <td className="whitespace-nowrap px-4 py-3 text-sm text-slate-500">
-                #{user.id}
+            <tr key={user.id} className="hover:bg-slate-50">
+              <td className="whitespace-nowrap px-3 py-3 text-sm text-slate-700">
+                {user.id}
               </td>
-              <td className="px-4 py-3">
+              <td className="px-3 py-3">
                 <div className="flex items-center gap-3">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-100 text-sm font-semibold text-emerald-700">
+                  <span className="grid h-8 w-8 place-items-center border border-slate-300 bg-white text-sm font-semibold text-teal-800">
                     {user.name.charAt(0).toUpperCase()}
-                  </div>
-                  <span className="text-sm font-medium text-slate-800">
+                  </span>
+                  <span className="text-sm font-semibold text-slate-950">
                     {user.name}
                   </span>
                 </div>
               </td>
-              <td className="px-4 py-3 text-sm text-slate-600">{user.email}</td>
-              <td className="px-4 py-3">
-                <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium capitalize text-emerald-700">
+              <td className="px-3 py-3 text-sm text-slate-700">{user.email}</td>
+              <td className="px-3 py-3">
+                <span className="inline-flex items-center border border-slate-300 px-2 py-1 text-[11px] font-semibold uppercase tracking-wide text-slate-700">
                   {user.role}
                 </span>
               </td>
-              <td className="whitespace-nowrap px-4 py-3 text-sm text-slate-500">
+              <td className="whitespace-nowrap px-3 py-3 text-sm text-slate-700">
                 {new Date(user.createdAt).toLocaleDateString()}
               </td>
               {onDelete && (
-                <td className="px-4 py-3 text-right">
+                <td className="px-3 py-3 text-right">
                   <Button
                     variant="danger"
                     size="sm"

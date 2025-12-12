@@ -6,22 +6,22 @@ interface LogLevelBadgeProps {
   level: LogLevel;
 }
 
-const levelStyles: Record<LogLevel, { bg: string; text: string }> = {
+const levelStyles: Record<LogLevel, { border: string; text: string }> = {
   debug: {
-    bg: 'bg-slate-100',
-    text: 'text-slate-600',
+    border: 'border-slate-300',
+    text: 'text-slate-700',
   },
   info: {
-    bg: 'bg-blue-50',
-    text: 'text-blue-700',
+    border: 'border-teal-300',
+    text: 'text-teal-800',
   },
   warn: {
-    bg: 'bg-amber-50',
-    text: 'text-amber-700',
+    border: 'border-amber-300',
+    text: 'text-amber-800',
   },
   error: {
-    bg: 'bg-red-50',
-    text: 'text-red-700',
+    border: 'border-red-300',
+    text: 'text-red-800',
   },
 };
 
@@ -30,7 +30,7 @@ export function LogLevelBadge({ level }: LogLevelBadgeProps) {
 
   return (
     <span
-      className={`inline-flex items-center rounded px-2 py-0.5 text-xs font-medium uppercase ${style.bg} ${style.text}`}
+      className={`inline-flex items-center border px-2 py-1 text-[11px] font-semibold uppercase tracking-wide ${style.border} ${style.text}`}
     >
       {level}
     </span>

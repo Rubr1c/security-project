@@ -6,6 +6,7 @@ import { updateDiagnosisSchema } from '@/lib/validation/appointment-schemas';
 import { useAppointments } from '@/hooks/useAppointments';
 import { Button, Textarea } from '@/components/ui';
 import * as v from 'valibot';
+import { useToast } from '@/components/providers/ToastProvider';
 
 type DiagnosisFormData = v.InferInput<typeof updateDiagnosisSchema>;
 
@@ -21,6 +22,7 @@ export function DiagnosisForm({
   onSuccess,
 }: DiagnosisFormProps) {
   const { updateDiagnosisMutation } = useAppointments();
+  const toast = useToast();
 
   const {
     register,
@@ -39,37 +41,34 @@ export function DiagnosisForm({
       {
         onSuccess: () => {
           onSuccess?.();
+          toast.success('Diagnosis saved', `Appointment #${appointmentId} updated.`);
         },
       }
     );
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+    <form onSubmit={handleSubmit(onSubmit)} className="grid gap-6">
       <Textarea
         {...register('diagnosis')}
         id="diagnosis"
         label="Diagnosis"
-        placeholder="Enter diagnosis details..."
+        placeholder="Write the diagnosis..."
         rows={5}
         error={errors.diagnosis?.message}
       />
 
-      <Button
-        type="submit"
-        isLoading={updateDiagnosisMutation.isPending}
-        className="w-full"
-      >
-        {currentDiagnosis ? 'Update Diagnosis' : 'Add Diagnosis'}
-      </Button>
-
       {updateDiagnosisMutation.isError && (
-        <p className="text-center text-sm text-red-600">
+        <div className="border border-red-300 bg-red-50 p-3 text-sm font-medium text-red-800">
           {updateDiagnosisMutation.error instanceof Error
             ? updateDiagnosisMutation.error.message
             : 'Failed to update diagnosis'}
-        </p>
+        </div>
       )}
+
+      <Button type="submit" isLoading={updateDiagnosisMutation.isPending}>
+        {currentDiagnosis ? 'Update diagnosis' : 'Add diagnosis'}
+      </Button>
     </form>
   );
 }

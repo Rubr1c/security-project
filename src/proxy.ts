@@ -54,7 +54,17 @@ export async function proxy(req: NextRequest) {
     },
   });
 
-  if (pathname.startsWith('/api/v1/auth') || pathname.startsWith('/api/v1/seed')) {
+  const publicAuthPaths = [
+    '/api/v1/auth/login',
+    '/api/v1/auth/register',
+    '/api/v1/auth/verify-otp',
+    '/api/v1/auth/resend-otp',
+  ];
+
+  if (
+    publicAuthPaths.some((p) => pathname.startsWith(p)) ||
+    pathname.startsWith('/api/v1/seed')
+  ) {
     return NextResponse.next();
   }
 

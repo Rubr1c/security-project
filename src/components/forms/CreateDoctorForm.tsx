@@ -47,12 +47,12 @@ export function CreateDoctorForm({ onSuccess }: CreateDoctorFormProps) {
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+    <form onSubmit={handleSubmit(onSubmit)} className="grid gap-6">
       <Input
         {...register('name')}
         id="name"
         type="text"
-        label="Full Name"
+        label="Name"
         placeholder="Dr. John Smith"
         error={errors.name?.message}
       />
@@ -61,7 +61,7 @@ export function CreateDoctorForm({ onSuccess }: CreateDoctorFormProps) {
         {...register('email')}
         id="email"
         type="email"
-        label="Email Address"
+        label="Email"
         placeholder="doctor@hospital.com"
         error={errors.email?.message}
       />
@@ -71,31 +71,27 @@ export function CreateDoctorForm({ onSuccess }: CreateDoctorFormProps) {
         id="password"
         type="password"
         label="Password"
-        placeholder="Enter password"
+        placeholder="At least 8 characters"
         error={errors.password?.message}
       />
 
-      <Button
-        type="submit"
-        isLoading={createDoctorMutation.isPending}
-        className="w-full"
-      >
-        Create Doctor
-      </Button>
-
       {createDoctorMutation.isError && (
-        <p className="text-center text-sm text-red-600">
+        <div className="border border-red-300 bg-red-50 p-3 text-sm font-medium text-red-800">
           {createDoctorMutation.error instanceof Error
             ? createDoctorMutation.error.message
             : 'Failed to create doctor'}
-        </p>
+        </div>
       )}
 
       {createDoctorMutation.isSuccess && (
-        <p className="text-center text-sm text-emerald-600">
+        <div className="border border-teal-200 bg-teal-50 p-3 text-sm font-medium text-teal-800">
           Doctor created successfully
-        </p>
+        </div>
       )}
+
+      <Button type="submit" isLoading={createDoctorMutation.isPending}>
+        Create doctor
+      </Button>
     </form>
   );
 }

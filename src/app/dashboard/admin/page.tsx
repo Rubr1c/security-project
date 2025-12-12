@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { LogTable } from '@/components/tables/LogTable';
@@ -8,35 +8,39 @@ import { UserTable } from '@/components/tables/UserTable';
 import { CreateDoctorForm } from '@/components/forms/CreateDoctorForm';
 import { CreateNurseForm } from '@/components/forms/CreateNurseForm';
 import {
-  Card,
-  CardHeader,
-  CardContent,
-  Button,
   Modal,
   EmptyState,
   LoadingSpinner,
+  Button,
+  Select,
 } from '@/components/ui';
 import { useLogs } from '@/hooks/useLogs';
 import { useUsers } from '@/hooks/useUsers';
-import { apiClient } from '@/services/api/client';
+import { ApiError, apiClient } from '@/services/api/client';
+import { useToast } from '@/components/providers/ToastProvider';
 import {
-  FileText,
-  Stethoscope,
-  Users,
-  AlertTriangle,
   Plus,
 } from 'lucide-react';
 
-type Tab = 'logs' | 'doctors' | 'nurses';
+type View = 'logs' | 'doctors' | 'nurses';
 
 export default function AdminDashboardPage() {
-  const [activeTab, setActiveTab] = useState<Tab>('logs');
+  const [view, setView] = useState<View>('logs');
   const [createDoctorModalOpen, setCreateDoctorModalOpen] = useState(false);
   const [createNurseModalOpen, setCreateNurseModalOpen] = useState(false);
+  const [forceDeleteDoctorId, setForceDeleteDoctorId] = useState<number | null>(
+    null
+  );
 
   const queryClient = useQueryClient();
+  const toast = useToast();
   const { logsQuery } = useLogs();
   const { doctorsQuery, nursesQuery } = useUsers();
+
+  const forceDeleteDoctor = useMemo(() => {
+    if (!forceDeleteDoctorId) return null;
+    return doctorsQuery.data?.find((d) => d.id === forceDeleteDoctorId) ?? null;
+  }, [forceDeleteDoctorId, doctorsQuery.data]);
 
   const deleteDoctorMutation = useMutation({
     mutationFn: async (id: number) => {
@@ -44,6 +48,38 @@ export default function AdminDashboardPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users', 'doctors'] });
+      toast.success('Doctor deleted', 'The doctor account was removed.');
+    },
+    onError: (err) => {
+      if (err instanceof ApiError && err.status === 409) {
+        // Show confirm popup instead of toast for the "has appointments" case.
+        return;
+      }
+
+      toast.error(
+        'Could not delete doctor',
+        err instanceof Error ? err.message : 'Delete failed'
+      );
+    },
+  });
+
+  const forceDeleteDoctorMutation = useMutation({
+    mutationFn: async (id: number) => {
+      await apiClient.delete(`/doctors/${id}?force=true`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['users', 'doctors'] });
+      setForceDeleteDoctorId(null);
+      toast.success(
+        'Doctor deleted',
+        'Doctor and associated appointments/medications were removed.'
+      );
+    },
+    onError: (err) => {
+      toast.error(
+        'Could not delete doctor',
+        err instanceof Error ? err.message : 'Delete failed'
+      );
     },
   });
 
@@ -53,206 +89,187 @@ export default function AdminDashboardPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users', 'nurses'] });
+      toast.success('Nurse deleted', 'The nurse account was removed.');
+    },
+    onError: (err) => {
+      toast.error(
+        'Could not delete nurse',
+        err instanceof Error ? err.message : 'Delete failed'
+      );
     },
   });
 
-  const tabs: { id: Tab; label: string; count?: number }[] = [
-    { id: 'logs', label: 'System Logs', count: logsQuery.data?.length },
-    { id: 'doctors', label: 'Doctors', count: doctorsQuery.data?.length },
-    { id: 'nurses', label: 'Nurses', count: nursesQuery.data?.length },
-  ];
+  const totalLogs = logsQuery.data?.length ?? 0;
+  const totalErrors = logsQuery.data?.filter((l) => l.level === 'error').length ?? 0;
+  const totalDoctors = doctorsQuery.data?.length ?? 0;
+  const totalNurses = nursesQuery.data?.length ?? 0;
+
+  const handleDeleteDoctor = (id: number) => {
+    deleteDoctorMutation.mutate(id, {
+      onError: (err) => {
+        if (err instanceof ApiError && err.status === 409) {
+          setForceDeleteDoctorId(id);
+        }
+      },
+    });
+  };
 
   return (
     <DashboardLayout allowedRoles={['admin']}>
-      <div className="space-y-8">
-        <div>
-          <h1 className="text-2xl font-semibold text-slate-800">
-            Admin Dashboard
+      <div className="grid gap-9">
+        <div className="border-l-4 border-teal-600 pl-6">
+          <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">
+            Admin
+          </p>
+          <h1 className="mt-2 text-3xl font-extrabold tracking-tight text-slate-950">
+            Control center
           </h1>
-          <p className="mt-1 text-slate-500">
-            System management and user administration
+          <p className="mt-3 text-sm leading-6 text-slate-700">
+            Review system activity and manage staff accounts.
           </p>
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-4">
-          <Card>
-            <CardContent className="flex items-center gap-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-emerald-50">
-                <FileText className="h-6 w-6 text-emerald-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-semibold text-slate-800">
-                  {logsQuery.data?.length ?? 0}
-                </p>
-                <p className="text-sm text-slate-500">Total Logs</p>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="flex items-center gap-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-emerald-50">
-                <Stethoscope className="h-6 w-6 text-emerald-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-semibold text-slate-800">
-                  {doctorsQuery.data?.length ?? 0}
-                </p>
-                <p className="text-sm text-slate-500">Doctors</p>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="flex items-center gap-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-emerald-50">
-                <Users className="h-6 w-6 text-emerald-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-semibold text-slate-800">
-                  {nursesQuery.data?.length ?? 0}
-                </p>
-                <p className="text-sm text-slate-500">Nurses</p>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="flex items-center gap-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-red-50">
-                <AlertTriangle className="h-6 w-6 text-red-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-semibold text-slate-800">
-                  {logsQuery.data?.filter((l) => l.level === 'error').length ??
-                    0}
-                </p>
-                <p className="text-sm text-slate-500">Errors</p>
-              </div>
-            </CardContent>
-          </Card>
+        <div className="border border-slate-200 bg-white">
+          <div className="grid grid-cols-2 divide-x divide-y divide-slate-200 md:grid-cols-4 md:divide-y-0">
+            <div className="p-6">
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">
+                Logs
+              </p>
+              <p className="mt-2 text-2xl font-extrabold tracking-tight text-slate-950">
+                {totalLogs}
+              </p>
+            </div>
+            <div className="p-6">
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">
+                Errors
+              </p>
+              <p className="mt-2 text-2xl font-extrabold tracking-tight text-slate-950">
+                {totalErrors}
+              </p>
+            </div>
+            <div className="p-6">
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">
+                Doctors
+              </p>
+              <p className="mt-2 text-2xl font-extrabold tracking-tight text-slate-950">
+                {totalDoctors}
+              </p>
+            </div>
+            <div className="p-6">
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">
+                Nurses
+              </p>
+              <p className="mt-2 text-2xl font-extrabold tracking-tight text-slate-950">
+                {totalNurses}
+              </p>
+            </div>
+          </div>
         </div>
 
-        <Card>
-          <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex gap-1 rounded-lg bg-gray-100 p-1">
-              {tabs.map((tab) => (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`rounded-md px-4 py-2 text-sm font-medium transition ${
-                    activeTab === tab.id
-                      ? 'bg-white text-emerald-700 shadow-sm'
-                      : 'text-slate-600 hover:text-slate-800'
-                  }`}
-                >
-                  {tab.label}
-                  {tab.count !== undefined && (
-                    <span
-                      className={`ml-2 rounded-full px-2 py-0.5 text-xs ${
-                        activeTab === tab.id
-                          ? 'bg-emerald-50 text-emerald-700'
-                          : 'bg-gray-200 text-slate-600'
-                      }`}
-                    >
-                      {tab.count}
-                    </span>
-                  )}
-                </button>
-              ))}
-            </div>
+        <div className="flex flex-col gap-6 border border-slate-200 bg-white p-6 md:flex-row md:items-end md:justify-between">
+          <div className="w-full md:max-w-sm">
+            <Select
+              id="adminView"
+              label="Workspace"
+              value={view}
+              onChange={(e) => setView(e.target.value as View)}
+            >
+              <option value="logs">System logs</option>
+              <option value="doctors">Doctors</option>
+              <option value="nurses">Nurses</option>
+            </Select>
+          </div>
 
-            {activeTab === 'doctors' && (
+          <div className="flex flex-wrap gap-3">
+            {view === 'doctors' && (
               <Button onClick={() => setCreateDoctorModalOpen(true)}>
                 <Plus className="h-4 w-4" />
-                Add Doctor
+                Add doctor
               </Button>
             )}
-            {activeTab === 'nurses' && (
+            {view === 'nurses' && (
               <Button onClick={() => setCreateNurseModalOpen(true)}>
                 <Plus className="h-4 w-4" />
-                Add Nurse
+                Add nurse
               </Button>
             )}
-          </CardHeader>
-          <CardContent className="p-0">
-            {activeTab === 'logs' && (
-              <>
-                {logsQuery.isPending ? (
-                  <div className="flex justify-center py-12">
-                    <LoadingSpinner />
-                  </div>
-                ) : logsQuery.isError ? (
-                  <div className="py-12 text-center text-red-600">
-                    Failed to load logs
-                  </div>
-                ) : logsQuery.data?.length === 0 ? (
-                  <EmptyState
-                    icon={<FileText className="h-6 w-6" />}
-                    title="No logs yet"
-                    description="System logs will appear here"
-                  />
-                ) : (
-                  <LogTable logs={logsQuery.data ?? []} />
-                )}
-              </>
-            )}
+          </div>
+        </div>
 
-            {activeTab === 'doctors' && (
-              <>
-                {doctorsQuery.isPending ? (
-                  <div className="flex justify-center py-12">
-                    <LoadingSpinner />
-                  </div>
-                ) : doctorsQuery.isError ? (
-                  <div className="py-12 text-center text-red-600">
-                    Failed to load doctors
-                  </div>
-                ) : doctorsQuery.data?.length === 0 ? (
-                  <EmptyState
-                    icon={<Stethoscope className="h-6 w-6" />}
-                    title="No doctors"
-                    description="Add your first doctor to get started"
-                  />
-                ) : (
-                  <UserTable
-                    users={doctorsQuery.data ?? []}
-                    onDelete={(id) => deleteDoctorMutation.mutate(id)}
-                    isDeleting={deleteDoctorMutation.isPending}
-                  />
-                )}
-              </>
-            )}
+        <div className="grid gap-6">
+          {view === 'logs' && (
+            <div className="grid gap-6">
+              {logsQuery.isPending ? (
+                <div className="grid place-items-center border border-slate-200 bg-white p-6">
+                  <LoadingSpinner />
+                </div>
+              ) : logsQuery.isError ? (
+                <div className="border border-red-300 bg-red-50 p-6 text-sm font-semibold text-red-800">
+                  Failed to load logs
+                </div>
+              ) : logsQuery.data?.length === 0 ? (
+                <EmptyState title="No logs" description="Nothing recorded yet." />
+              ) : (
+                <LogTable logs={logsQuery.data ?? []} />
+              )}
+            </div>
+          )}
 
-            {activeTab === 'nurses' && (
-              <>
-                {nursesQuery.isPending ? (
-                  <div className="flex justify-center py-12">
-                    <LoadingSpinner />
-                  </div>
-                ) : nursesQuery.isError ? (
-                  <div className="py-12 text-center text-red-600">
-                    Failed to load nurses
-                  </div>
-                ) : nursesQuery.data?.length === 0 ? (
-                  <EmptyState
-                    icon={<Users className="h-6 w-6" />}
-                    title="No nurses"
-                    description="Add your first nurse to get started"
-                  />
-                ) : (
-                  <UserTable
-                    users={nursesQuery.data ?? []}
-                    onDelete={(id) => deleteNurseMutation.mutate(id)}
-                    isDeleting={deleteNurseMutation.isPending}
-                  />
-                )}
-              </>
-            )}
-          </CardContent>
-        </Card>
+          {view === 'doctors' && (
+            <div className="grid gap-6">
+              {doctorsQuery.isPending ? (
+                <div className="grid place-items-center border border-slate-200 bg-white p-6">
+                  <LoadingSpinner />
+                </div>
+              ) : doctorsQuery.isError ? (
+                <div className="border border-red-300 bg-red-50 p-6 text-sm font-semibold text-red-800">
+                  Failed to load doctors
+                </div>
+              ) : doctorsQuery.data?.length === 0 ? (
+                <EmptyState
+                  title="No doctors"
+                  description="Create the first doctor account to begin."
+                />
+              ) : (
+                <UserTable
+                  users={doctorsQuery.data ?? []}
+                  onDelete={handleDeleteDoctor}
+                  isDeleting={deleteDoctorMutation.isPending || forceDeleteDoctorMutation.isPending}
+                />
+              )}
+            </div>
+          )}
+
+          {view === 'nurses' && (
+            <div className="grid gap-6">
+              {nursesQuery.isPending ? (
+                <div className="grid place-items-center border border-slate-200 bg-white p-6">
+                  <LoadingSpinner />
+                </div>
+              ) : nursesQuery.isError ? (
+                <div className="border border-red-300 bg-red-50 p-6 text-sm font-semibold text-red-800">
+                  Failed to load nurses
+                </div>
+              ) : nursesQuery.data?.length === 0 ? (
+                <EmptyState
+                  title="No nurses"
+                  description="Create the first nurse account to begin."
+                />
+              ) : (
+                <UserTable
+                  users={nursesQuery.data ?? []}
+                  onDelete={(id) => deleteNurseMutation.mutate(id)}
+                  isDeleting={deleteNurseMutation.isPending}
+                />
+              )}
+            </div>
+          )}
+        </div>
 
         <Modal
           isOpen={createDoctorModalOpen}
           onClose={() => setCreateDoctorModalOpen(false)}
-          title="Add New Doctor"
+          title="Create doctor"
         >
           <CreateDoctorForm onSuccess={() => setCreateDoctorModalOpen(false)} />
         </Modal>
@@ -260,9 +277,60 @@ export default function AdminDashboardPage() {
         <Modal
           isOpen={createNurseModalOpen}
           onClose={() => setCreateNurseModalOpen(false)}
-          title="Add New Nurse"
+          title="Create nurse"
         >
           <CreateNurseForm onSuccess={() => setCreateNurseModalOpen(false)} />
+        </Modal>
+
+        <Modal
+          isOpen={forceDeleteDoctorId !== null}
+          onClose={() => setForceDeleteDoctorId(null)}
+          title="Delete doctor with appointments?"
+        >
+          <div className="grid gap-6">
+            <div className="border border-slate-200 bg-slate-50 p-6">
+              <p className="text-sm font-semibold text-slate-950">
+                This doctor has appointments.
+              </p>
+              <p className="mt-2 text-sm leading-6 text-slate-700">
+                If you continue, we will delete the doctor and also delete all of
+                their appointments and related medications.
+              </p>
+              {forceDeleteDoctor ? (
+                <div className="mt-4 border border-slate-200 bg-white p-4">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">
+                    Doctor
+                  </p>
+                  <p className="mt-2 text-sm font-semibold text-slate-950">
+                    {forceDeleteDoctor.name}
+                  </p>
+                  <p className="mt-1 text-sm text-slate-700">
+                    {forceDeleteDoctor.email}
+                  </p>
+                </div>
+              ) : null}
+            </div>
+
+            <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
+              <Button
+                variant="secondary"
+                onClick={() => setForceDeleteDoctorId(null)}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="danger"
+                isLoading={forceDeleteDoctorMutation.isPending}
+                onClick={() => {
+                  if (forceDeleteDoctorId) {
+                    forceDeleteDoctorMutation.mutate(forceDeleteDoctorId);
+                  }
+                }}
+              >
+                Delete anyway
+              </Button>
+            </div>
+          </div>
         </Modal>
       </div>
     </DashboardLayout>

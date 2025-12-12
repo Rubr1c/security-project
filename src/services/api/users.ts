@@ -22,6 +22,10 @@ export const users = {
     const response = await apiClient.put(`/nurses/${nurseId}/assign`);
     return response.data;
   },
+  unassignNurseFromDoctor: async (nurseId: number) => {
+    const response = await apiClient.delete(`/nurses/${nurseId}/assign`);
+    return response.data;
+  },
   getPatientMedications: async (id: number) => {
     const response = await apiClient.get(`/patients/${id}/medications`);
     return response.data;

@@ -6,6 +6,7 @@ import { addMedicationSchema } from '@/lib/validation/medication-schemas';
 import { useAppointments } from '@/hooks/useAppointments';
 import { Button, Input, Textarea } from '@/components/ui';
 import * as v from 'valibot';
+import { useToast } from '@/components/providers/ToastProvider';
 
 type MedicationFormData = v.InferInput<typeof addMedicationSchema>;
 
@@ -19,6 +20,7 @@ export function AddMedicationForm({
   onSuccess,
 }: AddMedicationFormProps) {
   const { addMedicationMutation } = useAppointments();
+  const toast = useToast();
 
   const {
     register,
@@ -36,18 +38,22 @@ export function AddMedicationForm({
         onSuccess: () => {
           reset();
           onSuccess?.();
+          toast.success(
+            'Medication added',
+            `Linked to appointment #${appointmentId}.`
+          );
         },
       }
     );
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+    <form onSubmit={handleSubmit(onSubmit)} className="grid gap-6">
       <Input
         {...register('name')}
         id="name"
-        label="Medication Name"
-        placeholder="e.g., Amoxicillin"
+        label="Medication"
+        placeholder="Amoxicillin"
         error={errors.name?.message}
       />
 
@@ -55,7 +61,7 @@ export function AddMedicationForm({
         {...register('dosage')}
         id="dosage"
         label="Dosage"
-        placeholder="e.g., 500mg twice daily"
+        placeholder="500mg twice daily"
         error={errors.dosage?.message}
       />
 
@@ -63,26 +69,22 @@ export function AddMedicationForm({
         {...register('instructions')}
         id="instructions"
         label="Instructions"
-        placeholder="e.g., Take with food. Complete full course."
+        placeholder="Take with food..."
         rows={3}
         error={errors.instructions?.message}
       />
 
-      <Button
-        type="submit"
-        isLoading={addMedicationMutation.isPending}
-        className="w-full"
-      >
-        Add Medication
-      </Button>
-
       {addMedicationMutation.isError && (
-        <p className="text-center text-sm text-red-600">
+        <div className="border border-red-300 bg-red-50 p-3 text-sm font-medium text-red-800">
           {addMedicationMutation.error instanceof Error
             ? addMedicationMutation.error.message
             : 'Failed to add medication'}
-        </p>
+        </div>
       )}
+
+      <Button type="submit" isLoading={addMedicationMutation.isPending}>
+        Add medication
+      </Button>
     </form>
   );
 }
