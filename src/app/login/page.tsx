@@ -5,10 +5,7 @@ import { ArrowRight } from 'lucide-react';
 
 export default function LoginPage() {
   return (
-    <AuthLayout
-      title="Sign in"
-      subtitle=""
-    >
+    <AuthLayout title="Sign in" subtitle="">
       <div className="grid gap-6">
         <LoginForm />
         <div className="relative">
@@ -16,9 +13,7 @@ export default function LoginPage() {
             <span className="w-full border-t border-slate-200" />
           </div>
           <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-white px-2 text-slate-500">
-              Or
-            </span>
+            <span className="bg-white px-2 text-slate-500">Or</span>
           </div>
         </div>
         <div className="text-center text-sm">

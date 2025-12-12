@@ -18,9 +18,7 @@ import { useLogs } from '@/hooks/useLogs';
 import { useUsers } from '@/hooks/useUsers';
 import { ApiError, apiClient } from '@/services/api/client';
 import { useToast } from '@/components/providers/ToastProvider';
-import {
-  Plus,
-} from 'lucide-react';
+import { Plus } from 'lucide-react';
 
 type View = 'logs' | 'doctors' | 'nurses';
 
@@ -99,7 +97,8 @@ export default function AdminDashboardPage() {
   });
 
   const totalLogs = logsQuery.data?.length ?? 0;
-  const totalErrors = logsQuery.data?.filter((l) => l.level === 'error').length ?? 0;
+  const totalErrors =
+    logsQuery.data?.filter((l) => l.level === 'error').length ?? 0;
   const totalDoctors = doctorsQuery.data?.length ?? 0;
   const totalNurses = nursesQuery.data?.length ?? 0;
 
@@ -117,7 +116,7 @@ export default function AdminDashboardPage() {
     <DashboardLayout allowedRoles={['admin']}>
       <div className="grid gap-9">
         <div className="border-l-4 border-teal-600 pl-6">
-          <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">
+          <p className="text-xs font-semibold tracking-wide text-slate-600 uppercase">
             Admin
           </p>
           <h1 className="mt-2 text-3xl font-extrabold tracking-tight text-slate-950">
@@ -131,7 +130,7 @@ export default function AdminDashboardPage() {
         <div className="border border-slate-200 bg-white">
           <div className="grid grid-cols-2 divide-x divide-y divide-slate-200 md:grid-cols-4 md:divide-y-0">
             <div className="p-6">
-              <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">
+              <p className="text-xs font-semibold tracking-wide text-slate-600 uppercase">
                 Logs
               </p>
               <p className="mt-2 text-2xl font-extrabold tracking-tight text-slate-950">
@@ -139,7 +138,7 @@ export default function AdminDashboardPage() {
               </p>
             </div>
             <div className="p-6">
-              <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">
+              <p className="text-xs font-semibold tracking-wide text-slate-600 uppercase">
                 Errors
               </p>
               <p className="mt-2 text-2xl font-extrabold tracking-tight text-slate-950">
@@ -147,7 +146,7 @@ export default function AdminDashboardPage() {
               </p>
             </div>
             <div className="p-6">
-              <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">
+              <p className="text-xs font-semibold tracking-wide text-slate-600 uppercase">
                 Doctors
               </p>
               <p className="mt-2 text-2xl font-extrabold tracking-tight text-slate-950">
@@ -155,7 +154,7 @@ export default function AdminDashboardPage() {
               </p>
             </div>
             <div className="p-6">
-              <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">
+              <p className="text-xs font-semibold tracking-wide text-slate-600 uppercase">
                 Nurses
               </p>
               <p className="mt-2 text-2xl font-extrabold tracking-tight text-slate-950">
@@ -207,7 +206,10 @@ export default function AdminDashboardPage() {
                   Failed to load logs
                 </div>
               ) : logsQuery.data?.length === 0 ? (
-                <EmptyState title="No logs" description="Nothing recorded yet." />
+                <EmptyState
+                  title="No logs"
+                  description="Nothing recorded yet."
+                />
               ) : (
                 <LogTable logs={logsQuery.data ?? []} />
               )}
@@ -233,7 +235,10 @@ export default function AdminDashboardPage() {
                 <UserTable
                   users={doctorsQuery.data ?? []}
                   onDelete={handleDeleteDoctor}
-                  isDeleting={deleteDoctorMutation.isPending || forceDeleteDoctorMutation.isPending}
+                  isDeleting={
+                    deleteDoctorMutation.isPending ||
+                    forceDeleteDoctorMutation.isPending
+                  }
                 />
               )}
             </div>
@@ -292,12 +297,12 @@ export default function AdminDashboardPage() {
                 This doctor has appointments.
               </p>
               <p className="mt-2 text-sm leading-6 text-slate-700">
-                If you continue, we will delete the doctor and also delete all of
-                their appointments and related medications.
+                If you continue, we will delete the doctor and also delete all
+                of their appointments and related medications.
               </p>
               {forceDeleteDoctor ? (
                 <div className="mt-4 border border-slate-200 bg-white p-4">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">
+                  <p className="text-xs font-semibold tracking-wide text-slate-600 uppercase">
                     Doctor
                   </p>
                   <p className="mt-2 text-sm font-semibold text-slate-950">

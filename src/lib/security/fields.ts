@@ -46,30 +46,56 @@ export function decryptUserFields<T extends EncryptableRecord>(record: T): T {
   return decryptFields(record, USER_ENCRYPTED_FIELDS as unknown as (keyof T)[]);
 }
 
-export function encryptAppointmentFields<T extends EncryptableRecord>(record: T): T {
-  return encryptFields(record, APPOINTMENT_ENCRYPTED_FIELDS as unknown as (keyof T)[]);
+export function encryptAppointmentFields<T extends EncryptableRecord>(
+  record: T
+): T {
+  return encryptFields(
+    record,
+    APPOINTMENT_ENCRYPTED_FIELDS as unknown as (keyof T)[]
+  );
 }
 
-export function decryptAppointmentFields<T extends EncryptableRecord>(record: T): T {
-  return decryptFields(record, APPOINTMENT_ENCRYPTED_FIELDS as unknown as (keyof T)[]);
+export function decryptAppointmentFields<T extends EncryptableRecord>(
+  record: T
+): T {
+  return decryptFields(
+    record,
+    APPOINTMENT_ENCRYPTED_FIELDS as unknown as (keyof T)[]
+  );
 }
 
-export function encryptMedicationFields<T extends EncryptableRecord>(record: T): T {
-  return encryptFields(record, MEDICATION_ENCRYPTED_FIELDS as unknown as (keyof T)[]);
+export function encryptMedicationFields<T extends EncryptableRecord>(
+  record: T
+): T {
+  return encryptFields(
+    record,
+    MEDICATION_ENCRYPTED_FIELDS as unknown as (keyof T)[]
+  );
 }
 
-export function decryptMedicationFields<T extends EncryptableRecord>(record: T): T {
-  return decryptFields(record, MEDICATION_ENCRYPTED_FIELDS as unknown as (keyof T)[]);
+export function decryptMedicationFields<T extends EncryptableRecord>(
+  record: T
+): T {
+  return decryptFields(
+    record,
+    MEDICATION_ENCRYPTED_FIELDS as unknown as (keyof T)[]
+  );
 }
 
-export function decryptUserRecords<T extends EncryptableRecord>(records: T[]): T[] {
+export function decryptUserRecords<T extends EncryptableRecord>(
+  records: T[]
+): T[] {
   return records.map(decryptUserFields);
 }
 
-export function decryptAppointmentRecords<T extends EncryptableRecord>(records: T[]): T[] {
+export function decryptAppointmentRecords<T extends EncryptableRecord>(
+  records: T[]
+): T[] {
   return records.map(decryptAppointmentFields);
 }
 
-export function decryptMedicationRecords<T extends EncryptableRecord>(records: T[]): T[] {
+export function decryptMedicationRecords<T extends EncryptableRecord>(
+  records: T[]
+): T[] {
   return records.map(decryptMedicationFields);
 }

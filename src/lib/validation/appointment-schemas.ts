@@ -31,6 +31,10 @@ export const updateDiagnosisSchema = v.object({
   ),
 });
 
-export type CreateAppointmentInput = v.InferInput<typeof createAppointmentSchema>;
+export type CreateAppointmentInput = v.InferInput<
+  typeof createAppointmentSchema
+>;
 export type UpdateDiagnosisInput = v.InferInput<typeof updateDiagnosisSchema>;
-export type AppointmentResponseInput = v.InferInput<typeof appointmentResponseSchema>;
+export type AppointmentResponseInput = v.InferInput<
+  typeof appointmentResponseSchema
+>;

@@ -15,7 +15,9 @@ export class CompositeLogger extends BaseLogger {
   }
 
   getAuditLogger(): AuditLogger | undefined {
-    return this.loggers.find((l) => l instanceof AuditLogger) as AuditLogger | undefined;
+    return this.loggers.find((l) => l instanceof AuditLogger) as
+      | AuditLogger
+      | undefined;
   }
 
   debug(params: LoggerParams) {

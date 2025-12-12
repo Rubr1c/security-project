@@ -41,7 +41,10 @@ export function DiagnosisForm({
       {
         onSuccess: () => {
           onSuccess?.();
-          toast.success('Diagnosis saved', `Appointment #${appointmentId} updated.`);
+          toast.success(
+            'Diagnosis saved',
+            `Appointment #${appointmentId} updated.`
+          );
         },
       }
     );

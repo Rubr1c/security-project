@@ -15,4 +15,3 @@ export const logs = {
     return response.data;
   },
 };
-

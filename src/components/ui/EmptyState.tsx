@@ -17,7 +17,9 @@ export function EmptyState({ icon, title, description }: EmptyStateProps) {
           {icon || <Inbox className="h-5 w-5" />}
         </div>
         <div className="min-w-0">
-          <p className="truncate text-sm font-semibold text-slate-950">{title}</p>
+          <p className="truncate text-sm font-semibold text-slate-950">
+            {title}
+          </p>
           {description && (
             <p className="mt-1 text-sm text-slate-600">{description}</p>
           )}

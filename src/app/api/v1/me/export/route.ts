@@ -28,11 +28,7 @@ export async function GET() {
   const userId = session.userId;
 
   // Fetch User Profile
-  const user = db
-    .select()
-    .from(users)
-    .where(eq(users.id, userId))
-    .get();
+  const user = db.select().from(users).where(eq(users.id, userId)).get();
 
   if (!user) {
     return NextResponse.json(
@@ -49,8 +45,8 @@ export async function GET() {
     .all();
 
   // Fetch All Medications
-  let userMedications: typeof medications.$inferSelect[] = [];
-  
+  let userMedications: (typeof medications.$inferSelect)[] = [];
+
   if (userAppointments.length > 0) {
     const appointmentIds = userAppointments.map((a) => a.id);
     userMedications = db

@@ -4,12 +4,7 @@ import { useState, useMemo } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { MedicationCard } from '@/components/cards/MedicationCard';
 import { AddMedicationForm } from '@/components/forms/AddMedicationForm';
-import {
-  Button,
-  Modal,
-  EmptyState,
-  LoadingSpinner,
-} from '@/components/ui';
+import { Button, Modal, EmptyState, LoadingSpinner } from '@/components/ui';
 import {
   useAppointments,
   useAppointmentMedications,
@@ -62,7 +57,7 @@ export default function NurseDashboardPage() {
     <DashboardLayout allowedRoles={['nurse']}>
       <div className="grid gap-9">
         <div className="border-l-4 border-teal-600 pl-6">
-          <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">
+          <p className="text-xs font-semibold tracking-wide text-slate-600 uppercase">
             Nurse
           </p>
           <h1 className="mt-2 text-3xl font-extrabold tracking-tight text-slate-950">
@@ -75,7 +70,7 @@ export default function NurseDashboardPage() {
 
         <div className="grid gap-6 border border-slate-200 bg-white p-6 md:grid-cols-2">
           <div className="border border-slate-200 bg-slate-50 p-6">
-            <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">
+            <p className="text-xs font-semibold tracking-wide text-slate-600 uppercase">
               Assigned doctor
             </p>
             <div className="mt-3 flex items-center justify-between gap-6">
@@ -92,7 +87,7 @@ export default function NurseDashboardPage() {
           </div>
 
           <div className="border border-slate-200 bg-slate-50 p-6">
-            <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">
+            <p className="text-xs font-semibold tracking-wide text-slate-600 uppercase">
               Completed appointments
             </p>
             <p className="mt-2 text-2xl font-extrabold tracking-tight text-slate-950">
@@ -116,7 +111,7 @@ export default function NurseDashboardPage() {
               <p className="text-sm font-semibold text-slate-950">
                 Completed appointments
               </p>
-              <span className="text-xs font-semibold uppercase tracking-wide text-slate-600">
+              <span className="text-xs font-semibold tracking-wide text-slate-600 uppercase">
                 Add / review meds
               </span>
             </div>
@@ -138,10 +133,13 @@ export default function NurseDashboardPage() {
             ) : (
               <div className="grid gap-6">
                 {doctorAppointments.map((appointment) => (
-                  <div key={appointment.id} className="border border-slate-200 bg-white p-6">
+                  <div
+                    key={appointment.id}
+                    className="border border-slate-200 bg-white p-6"
+                  >
                     <div className="flex flex-wrap items-start justify-between gap-6">
                       <div className="min-w-0">
-                        <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">
+                        <p className="text-xs font-semibold tracking-wide text-slate-600 uppercase">
                           Patient
                         </p>
                         <p className="mt-2 truncate text-sm font-extrabold tracking-tight text-slate-950">
@@ -173,7 +171,7 @@ export default function NurseDashboardPage() {
 
                     {appointment.diagnosis && (
                       <div className="mt-6 border-l-4 border-teal-600 bg-slate-50 p-6">
-                        <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">
+                        <p className="text-xs font-semibold tracking-wide text-slate-600 uppercase">
                           Diagnosis
                         </p>
                         <p className="mt-2 text-sm leading-6 text-slate-900">
@@ -196,7 +194,7 @@ export default function NurseDashboardPage() {
           {selectedAppointment && (
             <div className="grid gap-6">
               <div className="border border-slate-200 bg-slate-50 p-6">
-                <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">
+                <p className="text-xs font-semibold tracking-wide text-slate-600 uppercase">
                   Patient
                 </p>
                 <p className="mt-2 text-sm font-extrabold tracking-tight text-slate-950">

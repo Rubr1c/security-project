@@ -9,9 +9,7 @@ interface CardProps {
 
 export function Card({ children, className = '' }: CardProps) {
   return (
-    <div
-      className={`rounded-md border border-slate-200 bg-white ${className}`}
-    >
+    <div className={`rounded-md border border-slate-200 bg-white ${className}`}>
       {children}
     </div>
   );

@@ -121,8 +121,9 @@ export async function GET(_req: Request, { params }: RouteParams) {
       .all();
   }
 
-
-  logger.getAuditLogger()?.logPhiAccess(userId, patientId, 'Patient Record', patientId);
+  logger
+    .getAuditLogger()
+    ?.logPhiAccess(userId, patientId, 'Patient Record', patientId);
 
   return NextResponse.json({
     ...decryptUserFields(patient[0]),
@@ -130,4 +131,3 @@ export async function GET(_req: Request, { params }: RouteParams) {
     medications: decryptMedicationRecords(patientMedications),
   });
 }
-

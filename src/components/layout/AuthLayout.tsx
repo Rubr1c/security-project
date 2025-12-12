@@ -10,13 +10,13 @@ interface AuthLayoutProps {
 export function AuthLayout({ children, title, subtitle }: AuthLayoutProps) {
   return (
     <div className="flex min-h-dvh flex-col items-center justify-center bg-slate-50 px-6 py-12">
-      <div className="flex items-center gap-3 mb-8">
-        <div className="grid h-10 w-10 place-items-center border border-slate-300 bg-white text-base font-extrabold tracking-tight text-teal-700 shadow-sm rounded-md">
+      <div className="mb-8 flex items-center gap-3">
+        <div className="grid h-10 w-10 place-items-center rounded-md border border-slate-300 bg-white text-base font-extrabold tracking-tight text-teal-700 shadow-sm">
           HC
         </div>
         <div>
           <p className="text-base font-bold text-slate-950">HealthCare</p>
-          <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+          <p className="text-[10px] font-bold tracking-wider text-slate-500 uppercase">
             Secure portal
           </p>
         </div>
@@ -34,9 +34,7 @@ export function AuthLayout({ children, title, subtitle }: AuthLayoutProps) {
           {children}
         </div>
 
-        <div className="mt-8 flex justify-center">
-    
-        </div>
+        <div className="mt-8 flex justify-center"></div>
       </div>
     </div>
   );

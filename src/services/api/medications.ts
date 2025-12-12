@@ -7,4 +7,3 @@ export const medications = {
     return response.data;
   },
 };
-

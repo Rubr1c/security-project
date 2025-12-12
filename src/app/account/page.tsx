@@ -11,7 +11,7 @@ import { Modal } from '@/components/ui/Modal';
 export default function AccountPage() {
   const user = useAuthStore((s) => s.user);
   const router = useRouter();
-  
+
   const [isExporting, setIsExporting] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -21,7 +21,7 @@ export default function AccountPage() {
     try {
       const res = await fetch('/api/v1/me/export');
       if (!res.ok) throw new Error('Export failed');
-      
+
       const blob = await res.blob();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -44,8 +44,8 @@ export default function AccountPage() {
     try {
       const res = await fetch('/api/v1/me', { method: 'DELETE' });
       if (!res.ok) throw new Error('Deletion failed');
-      
-      window.location.href = '/'; 
+
+      window.location.href = '/';
     } catch (error) {
       console.error(error);
       alert('Failed to delete account.');
@@ -92,32 +92,38 @@ export default function AccountPage() {
             Data Privacy & Compliance
           </p>
           <div className="mt-6 flex flex-col gap-6">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <p className="text-sm font-medium text-slate-900">Right to Portability</p>
-                <p className="text-sm text-slate-500 mt-1">
-                  Download a complete copy of your personal data, appointments, and medications in JSON format.
+                <p className="text-sm font-medium text-slate-900">
+                  Right to Portability
+                </p>
+                <p className="mt-1 text-sm text-slate-500">
+                  Download a complete copy of your personal data, appointments,
+                  and medications in JSON format.
                 </p>
               </div>
-              <Button 
-                variant="secondary" 
-                onClick={handleExport} 
+              <Button
+                variant="secondary"
+                onClick={handleExport}
                 isLoading={isExporting}
                 className="shrink-0"
               >
                 Download Medical Records
               </Button>
             </div>
-            
-            <div className="border-t border-slate-100 pt-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+
+            <div className="flex flex-col gap-4 border-t border-slate-100 pt-6 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <p className="text-sm font-medium text-slate-900">Right to Erasure</p>
-                <p className="text-sm text-slate-500 mt-1">
-                  Permanently delete your account. This action will anonymize your data and revoke access.
+                <p className="text-sm font-medium text-slate-900">
+                  Right to Erasure
+                </p>
+                <p className="mt-1 text-sm text-slate-500">
+                  Permanently delete your account. This action will anonymize
+                  your data and revoke access.
                 </p>
               </div>
-              <Button 
-                variant="danger" 
+              <Button
+                variant="danger"
                 onClick={() => setShowDeleteModal(true)}
                 className="shrink-0"
               >
@@ -128,9 +134,9 @@ export default function AccountPage() {
         </div>
       </div>
 
-      <Modal 
-        isOpen={showDeleteModal} 
-        onClose={() => setShowDeleteModal(false)} 
+      <Modal
+        isOpen={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
         title="Confirm Account Deletion"
       >
         <div className="space-y-6">
@@ -142,11 +148,16 @@ export default function AccountPage() {
                 </h3>
                 <div className="mt-2 text-sm text-red-700">
                   <p>
-                    Are you sure you want to delete your account? This action is <strong>irreversible</strong>.
+                    Are you sure you want to delete your account? This action is{' '}
+                    <strong>irreversible</strong>.
                   </p>
-                  <ul role="list" className="list-disc space-y-1 pl-5 mt-2">
-                    <li>Your personal information will be permanently anonymized.</li>
-                    <li>You will lose access to all medical records immediately.</li>
+                  <ul role="list" className="mt-2 list-disc space-y-1 pl-5">
+                    <li>
+                      Your personal information will be permanently anonymized.
+                    </li>
+                    <li>
+                      You will lose access to all medical records immediately.
+                    </li>
                     <li>Future logins will be disabled.</li>
                   </ul>
                 </div>
@@ -155,16 +166,16 @@ export default function AccountPage() {
           </div>
 
           <div className="flex flex-col gap-3 pt-4">
-            <Button 
-              variant="danger" 
-              onClick={handleDelete} 
+            <Button
+              variant="danger"
+              onClick={handleDelete}
               isLoading={isDeleting}
               className="w-full justify-center"
             >
               Requirements Met: Yes, Delete My Account
             </Button>
-            <Button 
-              variant="secondary" 
+            <Button
+              variant="secondary"
               onClick={() => setShowDeleteModal(false)}
               className="w-full justify-center"
             >
@@ -176,5 +187,3 @@ export default function AccountPage() {
     </DashboardLayout>
   );
 }
-
-

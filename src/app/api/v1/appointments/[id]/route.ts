@@ -5,7 +5,10 @@ import { logger } from '@/lib/logger';
 import { getSession } from '@/lib/auth/get-session';
 import { NextResponse } from 'next/server';
 import { eq } from 'drizzle-orm';
-import { decryptUserFields, decryptAppointmentFields } from '@/lib/security/fields';
+import {
+  decryptUserFields,
+  decryptAppointmentFields,
+} from '@/lib/security/fields';
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -120,4 +123,3 @@ export async function GET(_req: Request, { params }: RouteParams) {
     patient: patient[0] ? decryptUserFields(patient[0]) : null,
   });
 }
-

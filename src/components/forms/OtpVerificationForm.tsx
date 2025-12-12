@@ -29,7 +29,7 @@ export function OtpVerificationForm({ email }: { email: string }) {
         <p className="text-xs font-semibold tracking-wide text-slate-600 uppercase">
           Code sent to
         </p>
-        <p className="mt-2 text-sm font-semibold text-slate-950 break-words">
+        <p className="mt-2 text-sm font-semibold break-words text-slate-950">
           {email}
         </p>
         <p className="mt-2 text-sm text-slate-700">
@@ -97,5 +97,3 @@ export function OtpVerificationForm({ email }: { email: string }) {
     </div>
   );
 }
-
-

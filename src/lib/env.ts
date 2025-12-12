@@ -1,7 +1,10 @@
 import * as v from 'valibot';
 
 const envSchema = v.object({
-  NODE_ENV: v.optional(v.picklist(['development', 'production', 'test']), 'development'),
+  NODE_ENV: v.optional(
+    v.picklist(['development', 'production', 'test']),
+    'development'
+  ),
   JWT_SECRET: v.string(),
   ARCJET_KEY: v.string(),
   GMAIL_USER: v.string(),

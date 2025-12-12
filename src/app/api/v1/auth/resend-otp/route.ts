@@ -42,7 +42,9 @@ export async function POST(req: Request) {
     .where(eq(users.emailHash, emailHashValue));
 
   if (!user) {
-    return NextResponse.json({ message: 'If the email exists, a code was sent.' });
+    return NextResponse.json({
+      message: 'If the email exists, a code was sent.',
+    });
   }
 
   const now = Date.now();
@@ -81,5 +83,3 @@ export async function POST(req: Request) {
 
   return NextResponse.json({ message: 'Code sent' }, { status: STATUS.OK });
 }
-
-

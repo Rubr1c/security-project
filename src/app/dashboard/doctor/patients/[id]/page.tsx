@@ -18,7 +18,11 @@ export default function PatientDetailPage() {
   const router = useRouter();
   const id = params.id as string;
 
-  const { data: patient, isPending, isError } = useQuery({
+  const {
+    data: patient,
+    isPending,
+    isError,
+  } = useQuery({
     queryKey: ['patient', id],
     queryFn: async () => {
       const res = await apiClient.get<PatientDetails>(`/patients/${id}`);
@@ -59,7 +63,9 @@ export default function PatientDetailPage() {
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <div>
-            <h1 className="text-2xl font-bold text-slate-900">{patient.name}</h1>
+            <h1 className="text-2xl font-bold text-slate-900">
+              {patient.name}
+            </h1>
             <p className="text-sm text-slate-500">{patient.email}</p>
           </div>
         </div>
@@ -71,16 +77,22 @@ export default function PatientDetailPage() {
               <div className="grid h-10 w-10 place-items-center rounded-full bg-teal-50 text-teal-600">
                 <User className="h-5 w-5" />
               </div>
-              <h2 className="font-semibold text-slate-900">Patient Information</h2>
+              <h2 className="font-semibold text-slate-900">
+                Patient Information
+              </h2>
             </div>
             <div className="mt-4 space-y-3">
               <div className="flex justify-between border-b border-slate-50 py-2">
                 <span className="text-sm text-slate-500">ID</span>
-                <span className="text-sm font-medium text-slate-900">{patient.id}</span>
+                <span className="text-sm font-medium text-slate-900">
+                  {patient.id}
+                </span>
               </div>
               <div className="flex justify-between border-b border-slate-50 py-2">
                 <span className="text-sm text-slate-500">Role</span>
-                <span className="text-sm font-medium text-slate-900 capitalize">{patient.role}</span>
+                <span className="text-sm font-medium text-slate-900 capitalize">
+                  {patient.role}
+                </span>
               </div>
               <div className="flex justify-between pt-2">
                 <span className="text-sm text-slate-500">Joined</span>
@@ -93,16 +105,24 @@ export default function PatientDetailPage() {
 
           {/* Stats Card */}
           <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-             <div className="grid grid-cols-2 gap-4">
-                <div className="rounded-md bg-slate-50 p-4">
-                  <p className="text-xs font-medium text-slate-500 uppercase">Appointments</p>
-                  <p className="mt-2 text-3xl font-bold text-slate-900">{patient.appointments.length}</p>
-                </div>
-                <div className="rounded-md bg-slate-50 p-4">
-                  <p className="text-xs font-medium text-slate-500 uppercase">Medications</p>
-                  <p className="mt-2 text-3xl font-bold text-slate-900">{patient.medications.length}</p>
-                </div>
-             </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="rounded-md bg-slate-50 p-4">
+                <p className="text-xs font-medium text-slate-500 uppercase">
+                  Appointments
+                </p>
+                <p className="mt-2 text-3xl font-bold text-slate-900">
+                  {patient.appointments.length}
+                </p>
+              </div>
+              <div className="rounded-md bg-slate-50 p-4">
+                <p className="text-xs font-medium text-slate-500 uppercase">
+                  Medications
+                </p>
+                <p className="mt-2 text-3xl font-bold text-slate-900">
+                  {patient.medications.length}
+                </p>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -112,25 +132,38 @@ export default function PatientDetailPage() {
           <section className="space-y-4">
             <div className="flex items-center gap-2">
               <FileText className="h-5 w-5 text-slate-400" />
-              <h3 className="font-semibold text-slate-900">Appointment History</h3>
+              <h3 className="font-semibold text-slate-900">
+                Appointment History
+              </h3>
             </div>
             <div className="rounded-lg border border-slate-200 bg-white shadow-sm">
               {patient.appointments.length === 0 ? (
-                <div className="p-8 text-center text-sm text-slate-500">No appointments recorded.</div>
+                <div className="p-8 text-center text-sm text-slate-500">
+                  No appointments recorded.
+                </div>
               ) : (
                 <div className="divide-y divide-slate-100">
                   {patient.appointments.map((apt) => (
                     <div key={apt.id} className="p-4 hover:bg-slate-50">
                       <div className="flex justify-between">
-                         <span className="font-medium text-slate-900">{new Date(apt.date).toLocaleDateString()}</span>
-                         <span className={`px-2 py-1 text-xs rounded-full font-medium capitalize 
-                           ${apt.status === 'confirmed' ? 'bg-green-100 text-green-700' : 
-                             apt.status === 'pending' ? 'bg-yellow-100 text-yellow-700' : 
-                             'bg-slate-100 text-slate-700'}`}>
-                           {apt.status}
-                         </span>
+                        <span className="font-medium text-slate-900">
+                          {new Date(apt.date).toLocaleDateString()}
+                        </span>
+                        <span
+                          className={`rounded-full px-2 py-1 text-xs font-medium capitalize ${
+                            apt.status === 'confirmed'
+                              ? 'bg-green-100 text-green-700'
+                              : apt.status === 'pending'
+                                ? 'bg-yellow-100 text-yellow-700'
+                                : 'bg-slate-100 text-slate-700'
+                          }`}
+                        >
+                          {apt.status}
+                        </span>
                       </div>
-                      <p className="mt-1 text-sm text-slate-500">{apt.diagnosis || 'No diagnosis yet'}</p>
+                      <p className="mt-1 text-sm text-slate-500">
+                        {apt.diagnosis || 'No diagnosis yet'}
+                      </p>
                     </div>
                   ))}
                 </div>
@@ -145,14 +178,18 @@ export default function PatientDetailPage() {
               <h3 className="font-semibold text-slate-900">Medications</h3>
             </div>
             <div className="rounded-lg border border-slate-200 bg-white shadow-sm">
-            {patient.medications.length === 0 ? (
-                <div className="p-8 text-center text-sm text-slate-500">No medications recorded.</div>
+              {patient.medications.length === 0 ? (
+                <div className="p-8 text-center text-sm text-slate-500">
+                  No medications recorded.
+                </div>
               ) : (
                 <div className="divide-y divide-slate-100">
                   {patient.medications.map((med) => (
                     <div key={med.id} className="p-4 hover:bg-slate-50">
                       <p className="font-medium text-slate-900">{med.name}</p>
-                      <p className="text-sm text-slate-600">{med.dosage} - {med.instructions}</p>
+                      <p className="text-sm text-slate-600">
+                        {med.dosage} - {med.instructions}
+                      </p>
                     </div>
                   ))}
                 </div>

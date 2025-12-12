@@ -192,7 +192,7 @@ export function DashboardLayout({
           <header className="border-b border-slate-200 bg-white">
             <div className="flex items-center justify-between px-6 py-3">
               <div className="min-w-0">
-                <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">
+                <p className="text-xs font-semibold tracking-wide text-slate-600 uppercase">
                   {roleLabel}
                 </p>
                 <p className="truncate text-sm font-semibold text-slate-950">

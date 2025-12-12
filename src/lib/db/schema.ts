@@ -33,10 +33,12 @@ export const users = sqliteTable(
       sql`NULL`
     ),
 
-    passwordResetToken: text('password_reset_token').unique().default(sql`NULL`),
-    passwordResetTokenExpiresAt: text('password_reset_token_expires_at').default(
-      sql`NULL`
-    ),
+    passwordResetToken: text('password_reset_token')
+      .unique()
+      .default(sql`NULL`),
+    passwordResetTokenExpiresAt: text(
+      'password_reset_token_expires_at'
+    ).default(sql`NULL`),
 
     createdAt: text('created_at')
       .default(sql`CURRENT_TIMESTAMP`)

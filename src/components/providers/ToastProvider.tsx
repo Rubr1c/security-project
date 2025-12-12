@@ -94,7 +94,7 @@ function ToastViewport({
 }) {
   return (
     <div
-      className="fixed right-3 top-3 z-50 grid w-[360px] max-w-[calc(100vw-24px)] gap-3"
+      className="fixed top-3 right-3 z-50 grid w-[360px] max-w-[calc(100vw-24px)] gap-3"
       aria-live="polite"
       aria-relevant="additions text"
     >
@@ -112,12 +112,14 @@ function ToastCard({
   toast: ToastInternal;
   onClose: () => void;
 }) {
-  const styles: Record<ToastVariant, { bar: string; bg: string; text: string }> =
-    {
-      success: { bar: 'bg-teal-600', bg: 'bg-white', text: 'text-slate-950' },
-      info: { bar: 'bg-slate-700', bg: 'bg-white', text: 'text-slate-950' },
-      error: { bar: 'bg-red-600', bg: 'bg-white', text: 'text-slate-950' },
-    };
+  const styles: Record<
+    ToastVariant,
+    { bar: string; bg: string; text: string }
+  > = {
+    success: { bar: 'bg-teal-600', bg: 'bg-white', text: 'text-slate-950' },
+    info: { bar: 'bg-slate-700', bg: 'bg-white', text: 'text-slate-950' },
+    error: { bar: 'bg-red-600', bg: 'bg-white', text: 'text-slate-950' },
+  };
 
   const s = styles[toast.variant];
 
@@ -145,5 +147,3 @@ function ToastCard({
     </div>
   );
 }
-
-

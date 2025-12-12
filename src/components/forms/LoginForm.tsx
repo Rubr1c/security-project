@@ -54,9 +54,9 @@ export function LoginForm() {
 
         <div className="flex justify-end">
           <Link
-             href={`/auth/forgot-password${
-               emailValue ? `?email=${encodeURIComponent(emailValue)}` : ''
-             }`}
+            href={`/auth/forgot-password${
+              emailValue ? `?email=${encodeURIComponent(emailValue)}` : ''
+            }`}
             className="text-sm font-medium text-teal-600 hover:text-teal-500"
           >
             Forgot password?

@@ -88,7 +88,9 @@ export async function GET(_req: Request, { params }: RouteParams) {
     .where(inArray(medications.appointmentId, apptIds))
     .all();
 
-  logger.getAuditLogger()?.logPhiAccess(doctorId, patientId, 'Patient Medications', patientId);
+  logger
+    .getAuditLogger()
+    ?.logPhiAccess(doctorId, patientId, 'Patient Medications', patientId);
 
   return NextResponse.json(decryptMedicationRecords(meds));
 }

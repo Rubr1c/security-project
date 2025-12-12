@@ -16,23 +16,23 @@ export function UserTable({ users, onDelete, isDeleting }: UserTableProps) {
       <table className="w-full border-collapse">
         <thead>
           <tr className="border-b border-slate-200">
-            <th className="px-3 py-3 text-left text-[11px] font-semibold uppercase tracking-wide text-slate-600">
+            <th className="px-3 py-3 text-left text-[11px] font-semibold tracking-wide text-slate-600 uppercase">
               ID
             </th>
-            <th className="px-3 py-3 text-left text-[11px] font-semibold uppercase tracking-wide text-slate-600">
+            <th className="px-3 py-3 text-left text-[11px] font-semibold tracking-wide text-slate-600 uppercase">
               Name
             </th>
-            <th className="px-3 py-3 text-left text-[11px] font-semibold uppercase tracking-wide text-slate-600">
+            <th className="px-3 py-3 text-left text-[11px] font-semibold tracking-wide text-slate-600 uppercase">
               Email
             </th>
-            <th className="px-3 py-3 text-left text-[11px] font-semibold uppercase tracking-wide text-slate-600">
+            <th className="px-3 py-3 text-left text-[11px] font-semibold tracking-wide text-slate-600 uppercase">
               Role
             </th>
-            <th className="px-3 py-3 text-left text-[11px] font-semibold uppercase tracking-wide text-slate-600">
+            <th className="px-3 py-3 text-left text-[11px] font-semibold tracking-wide text-slate-600 uppercase">
               Created
             </th>
             {onDelete && (
-              <th className="px-3 py-3 text-right text-[11px] font-semibold uppercase tracking-wide text-slate-600">
+              <th className="px-3 py-3 text-right text-[11px] font-semibold tracking-wide text-slate-600 uppercase">
                 Actions
               </th>
             )}
@@ -41,7 +41,7 @@ export function UserTable({ users, onDelete, isDeleting }: UserTableProps) {
         <tbody className="divide-y divide-slate-200">
           {users.map((user) => (
             <tr key={user.id} className="hover:bg-slate-50">
-              <td className="whitespace-nowrap px-3 py-3 text-sm text-slate-700">
+              <td className="px-3 py-3 text-sm whitespace-nowrap text-slate-700">
                 {user.id}
               </td>
               <td className="px-3 py-3">
@@ -56,11 +56,11 @@ export function UserTable({ users, onDelete, isDeleting }: UserTableProps) {
               </td>
               <td className="px-3 py-3 text-sm text-slate-700">{user.email}</td>
               <td className="px-3 py-3">
-                <span className="inline-flex items-center border border-slate-300 px-2 py-1 text-[11px] font-semibold uppercase tracking-wide text-slate-700">
+                <span className="inline-flex items-center border border-slate-300 px-2 py-1 text-[11px] font-semibold tracking-wide text-slate-700 uppercase">
                   {user.role}
                 </span>
               </td>
-              <td className="whitespace-nowrap px-3 py-3 text-sm text-slate-700">
+              <td className="px-3 py-3 text-sm whitespace-nowrap text-slate-700">
                 {new Date(user.createdAt).toLocaleDateString()}
               </td>
               {onDelete && (

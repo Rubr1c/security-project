@@ -9,7 +9,7 @@ export default function ForbiddenPage() {
         <div className="w-full max-w-[720px] border border-slate-200 bg-white">
           <div className="grid gap-6 px-6 py-12 md:grid-cols-[180px_1fr]">
             <div className="border border-slate-200 bg-slate-50 p-6">
-              <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">
+              <p className="text-xs font-semibold tracking-wide text-slate-600 uppercase">
                 Error
               </p>
               <p className="mt-3 text-4xl font-extrabold tracking-tight text-slate-950">

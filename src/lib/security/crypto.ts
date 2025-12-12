@@ -14,9 +14,7 @@ function getEncryptionKey(): Buffer {
   }
 
   if (key.length !== 64) {
-    throw new Error(
-      'ENCRYPTION_KEY must be 64 hex characters (32 bytes)'
-    );
+    throw new Error('ENCRYPTION_KEY must be 64 hex characters (32 bytes)');
   }
 
   return Buffer.from(key, 'hex');
@@ -90,7 +88,9 @@ export function isEncrypted(text: string): boolean {
     const ivBuffer = Buffer.from(iv, 'base64');
     const authTagBuffer = Buffer.from(authTag, 'base64');
 
-    return ivBuffer.length === IV_LENGTH && authTagBuffer.length === AUTH_TAG_LENGTH;
+    return (
+      ivBuffer.length === IV_LENGTH && authTagBuffer.length === AUTH_TAG_LENGTH
+    );
   } catch {
     return false;
   }
@@ -103,4 +103,3 @@ export function hashEmail(email: string): string {
   const normalized = email.toLowerCase().trim();
   return crypto.createHash('sha256').update(normalized).digest('hex');
 }
-

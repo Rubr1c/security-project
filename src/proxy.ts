@@ -75,7 +75,10 @@ export async function proxy(req: NextRequest) {
     const headerToken = req.headers.get('x-csrf-token');
 
     if (!cookieToken || !headerToken || cookieToken !== headerToken) {
-      logger.warn({ message: 'CSRF token validation failed', meta: { pathname } });
+      logger.warn({
+        message: 'CSRF token validation failed',
+        meta: { pathname },
+      });
       return NextResponse.json(
         { error: 'Forbidden: Invalid CSRF token' },
         { status: STATUS.FORBIDDEN }

@@ -18,10 +18,7 @@ export default async function OtpPage(
   }
 
   return (
-    <AuthLayout
-      title="Check your email"
-      subtitle=""
-    >
+    <AuthLayout title="Check your email" subtitle="">
       <div className="grid gap-6">
         <OtpVerificationForm email={email} />
         <div className="text-center text-sm">

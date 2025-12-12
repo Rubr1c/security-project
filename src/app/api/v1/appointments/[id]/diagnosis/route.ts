@@ -87,12 +87,16 @@ export async function PUT(req: Request, { params }: RouteParams) {
       updatedAt: new Date().toISOString(),
     })
     .where(
-      and(eq(appointments.id, appointmentId), eq(appointments.doctorId, doctorId))
+      and(
+        eq(appointments.id, appointmentId),
+        eq(appointments.doctorId, doctorId)
+      )
     );
 
   if (updateResult.changes === 0) {
     logger.info({
-      message: 'Diagnosis update failed - appointment not found or not owned by doctor',
+      message:
+        'Diagnosis update failed - appointment not found or not owned by doctor',
       meta: { appointmentId, doctorId },
     });
 

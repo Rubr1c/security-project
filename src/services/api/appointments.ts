@@ -7,7 +7,6 @@ import {
 import { AddMedicationInput } from '@/lib/validation/medication-schemas';
 import { Appointment, Medication } from '@/lib/db/types';
 
-
 export const appointments = {
   list: async () => {
     const response = await apiClient.get<Appointment[]>('/appointments');

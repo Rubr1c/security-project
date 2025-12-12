@@ -4,10 +4,10 @@ import { logs } from '../db/schema';
 import { LogLevel } from '../db/types';
 import { BaseLogger } from './base-logger';
 
-export type AuditEventType = 
-  | 'PHI_ACCESS' 
-  | 'DATA_EXPORT' 
-  | 'ACCOUNT_DELETION' 
+export type AuditEventType =
+  | 'PHI_ACCESS'
+  | 'DATA_EXPORT'
+  | 'ACCOUNT_DELETION'
   | 'SECURITY_ALERT';
 
 export interface AuditLogMeta {
@@ -97,7 +97,12 @@ export class AuditLogger extends BaseLogger {
   /**
    * Logs PHI access by a doctor/staff.
    */
-  logPhiAccess(actorId: number | string, patientId: number | string, resource: string, resourceId: number | string) {
+  logPhiAccess(
+    actorId: number | string,
+    patientId: number | string,
+    resource: string,
+    resourceId: number | string
+  ) {
     const meta: AuditLogMeta = {
       event: 'PHI_ACCESS',
       actorId,
@@ -105,7 +110,7 @@ export class AuditLogger extends BaseLogger {
       resource,
       resourceId,
     };
-    
+
     this.info({
       message: `Doctor ${actorId} viewed ${resource} ${resourceId} for Patient ${patientId}`,
       meta,

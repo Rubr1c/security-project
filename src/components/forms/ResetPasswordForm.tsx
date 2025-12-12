@@ -46,19 +46,19 @@ export function ResetPasswordForm() {
   };
 
   if (!token) {
-     return (
-        <div className="grid gap-6 text-center">
-            <div className="rounded-md bg-red-50 p-4 text-sm text-red-700">
-                Invalid or missing token.
-            </div>
-            <Link
-                href="/auth/forgot-password"
-                className="text-sm font-medium text-indigo-600 hover:text-indigo-500"
-            >
-                Request a new link
-            </Link>
+    return (
+      <div className="grid gap-6 text-center">
+        <div className="rounded-md bg-red-50 p-4 text-sm text-red-700">
+          Invalid or missing token.
         </div>
-     )
+        <Link
+          href="/auth/forgot-password"
+          className="text-sm font-medium text-indigo-600 hover:text-indigo-500"
+        >
+          Request a new link
+        </Link>
+      </div>
+    );
   }
 
   if (successMessage) {

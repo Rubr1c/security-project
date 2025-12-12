@@ -40,7 +40,7 @@ export function Button({
 }: ButtonProps) {
   return (
     <button
-      className={`inline-flex cursor-pointer items-center justify-center gap-2 rounded-md font-semibold tracking-tight transition disabled:cursor-not-allowed disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-600/40 ${variantStyles[variant]} ${sizeStyles[size]} ${className}`}
+      className={`inline-flex cursor-pointer items-center justify-center gap-2 rounded-md font-semibold tracking-tight transition focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-600/40 disabled:cursor-not-allowed disabled:opacity-50 ${variantStyles[variant]} ${sizeStyles[size]} ${className}`}
       disabled={disabled || isLoading}
       {...props}
     >

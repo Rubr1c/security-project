@@ -27,5 +27,3 @@ export const sendPasswordResetEmail = async (email: string, token: string) => {
     `,
   });
 };
-
-

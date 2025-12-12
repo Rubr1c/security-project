@@ -10,5 +10,3 @@ export const roleRouteMap: Record<UserRole, `/dashboard/${string}`> = {
 export function getRoleRoute(role: UserRole): string {
   return roleRouteMap[role];
 }
-
-

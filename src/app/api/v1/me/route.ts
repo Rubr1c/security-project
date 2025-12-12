@@ -82,7 +82,7 @@ export async function DELETE() {
   // Anonymization (Soft Delete)
   const timestamp = Date.now();
   const randomSuffix = crypto.randomUUID();
-  
+
   try {
     db.update(users)
       .set({
@@ -90,7 +90,7 @@ export async function DELETE() {
         email: `deleted-${timestamp}-${randomSuffix}@healthcure.deleted`,
         emailHash: `deleted-${timestamp}-${randomSuffix}@healthcure.deleted`,
         passwordHash: 'DELETED_ACCOUNT_NO_LOGIN',
-        role: 'patient', 
+        role: 'patient',
         otpHash: null,
         pendingPasswordHash: null,
         pendingPasswordExpiresAt: null,
@@ -111,7 +111,6 @@ export async function DELETE() {
       { message: 'Account deleted and anonymized successfully.' },
       { status: STATUS.OK }
     );
-
   } catch (err: any) {
     logger.error({
       message: 'Failed to delete account',
@@ -125,4 +124,3 @@ export async function DELETE() {
     );
   }
 }
-

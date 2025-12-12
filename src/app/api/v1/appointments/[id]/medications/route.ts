@@ -107,7 +107,8 @@ export async function GET(_req: Request, { params }: RouteParams) {
       nurse[0].doctorId !== appointment[0].doctorId
     ) {
       logger.info({
-        message: 'Nurse not authorized to view medications for this appointment',
+        message:
+          'Nurse not authorized to view medications for this appointment',
         meta: {
           nurseId: userId,
           nurseAssignedDoctorId: nurse[0]?.doctorId,

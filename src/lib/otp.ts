@@ -15,7 +15,10 @@ export async function hashOtpCode(code: string): Promise<string> {
   return bcrypt.hash(code, 10);
 }
 
-export async function verifyOtpCode(code: string, hash: string): Promise<boolean> {
+export async function verifyOtpCode(
+  code: string,
+  hash: string
+): Promise<boolean> {
   return bcrypt.compare(code, hash);
 }
 
@@ -28,5 +31,3 @@ export function isExpired(expiresAtISO: string, now = Date.now()): boolean {
   if (Number.isNaN(expiresAt)) return true;
   return now > expiresAt;
 }
-
-

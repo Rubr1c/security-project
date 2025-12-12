@@ -28,7 +28,7 @@ export function AppointmentCard({
       <div className="grid gap-6 p-6">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="min-w-0">
-            <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">
+            <p className="text-xs font-semibold tracking-wide text-slate-600 uppercase">
               Appointment {appointment.id}
             </p>
             <div className="mt-2 flex items-center gap-2">
@@ -46,7 +46,7 @@ export function AppointmentCard({
             <div className="flex items-center gap-3 border border-slate-200 bg-slate-50 p-3">
               <Stethoscope className="h-4 w-4 text-teal-700" />
               <div className="min-w-0">
-                <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">
+                <p className="text-xs font-semibold tracking-wide text-slate-600 uppercase">
                   Doctor
                 </p>
                 <p className="truncate text-sm font-semibold text-slate-950">
@@ -59,7 +59,7 @@ export function AppointmentCard({
             <div className="flex items-center gap-3 border border-slate-200 bg-slate-50 p-3">
               <User className="h-4 w-4 text-teal-700" />
               <div className="min-w-0">
-                <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">
+                <p className="text-xs font-semibold tracking-wide text-slate-600 uppercase">
                   Patient
                 </p>
                 <p className="truncate text-sm font-semibold text-slate-950">
@@ -72,7 +72,7 @@ export function AppointmentCard({
 
         {appointment.diagnosis && (
           <div className="border-l-4 border-teal-600 bg-slate-50 p-6">
-            <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">
+            <p className="text-xs font-semibold tracking-wide text-slate-600 uppercase">
               Diagnosis
             </p>
             <p className="mt-2 text-sm leading-6 text-slate-900">

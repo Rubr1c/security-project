@@ -30,7 +30,7 @@ export function LogLevelBadge({ level }: LogLevelBadgeProps) {
 
   return (
     <span
-      className={`inline-flex items-center border px-2 py-1 text-[11px] font-semibold uppercase tracking-wide ${style.border} ${style.text}`}
+      className={`inline-flex items-center border px-2 py-1 text-[11px] font-semibold tracking-wide uppercase ${style.border} ${style.text}`}
     >
       {level}
     </span>

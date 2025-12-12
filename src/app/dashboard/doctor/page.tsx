@@ -6,23 +6,13 @@ import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { AppointmentCard } from '@/components/cards/AppointmentCard';
 import { DiagnosisForm } from '@/components/forms/DiagnosisForm';
 import { NurseAssignmentForm } from '@/components/forms/NurseAssignmentForm';
-import {
-  Button,
-  Modal,
-  EmptyState,
-  LoadingSpinner,
-} from '@/components/ui';
+import { Button, Modal, EmptyState, LoadingSpinner } from '@/components/ui';
 import { useAppointments } from '@/hooks/useAppointments';
 import { useUsers } from '@/hooks/useUsers';
 import { useAuthStore } from '@/store/auth';
 import type { Appointment } from '@/lib/db/types';
 import { useToast } from '@/components/providers/ToastProvider';
-import {
-  Users,
-  Plus,
-  Calendar,
-  FileText,
-} from 'lucide-react';
+import { Users, Plus, Calendar, FileText } from 'lucide-react';
 
 export default function DoctorDashboardPage() {
   const [selectedAppointment, setSelectedAppointment] =
@@ -52,7 +42,9 @@ export default function DoctorDashboardPage() {
       {
         onSuccess: () => {
           toast.success(
-            action === 'confirm' ? 'Appointment confirmed' : 'Appointment denied',
+            action === 'confirm'
+              ? 'Appointment confirmed'
+              : 'Appointment denied',
             `Appointment #${appointmentId}`
           );
         },
@@ -103,14 +95,15 @@ export default function DoctorDashboardPage() {
         <div className="flex flex-col gap-6 border border-slate-200 bg-white p-6">
           <div className="flex flex-wrap items-end justify-between gap-6">
             <div className="border-l-4 border-teal-600 pl-6">
-              <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">
+              <p className="text-xs font-semibold tracking-wide text-slate-600 uppercase">
                 Doctor
               </p>
               <h1 className="mt-2 text-3xl font-extrabold tracking-tight text-slate-950">
                 Appointment board
               </h1>
               <p className="mt-3 text-sm leading-6 text-slate-700">
-                Confirm requests, complete visits, and keep patient notes current.
+                Confirm requests, complete visits, and keep patient notes
+                current.
               </p>
             </div>
             <Button onClick={() => setAssignNurseModalOpen(true)}>
@@ -121,7 +114,7 @@ export default function DoctorDashboardPage() {
 
           <div className="grid grid-cols-3 gap-6 border-t border-slate-200 pt-6">
             <div className="border border-slate-200 bg-slate-50 p-6">
-              <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">
+              <p className="text-xs font-semibold tracking-wide text-slate-600 uppercase">
                 Pending
               </p>
               <p className="mt-2 text-2xl font-extrabold tracking-tight text-slate-950">
@@ -129,7 +122,7 @@ export default function DoctorDashboardPage() {
               </p>
             </div>
             <div className="border border-slate-200 bg-slate-50 p-6">
-              <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">
+              <p className="text-xs font-semibold tracking-wide text-slate-600 uppercase">
                 Confirmed
               </p>
               <p className="mt-2 text-2xl font-extrabold tracking-tight text-slate-950">
@@ -137,7 +130,7 @@ export default function DoctorDashboardPage() {
               </p>
             </div>
             <div className="border border-slate-200 bg-slate-50 p-6">
-              <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">
+              <p className="text-xs font-semibold tracking-wide text-slate-600 uppercase">
                 Nurses
               </p>
               <p className="mt-2 text-2xl font-extrabold tracking-tight text-slate-950">
@@ -151,7 +144,7 @@ export default function DoctorDashboardPage() {
           <section className="grid gap-6">
             <div className="flex items-center justify-between border-b border-slate-200 pb-3">
               <p className="text-sm font-semibold text-slate-950">Requests</p>
-              <span className="text-xs font-semibold uppercase tracking-wide text-slate-600">
+              <span className="text-xs font-semibold tracking-wide text-slate-600 uppercase">
                 Pending
               </span>
             </div>
@@ -185,7 +178,9 @@ export default function DoctorDashboardPage() {
                       <>
                         <Button
                           size="sm"
-                          onClick={() => handleRespond(appointment.id, 'confirm')}
+                          onClick={() =>
+                            handleRespond(appointment.id, 'confirm')
+                          }
                           disabled={respondAppointmentMutation.isPending}
                         >
                           Confirm
@@ -211,7 +206,7 @@ export default function DoctorDashboardPage() {
               <p className="text-sm font-semibold text-slate-950">
                 Confirmed visits
               </p>
-              <span className="text-xs font-semibold uppercase tracking-wide text-slate-600">
+              <span className="text-xs font-semibold tracking-wide text-slate-600 uppercase">
                 Complete with diagnosis
               </span>
             </div>
@@ -253,8 +248,10 @@ export default function DoctorDashboardPage() {
 
             <div className="mt-6 border-t border-slate-200 pt-6">
               <div className="flex items-center justify-between">
-                <p className="text-sm font-semibold text-slate-950">My nurses</p>
-                <span className="text-xs font-semibold uppercase tracking-wide text-slate-600">
+                <p className="text-sm font-semibold text-slate-950">
+                  My nurses
+                </p>
+                <span className="text-xs font-semibold tracking-wide text-slate-600 uppercase">
                   {myNurses.length}
                 </span>
               </div>
@@ -318,8 +315,10 @@ export default function DoctorDashboardPage() {
 
         <section className="grid gap-6">
           <div className="flex items-center justify-between border-b border-slate-200 pb-3">
-            <p className="text-sm font-semibold text-slate-950">Patient history</p>
-            <span className="text-xs font-semibold uppercase tracking-wide text-slate-600">
+            <p className="text-sm font-semibold text-slate-950">
+              Patient history
+            </p>
+            <span className="text-xs font-semibold tracking-wide text-slate-600 uppercase">
               Completed
             </span>
           </div>
@@ -349,7 +348,10 @@ export default function DoctorDashboardPage() {
                           {patient.name}
                         </p>
                         <p className="text-sm text-slate-700">
-                          Last visit {new Date(patient.lastAppointment.date).toLocaleDateString()}
+                          Last visit{' '}
+                          {new Date(
+                            patient.lastAppointment.date
+                          ).toLocaleDateString()}
                         </p>
                       </div>
                       <span className="grid h-9 w-9 place-items-center border border-slate-300 bg-white text-sm font-semibold text-teal-800">
@@ -358,7 +360,7 @@ export default function DoctorDashboardPage() {
                     </div>
                     {patient.lastAppointment.diagnosis && (
                       <div className="mt-6 border-l-4 border-teal-600 bg-slate-50 p-6">
-                        <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">
+                        <p className="text-xs font-semibold tracking-wide text-slate-600 uppercase">
                           Latest diagnosis
                         </p>
                         <p className="mt-2 text-sm leading-6 text-slate-900">
@@ -397,7 +399,9 @@ export default function DoctorDashboardPage() {
           onClose={() => setAssignNurseModalOpen(false)}
           title="Assign nurse"
         >
-          <NurseAssignmentForm onSuccess={() => setAssignNurseModalOpen(false)} />
+          <NurseAssignmentForm
+            onSuccess={() => setAssignNurseModalOpen(false)}
+          />
         </Modal>
       </div>
     </DashboardLayout>

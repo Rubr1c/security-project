@@ -22,5 +22,3 @@ export async function sendOtpEmail(params: {
     html,
   });
 }
-
-
