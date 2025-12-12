@@ -10,6 +10,7 @@ const envSchema = v.object({
   GMAIL_USER: v.string(),
   GMAIL_APP_PASSWORD: v.string(),
   APP_URL: v.string(),
+  HASH_PEPPER: v.string(),
 });
 
 export const env = v.parse(envSchema, process.env);

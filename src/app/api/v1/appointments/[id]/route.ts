@@ -17,7 +17,7 @@ interface RouteParams {
 export async function GET(_req: Request, { params }: RouteParams) {
   const session = await getSession();
 
-  if (!session || !['patient', 'doctor'].includes(session.role)) {
+  if (!session || !['patient', 'doctor', 'nurse'].includes(session.role)) {
     logger.info({
       message:
         'Unauthorized: Only patients and doctors can view appointment details',

@@ -70,6 +70,13 @@ export async function POST(req: Request) {
     .where(eq(users.emailHash, emailHashValue));
 
   if (!user) {
+    // Timing attack protection:
+    // Always perform a comparison to ensure the request takes the same amount of time
+    // irrespective of whether the user exists or not.
+    // We use a dummy hash that will never match valid input.
+    const dummyHash = '$2b$10$abcdefghijklmnopqrstuv'; // Invalid bcrypt hash
+    await bcrypt.compare(result.output.password, dummyHash);
+
     logger.info({
       message: 'User not found during login attempt',
     });

@@ -101,5 +101,6 @@ export function hashEmail(email: string): string {
     return email;
   }
   const normalized = email.toLowerCase().trim();
-  return crypto.createHash('sha256').update(normalized).digest('hex');
+  const peppered = `${normalized}${process.env.HASH_PEPPER}`;
+  return crypto.createHash('sha256').update(peppered).digest('hex');
 }

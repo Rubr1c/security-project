@@ -86,53 +86,7 @@ export async function proxy(req: NextRequest) {
     }
   }
 
-  logger.info({
-    message: 'Authorizing User',
-  });
-
-  const token = req.cookies.get(AUTH_COOKIE_NAME)?.value;
-  if (!token) {
-    logger.info({
-      message: 'No auth cookie found',
-    });
-    return NextResponse.json(
-      { error: 'Unauthorized' },
-      { status: STATUS.UNAUTHORIZED }
-    );
-  }
-  const decoded = await jwt.verify<JwtPayload>(token);
-  if (!decoded) {
-    logger.info({
-      message: 'Invalid token',
-    });
-    return NextResponse.json(
-      { error: 'Unauthorized' },
-      { status: STATUS.UNAUTHORIZED }
-    );
-  }
-
-  logger.debug({
-    message: 'Token verified',
-    meta: {
-      userId: decoded.userId,
-    },
-  });
-
-  const requestHeaders = new Headers(req.headers);
-
-  logger.info({
-    message: 'Request headers set',
-    meta: {
-      userId: decoded.userId.toString(),
-      role: decoded.role,
-    },
-  });
-
-  return NextResponse.next({
-    request: {
-      headers: requestHeaders,
-    },
-  });
+  return NextResponse.next();
 }
 
 export const config = {
