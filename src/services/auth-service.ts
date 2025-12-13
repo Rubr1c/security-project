@@ -26,7 +26,6 @@ import { sendPasswordResetEmail } from '@/lib/email/mailer';
 import { ServiceError } from './errors';
 export { ServiceError };
 
-// Dummy hash for timing attack mitigation
 const DUMMY_HASH = bcrypt.hashSync(
   'dummy-password-for-timing-mitigation',
   BCRYPT_COST
@@ -52,7 +51,7 @@ export const authService = {
 
     if (!user) {
       await bcrypt.compare(password, DUMMY_HASH);
-      throw new ServiceError('Invalid Credentials', 401);
+      throw new ServiceError('Invalid email or password', 401);
     }
 
     if (user.loginLockedUntil) {
@@ -74,7 +73,6 @@ export const authService = {
       const newAttempts = (user.loginAttempts ?? 0) + 1;
 
       if (newAttempts >= LOGIN_MAX_ATTEMPTS) {
-        // Lock the account
         const lockUntil = new Date(
           Date.now() + LOGIN_LOCKOUT_DURATION_MS
         ).toISOString();
@@ -91,7 +89,6 @@ export const authService = {
           429
         );
       } else {
-        // Increment attempts
         await db
           .update(users)
           .set({
@@ -101,7 +98,7 @@ export const authService = {
           .where(eq(users.id, user.id));
       }
 
-      throw new ServiceError('Invalid Credentials', 401);
+      throw new ServiceError('Invalid email or password', 401);
     }
 
     const code = generateOtpCode();
