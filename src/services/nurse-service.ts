@@ -82,7 +82,6 @@ export const nurseService = {
       .run();
 
     if (deleteResult.changes === 0) {
-      // Should have been caught by select above, but for safety
       throw new ServiceError('Nurse not found or already deleted', 404);
     }
   },

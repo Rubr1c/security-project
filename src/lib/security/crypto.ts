@@ -39,7 +39,7 @@ export function decrypt(encryptedText: string): string {
 
   const parts = encryptedText.split(':');
   if (parts.length !== 3) {
-    return encryptedText;
+    throw new Error('Decryption failed: malformed ciphertext format');
   }
 
   const key = getEncryptionKey();

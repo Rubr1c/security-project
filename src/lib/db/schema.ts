@@ -28,6 +28,9 @@ export const users = sqliteTable(
     otpLastSentAt: text('otp_last_sent_at').default(sql`NULL`),
     otpAttempts: integer('otp_attempts').notNull().default(0),
 
+    loginAttempts: integer('login_attempts').notNull().default(0),
+    loginLockedUntil: text('login_locked_until').default(sql`NULL`),
+
     pendingPasswordHash: text('pending_password_hash').default(sql`NULL`),
     pendingPasswordExpiresAt: text('pending_password_expires_at').default(
       sql`NULL`

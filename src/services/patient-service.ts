@@ -1,6 +1,6 @@
 import { db } from '@/lib/db/client';
 import { users, appointments, medications } from '@/lib/db/schema';
-import { eq, and, inArray } from 'drizzle-orm';
+import { eq, and, inArray, or, sql } from 'drizzle-orm';
 import {
   decryptUserRecords,
   decryptUserFields,
@@ -10,8 +10,43 @@ import {
 import { logger } from '@/lib/logger';
 import { ServiceError } from './errors';
 
+const DEFAULT_LIMIT = 50;
+const MAX_LIMIT = 100;
+
 export const patientService = {
-  async getPatientsForDoctor(doctorId: number) {
+  async getPatientsForDoctor(
+    doctorId: number,
+    page = 1,
+    limit = DEFAULT_LIMIT
+  ) {
+    const safeLimit = Math.min(Math.max(1, limit), MAX_LIMIT);
+    const safePage = Math.max(1, page);
+    const offset = (safePage - 1) * safeLimit;
+
+    const historyPatients = db
+      .select({ patientId: appointments.patientId })
+      .from(appointments)
+      .where(eq(appointments.doctorId, doctorId))
+      .all();
+
+    const historyPatientIds = historyPatients.map((a) => a.patientId);
+
+    const baseCondition = eq(users.role, 'patient');
+
+    const accessCondition =
+      historyPatientIds.length > 0
+        ? or(eq(users.doctorId, doctorId), inArray(users.id, historyPatientIds))
+        : eq(users.doctorId, doctorId);
+
+    const whereClause = and(baseCondition, accessCondition);
+
+    const countResult = db
+      .select({ count: sql<number>`COUNT(*)` })
+      .from(users)
+      .where(whereClause)
+      .all();
+    const total = Number(countResult[0]?.count ?? 0);
+
     const patients = db
       .select({
         id: users.id,
@@ -23,10 +58,12 @@ export const patientService = {
         updatedAt: users.updatedAt,
       })
       .from(users)
-      .where(and(eq(users.role, 'patient'), eq(users.doctorId, doctorId)))
+      .where(whereClause)
+      .limit(safeLimit)
+      .offset(offset)
       .all();
 
-    return decryptUserRecords(patients, [
+    const data = decryptUserRecords(patients, [
       'id',
       'email',
       'name',
@@ -35,10 +72,17 @@ export const patientService = {
       'createdAt',
       'updatedAt',
     ]);
+
+    return {
+      data,
+      page: safePage,
+      limit: safeLimit,
+      total,
+      hasMore: offset + data.length < total,
+    };
   },
 
   async getPatientDetails(requesterId: number, patientId: number) {
-    // Check if patient exists
     const patient = db
       .select({
         id: users.id,
@@ -57,9 +101,8 @@ export const patientService = {
       throw new ServiceError('Patient not found', 404);
     }
 
-    // Access control: Doctor must be assigned OR have history
-    const patientAppointments = db
-      .select()
+    const requesterAppointments = db
+      .select({ id: appointments.id })
       .from(appointments)
       .where(
         and(
@@ -70,12 +113,17 @@ export const patientService = {
       .all();
 
     const isAssigned = patient[0].doctorId === requesterId;
-    const hasHistory = patientAppointments.length > 0;
+    const hasHistory = requesterAppointments.length > 0;
 
     if (!isAssigned && !hasHistory) {
-      // 404 to avoid leaking existence? Or 403? Existing code returned 404 "Patient not found".
       throw new ServiceError('Patient not found', 404);
     }
+
+    const allPatientAppointments = db
+      .select()
+      .from(appointments)
+      .where(eq(appointments.patientId, patientId))
+      .all();
 
     let patientMedications: {
       id: number;
@@ -85,8 +133,8 @@ export const patientService = {
       instructions: string;
     }[] = [];
 
-    if (patientAppointments.length > 0) {
-      const appointmentIds = patientAppointments.map((a) => a.id);
+    if (allPatientAppointments.length > 0) {
+      const appointmentIds = allPatientAppointments.map((a) => a.id);
       patientMedications = db
         .select({
           id: medications.id,
@@ -100,14 +148,13 @@ export const patientService = {
         .all();
     }
 
-    // Log PHI Access
     logger
       .getAuditLogger()
       ?.logPhiAccess(requesterId, patientId, 'Patient Record', patientId);
 
     return {
       ...decryptUserFields(patient[0]),
-      appointments: decryptAppointmentRecords(patientAppointments),
+      appointments: decryptAppointmentRecords(allPatientAppointments),
       medications: decryptMedicationRecords(patientMedications),
     };
   },

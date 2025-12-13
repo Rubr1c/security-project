@@ -15,6 +15,9 @@ interface Log {
 
 interface LogTableProps {
   logs: Log[];
+  onLoadMore?: () => void;
+  hasMore?: boolean;
+  isLoadingMore?: boolean;
 }
 
 function formatMeta(meta: string | null): Record<string, unknown> | null {
@@ -208,7 +211,12 @@ function MetaDetails({ meta }: { meta: string }) {
   );
 }
 
-export function LogTable({ logs }: LogTableProps) {
+export function LogTable({
+  logs,
+  onLoadMore,
+  hasMore,
+  isLoadingMore,
+}: LogTableProps) {
   const [selectedLog, setSelectedLog] = useState<Log | null>(null);
 
   return (
@@ -270,6 +278,18 @@ export function LogTable({ logs }: LogTableProps) {
           </tbody>
         </table>
       </div>
+
+      {hasMore && onLoadMore && (
+        <div className="flex justify-center border border-t-0 border-slate-200 bg-white p-4">
+          <button
+            onClick={onLoadMore}
+            disabled={isLoadingMore}
+            className="inline-flex items-center gap-2 border border-slate-300 bg-white px-6 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+          >
+            {isLoadingMore ? 'Loading...' : 'Load More'}
+          </button>
+        </div>
+      )}
 
       <Modal
         isOpen={!!selectedLog}

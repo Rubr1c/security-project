@@ -1,11 +1,11 @@
 import { STATUS } from '@/lib/http/status-codes';
 import { logger } from '@/lib/logger';
 import { requireRole } from '@/lib/auth/get-session';
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 
 import { logService } from '@/services/log-service';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   const session = await requireRole('admin');
 
   if (!session) {
@@ -20,19 +20,24 @@ export async function GET() {
   }
 
   try {
-    const logs = await logService.getAllLogs();
+    const { searchParams } = new URL(request.url);
+    const page = parseInt(searchParams.get('page') || '1', 10);
+    const limit = parseInt(searchParams.get('limit') || '50', 10);
+
+    const result = await logService.getLogs(page, limit);
 
     logger.info({
       message: 'Logs fetched successfully',
       meta: {
-        count: logs.length,
+        count: result.data.length,
+        total: result.total,
+        page: result.page,
         userId: session.userId,
       },
     });
 
-    return NextResponse.json(logs);
+    return NextResponse.json(result);
   } catch (error) {
-    // logService doesn't throw ServiceError currently but for consistency
     logger.error({ message: 'Get logs error', error: error as Error });
     return NextResponse.json({ error: 'Internal Error' }, { status: 500 });
   }

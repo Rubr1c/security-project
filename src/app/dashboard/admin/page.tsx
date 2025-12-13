@@ -96,9 +96,15 @@ export default function AdminDashboardPage() {
     },
   });
 
-  const totalLogs = logsQuery.data?.length ?? 0;
-  const totalErrors =
-    logsQuery.data?.filter((l) => l.level === 'error').length ?? 0;
+  const allLogs = useMemo(() => {
+    if (!logsQuery.data?.pages) return [];
+    const allData = logsQuery.data.pages.flatMap((page) => page.data);
+    const uniqueMap = new Map(allData.map((log) => [log.id, log]));
+    return Array.from(uniqueMap.values());
+  }, [logsQuery.data]);
+
+  const totalLogs = logsQuery.data?.pages[0]?.total ?? 0;
+  const totalErrors = allLogs.filter((l) => l.level === 'error').length;
   const totalDoctors = doctorsQuery.data?.length ?? 0;
   const totalNurses = nursesQuery.data?.length ?? 0;
 
@@ -205,13 +211,18 @@ export default function AdminDashboardPage() {
                 <div className="border border-red-300 bg-red-50 p-6 text-sm font-semibold text-red-800">
                   Failed to load logs
                 </div>
-              ) : logsQuery.data?.length === 0 ? (
+              ) : allLogs.length === 0 ? (
                 <EmptyState
                   title="No logs"
                   description="Nothing recorded yet."
                 />
               ) : (
-                <LogTable logs={logsQuery.data ?? []} />
+                <LogTable
+                  logs={allLogs}
+                  onLoadMore={() => logsQuery.fetchNextPage()}
+                  hasMore={logsQuery.hasNextPage}
+                  isLoadingMore={logsQuery.isFetchingNextPage}
+                />
               )}
             </div>
           )}

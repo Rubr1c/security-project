@@ -9,9 +9,19 @@ interface Log {
   level: 'debug' | 'info' | 'warn' | 'error';
 }
 
+export interface PaginatedLogs {
+  data: Log[];
+  page: number;
+  limit: number;
+  total: number;
+  hasMore: boolean;
+}
+
 export const logs = {
-  list: async () => {
-    const response = await apiClient.get<Log[]>('/logs');
+  list: async (page = 1, limit = 50) => {
+    const response = await apiClient.get<PaginatedLogs>('/logs', {
+      params: { page, limit },
+    });
     return response.data;
   },
 };

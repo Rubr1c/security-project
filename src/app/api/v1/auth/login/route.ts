@@ -38,9 +38,10 @@ export async function POST(req: Request) {
   const result = v.safeParse(loginSchema, body);
 
   if (!result.success) {
-    delete body.password;
-
-    logger.info({ message: 'Invalid login request', meta: body });
+    logger.info({
+      message: 'Invalid login request',
+      meta: { error: result.issues[0].message },
+    });
 
     return NextResponse.json(
       { error: result.issues[0].message },
@@ -49,7 +50,7 @@ export async function POST(req: Request) {
   }
 
   logger.info({
-    message: 'Login attempt', // concise log
+    message: 'Login attempt',
   });
 
   try {

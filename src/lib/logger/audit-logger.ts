@@ -16,6 +16,21 @@ export interface AuditLogMeta {
   [key: string]: unknown;
 }
 
+const SENSITIVE_KEYS = new Set([
+  'email',
+  'emailhash',
+  'passwordhash',
+  'otphash',
+  'pendingpasswordhash',
+  'passwordresettoken',
+
+  'diagnosis',
+  'dosage',
+  'instructions',
+]);
+
+const REDACTED_VALUE = '[REDACTED]';
+
 export class AuditLogger extends BaseLogger {
   /**
    * Creates a console logger.
@@ -26,19 +41,57 @@ export class AuditLogger extends BaseLogger {
   }
 
   /**
-   * Safely stringifies an object, handling circular references
+   * Recursively sanitizes an object by redacting sensitive keys.
+   * Handles nested objects and arrays.
+   */
+  private sanitizeMeta(obj: unknown, seen = new WeakSet()): unknown {
+    if (obj === null || obj === undefined) {
+      return obj;
+    }
+
+    if (typeof obj !== 'object') {
+      return obj;
+    }
+
+    // Handle circular references
+    if (seen.has(obj as object)) {
+      return '[Circular]';
+    }
+    seen.add(obj as object);
+
+    // Handle arrays
+    if (Array.isArray(obj)) {
+      return obj.map((item) => this.sanitizeMeta(item, seen));
+    }
+
+    // Handle Date objects
+    if (obj instanceof Date) {
+      return obj.toISOString();
+    }
+
+    // Handle plain objects
+    const sanitized: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(obj as Record<string, unknown>)) {
+      const lowerKey = key.toLowerCase().replace(/[-_\s]/g, '');
+
+      if (SENSITIVE_KEYS.has(lowerKey)) {
+        sanitized[key] = REDACTED_VALUE;
+      } else if (typeof value === 'object' && value !== null) {
+        sanitized[key] = this.sanitizeMeta(value, seen);
+      } else {
+        sanitized[key] = value;
+      }
+    }
+
+    return sanitized;
+  }
+
+  /**
+   * Safely stringifies an object, handling circular references and sanitizing PII.
    */
   private safeStringify(obj: unknown): string {
-    const seen = new WeakSet();
-    return JSON.stringify(obj, (key, value) => {
-      if (typeof value === 'object' && value !== null) {
-        if (seen.has(value)) {
-          return '[Circular]';
-        }
-        seen.add(value);
-      }
-      return value;
-    });
+    const sanitized = this.sanitizeMeta(obj);
+    return JSON.stringify(sanitized);
   }
 
   debug(params: LoggerParams) {

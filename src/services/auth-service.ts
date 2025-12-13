@@ -1,6 +1,6 @@
 import { db } from '@/lib/db/client';
 import { users } from '@/lib/db/schema';
-import { eq, and, gt } from 'drizzle-orm';
+import { eq, and, gt, lt, sql } from 'drizzle-orm';
 import bcrypt from 'bcrypt';
 import {
   hashEmail,
@@ -32,6 +32,9 @@ const DUMMY_HASH = bcrypt.hashSync(
   BCRYPT_COST
 );
 
+const LOGIN_MAX_ATTEMPTS = 5;
+const LOGIN_LOCKOUT_DURATION_MS = 15 * 60 * 1000; // 15 minutes
+
 export const authService = {
   async login(email: string, password: string) {
     const emailHashValue = hashEmail(email);
@@ -41,26 +44,69 @@ export const authService = {
         id: users.id,
         email: users.email,
         passwordHash: users.passwordHash,
+        loginAttempts: users.loginAttempts,
+        loginLockedUntil: users.loginLockedUntil,
       })
       .from(users)
       .where(eq(users.emailHash, emailHashValue));
 
     if (!user) {
-      // Timing attack mitigation
       await bcrypt.compare(password, DUMMY_HASH);
       throw new ServiceError('Invalid Credentials', 401);
     }
 
+    if (user.loginLockedUntil) {
+      const lockExpiry = Date.parse(user.loginLockedUntil);
+      if (!Number.isNaN(lockExpiry) && Date.now() < lockExpiry) {
+        const remainingMs = lockExpiry - Date.now();
+        const remainingMins = Math.ceil(remainingMs / 60000);
+        throw new ServiceError(
+          `Account locked. Try again in ${remainingMins} minute(s).`,
+          429
+        );
+      }
+    }
+
     const passwordMatched = await bcrypt.compare(password, user.passwordHash);
+    const nowIso = new Date().toISOString();
 
     if (!passwordMatched) {
+      const newAttempts = (user.loginAttempts ?? 0) + 1;
+
+      if (newAttempts >= LOGIN_MAX_ATTEMPTS) {
+        // Lock the account
+        const lockUntil = new Date(
+          Date.now() + LOGIN_LOCKOUT_DURATION_MS
+        ).toISOString();
+        await db
+          .update(users)
+          .set({
+            loginAttempts: newAttempts,
+            loginLockedUntil: lockUntil,
+            updatedAt: nowIso,
+          })
+          .where(eq(users.id, user.id));
+        throw new ServiceError(
+          'Too many failed attempts. Account locked for 15 minutes.',
+          429
+        );
+      } else {
+        // Increment attempts
+        await db
+          .update(users)
+          .set({
+            loginAttempts: newAttempts,
+            updatedAt: nowIso,
+          })
+          .where(eq(users.id, user.id));
+      }
+
       throw new ServiceError('Invalid Credentials', 401);
     }
 
     const code = generateOtpCode();
     const otpHash = await hashOtpCode(code);
     const expiresAt = otpExpiresAtISO();
-    const nowIso = new Date().toISOString();
 
     await db
       .update(users)
@@ -69,6 +115,8 @@ export const authService = {
         otpExpiresAt: expiresAt,
         otpAttempts: 0,
         otpLastSentAt: nowIso,
+        loginAttempts: 0,
+        loginLockedUntil: null,
         updatedAt: nowIso,
       })
       .where(eq(users.id, user.id));
@@ -84,7 +132,7 @@ export const authService = {
     return {
       otpRequired: true,
       email: decryptedEmail,
-      userId: user.id, // return ID for logging if needed
+      userId: user.id,
     };
   },
 
@@ -182,26 +230,30 @@ export const authService = {
       throw new ServiceError('No active code. Request a new code.', 400);
     }
 
-    if (user.otpAttempts >= OTP_MAX_ATTEMPTS) {
-      throw new ServiceError('Too many attempts. Request a new code.', 429);
-    }
-
     if (isExpired(user.otpExpiresAt)) {
       throw new ServiceError('Code expired. Request a new code.', 400);
     }
 
-    const ok = await verifyOtpCode(code, user.otpHash);
     const nowIso = new Date().toISOString();
 
-    if (!ok) {
-      await db
-        .update(users)
-        .set({
-          otpAttempts: (user.otpAttempts ?? 0) + 1,
-          updatedAt: nowIso,
-        })
-        .where(eq(users.id, user.id));
+    const incrementResult = db
+      .update(users)
+      .set({
+        otpAttempts: sql`${users.otpAttempts} + 1`,
+        updatedAt: nowIso,
+      })
+      .where(
+        and(eq(users.id, user.id), lt(users.otpAttempts, OTP_MAX_ATTEMPTS))
+      )
+      .run();
 
+    if (incrementResult.changes === 0) {
+      throw new ServiceError('Too many attempts. Request a new code.', 429);
+    }
+
+    const ok = await verifyOtpCode(code, user.otpHash);
+
+    if (!ok) {
       throw new ServiceError('Invalid code', 400);
     }
 
@@ -380,23 +432,30 @@ export const authService = {
         throw new ServiceError('No active code. Request a new code.', 400);
       }
 
-      if (user.otpAttempts >= 5) {
-        throw new ServiceError('Too many attempts. Request a new code.', 429);
-      }
-
       if (isExpired(user.otpExpiresAt)) {
         throw new ServiceError('Code expired. Request a new code.', 400);
       }
 
-      const ok = await verifyOtpCode(data.code, user.otpHash);
       const nowIso = new Date().toISOString();
 
-      if (!ok) {
-        await db
-          .update(users)
-          .set({ otpAttempts: user.otpAttempts + 1, updatedAt: nowIso })
-          .where(eq(users.id, user.id));
+      const incrementResult = db
+        .update(users)
+        .set({
+          otpAttempts: sql`${users.otpAttempts} + 1`,
+          updatedAt: nowIso,
+        })
+        .where(
+          and(eq(users.id, user.id), lt(users.otpAttempts, OTP_MAX_ATTEMPTS))
+        )
+        .run();
 
+      if (incrementResult.changes === 0) {
+        throw new ServiceError('Too many attempts. Request a new code.', 429);
+      }
+
+      const ok = await verifyOtpCode(data.code, user.otpHash);
+
+      if (!ok) {
         throw new ServiceError('Invalid code', 400);
       }
 
@@ -416,7 +475,6 @@ export const authService = {
 
       return { success: true, userId: user.id };
     } else {
-      // Request change
       if (!data.oldPassword || !data.newPassword) {
         throw new ServiceError('Missing passwords', 400);
       }

@@ -9,8 +9,6 @@
     "lint": "eslint",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "seed": "bun run scripts/seed-test-accounts.ts",
-    "update:users": "bun run scripts/update-user-emails.ts",
     "db:migrate": "bunx drizzle-kit migrate"
   },
   "dependencies": {
