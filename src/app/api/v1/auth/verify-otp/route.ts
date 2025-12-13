@@ -5,6 +5,7 @@ import { logger } from '@/lib/logger';
 import { cookies } from 'next/headers';
 import { env } from '@/lib/env';
 import { authService, ServiceError } from '@/services/auth-service';
+import { aj } from '@/proxy';
 
 const verifySchema = v.object({
   email: v.pipe(v.string(), v.email()),
@@ -12,6 +13,32 @@ const verifySchema = v.object({
 });
 
 export async function POST(req: Request) {
+  const decision = await aj.protect(req, { requested: 5 });
+  if (decision.isDenied()) {
+    if (decision.reason.isRateLimit()) {
+      logger.info({
+        message: 'Too Many Requests',
+        meta: { reason: decision.reason },
+      });
+      return NextResponse.json({}, { status: STATUS.TOO_MANY_REQUESTS });
+    } else if (decision.reason.isBot()) {
+      logger.info({
+        message: 'No bots allowed',
+        meta: { reason: decision.reason },
+      });
+      return NextResponse.json(
+        { error: 'No bots allowed' },
+        { status: STATUS.FORBIDDEN }
+      );
+    } else {
+      logger.info({
+        message: 'Forbidden',
+        meta: { reason: decision.reason },
+      });
+      return NextResponse.json({}, { status: STATUS.FORBIDDEN });
+    }
+  }
+
   const body = await req.json();
   const parsed = v.safeParse(verifySchema, body);
 

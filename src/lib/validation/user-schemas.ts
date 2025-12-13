@@ -15,7 +15,12 @@ export const createUserSchema = v.object({
   email: v.pipe(v.string(), v.email()),
   name: v.pipe(
     v.string(),
-    v.minLength(3, 'Name must be at least 3 characters')
+    v.transform((s) => s.trim()),
+    v.minLength(3, 'Name must be at least 3 characters'),
+    v.regex(
+      /^[a-zA-Z\s'-]+$/,
+      'Name can only contain letters, spaces, hyphens, and apostrophes'
+    )
   ),
   password: passwordSchema,
 });

@@ -1,4 +1,5 @@
 import * as v from 'valibot';
+import { passwordSchema } from './user-schemas';
 
 export const otpVerifySchema = v.object({
   email: v.pipe(v.string(), v.email()),
@@ -10,8 +11,8 @@ export const otpResendSchema = v.object({
 });
 
 export const changePasswordRequestSchema = v.object({
-  oldPassword: v.pipe(v.string(), v.minLength(1, 'Old password is required')),
-  newPassword: v.pipe(v.string(), v.minLength(1, 'New password is required')),
+  oldPassword: passwordSchema,
+  newPassword: passwordSchema,
 });
 
 export const changePasswordVerifySchema = v.object({
@@ -33,10 +34,7 @@ export const forgotPasswordSchema = v.object({
 
 export const resetPasswordSchema = v.object({
   token: v.string(),
-  password: v.pipe(
-    v.string(),
-    v.minLength(8, 'Password must be at least 8 characters')
-  ),
+  password: passwordSchema,
 });
 
 export type ForgotPasswordInput = v.InferInput<typeof forgotPasswordSchema>;
