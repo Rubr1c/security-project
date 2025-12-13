@@ -5,7 +5,10 @@ const envSchema = v.object({
     v.picklist(['development', 'production', 'test']),
     'development'
   ),
-  JWT_SECRET: v.string(),
+  JWT_SECRET: v.pipe(
+    v.string(),
+    v.length(32, 'JWT_SECRET must be 32 characters')
+  ),
   ARCJET_KEY: v.string(),
   GMAIL_USER: v.string(),
   GMAIL_APP_PASSWORD: v.string(),

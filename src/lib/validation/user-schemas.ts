@@ -12,7 +12,11 @@ export const passwordSchema = v.pipe(
 );
 
 export const createUserSchema = v.object({
-  email: v.pipe(v.string(), v.email()),
+  email: v.pipe(
+    v.string(),
+    v.transform((s) => s.trim()),
+    v.email()
+  ),
   name: v.pipe(
     v.string(),
     v.transform((s) => s.trim()),
@@ -26,13 +30,23 @@ export const createUserSchema = v.object({
 });
 
 export const updateUserSchema = v.object({
-  email: v.optional(v.pipe(v.string(), v.email())),
+  email: v.optional(
+    v.pipe(
+      v.string(),
+      v.transform((s) => s.trim()),
+      v.email()
+    )
+  ),
   password: v.optional(passwordSchema),
   role: v.optional(roleEnum),
 });
 
 export const loginSchema = v.object({
-  email: v.pipe(v.string(), v.email()),
+  email: v.pipe(
+    v.string(),
+    v.transform((s) => s.trim()),
+    v.email()
+  ),
   password: passwordSchema,
 });
 

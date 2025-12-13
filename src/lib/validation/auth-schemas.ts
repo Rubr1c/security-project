@@ -2,12 +2,24 @@ import * as v from 'valibot';
 import { passwordSchema } from './user-schemas';
 
 export const otpVerifySchema = v.object({
-  email: v.pipe(v.string(), v.email()),
-  code: v.pipe(v.string(), v.regex(/^\d{6}$/, 'Code must be 6 digits')),
+  email: v.pipe(
+    v.string(),
+    v.transform((s) => s.trim()),
+    v.email()
+  ),
+  code: v.pipe(
+    v.string(),
+    v.transform((s) => s.trim()),
+    v.regex(/^\d{6}$/, 'Code must be 6 digits')
+  ),
 });
 
 export const otpResendSchema = v.object({
-  email: v.pipe(v.string(), v.email()),
+  email: v.pipe(
+    v.string(),
+    v.transform((s) => s.trim()),
+    v.email()
+  ),
 });
 
 export const changePasswordRequestSchema = v.object({
@@ -16,7 +28,11 @@ export const changePasswordRequestSchema = v.object({
 });
 
 export const changePasswordVerifySchema = v.object({
-  code: v.pipe(v.string(), v.regex(/^\d{6}$/, 'Code must be 6 digits')),
+  code: v.pipe(
+    v.string(),
+    v.transform((s) => s.trim()),
+    v.regex(/^\d{6}$/, 'Code must be 6 digits')
+  ),
 });
 
 export type OtpVerifyInput = v.InferInput<typeof otpVerifySchema>;
@@ -29,11 +45,18 @@ export type ChangePasswordVerifyInput = v.InferInput<
 >;
 
 export const forgotPasswordSchema = v.object({
-  email: v.pipe(v.string(), v.email()),
+  email: v.pipe(
+    v.string(),
+    v.transform((s) => s.trim()),
+    v.email()
+  ),
 });
 
 export const resetPasswordSchema = v.object({
-  token: v.string(),
+  token: v.pipe(
+    v.string(),
+    v.transform((s) => s.trim())
+  ),
   password: passwordSchema,
 });
 
