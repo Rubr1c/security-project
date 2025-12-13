@@ -1,14 +1,9 @@
-import { db } from '@/lib/db/client';
-import { appointments, users } from '@/lib/db/schema';
 import { STATUS } from '@/lib/http/status-codes';
 import { logger } from '@/lib/logger';
 import { getSession, requireRole } from '@/lib/auth/get-session';
 import { NextResponse } from 'next/server';
-import { eq } from 'drizzle-orm';
-import {
-  decryptUserFields,
-  decryptAppointmentFields,
-} from '@/lib/security/fields';
+import { appointmentService } from '@/services/appointment-service';
+import { ServiceError } from '@/services/errors';
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -46,103 +41,24 @@ export async function GET(_req: Request, { params }: RouteParams) {
     );
   }
 
-  const appointment = db
-    .select()
-    .from(appointments)
-    .where(eq(appointments.id, appointmentId))
-    .all();
+  try {
+      const appointment = await appointmentService.getAppointmentById(appointmentId, userId, userRole);
+      
+      logger.info({
+        message: 'Appointment details fetched',
+        meta: {
+          appointmentId,
+          userId,
+          role: userRole,
+        },
+      });
 
-  if (appointment.length === 0) {
-    logger.info({
-      message: 'Appointment not found',
-      meta: { appointmentId },
-    });
-
-    return NextResponse.json(
-      { error: 'Appointment not found' },
-      { status: STATUS.NOT_FOUND }
-    );
+      return NextResponse.json(appointment);
+  } catch (error) {
+      if (error instanceof ServiceError) {
+          return NextResponse.json({ error: error.message }, { status: error.status });
+      }
+      logger.error({ message: 'Get appointment details error', error: error as Error });
+      return NextResponse.json({ error: 'Internal Error' }, { status: 500 });
   }
-
-  if (userRole === 'patient') {
-    if (appointment[0].patientId !== userId) {
-      logger.info({
-        message: 'Patient attempting to view another patient appointment',
-        meta: {
-          requestingPatientId: userId,
-          appointmentPatientId: appointment[0].patientId,
-        },
-      });
-
-      return NextResponse.json(
-        { error: 'Appointment not found' },
-        { status: STATUS.NOT_FOUND }
-      );
-    }
-  } else if (userRole === 'doctor') {
-    if (appointment[0].doctorId !== userId) {
-      logger.info({
-        message: 'Doctor attempting to view another doctor appointment',
-        meta: {
-          requestingDoctorId: userId,
-          appointmentDoctorId: appointment[0].doctorId,
-        },
-      });
-
-      return NextResponse.json(
-        { error: 'Appointment not found' },
-        { status: STATUS.NOT_FOUND }
-      );
-    }
-  } else if (userRole === 'nurse') {
-    const nurse = db
-      .select({ doctorId: users.doctorId })
-      .from(users)
-      .where(eq(users.id, userId))
-      .get();
-
-    if (!nurse || nurse.doctorId !== appointment[0].doctorId) {
-      logger.info({
-        message: 'Nurse attempting to view appointment of unassigned doctor',
-        meta: {
-          nurseId: userId,
-          appointmentId: appointmentId,
-          appointmentDoctorId: appointment[0].doctorId,
-          nurseAssignedDoctorId: nurse?.doctorId,
-        },
-      });
-
-      return NextResponse.json(
-        { error: 'Appointment not found' },
-        { status: STATUS.NOT_FOUND }
-      );
-    }
-  }
-
-  const doctor = db
-    .select({ id: users.id, name: users.name, email: users.email })
-    .from(users)
-    .where(eq(users.id, appointment[0].doctorId))
-    .all();
-
-  const patient = db
-    .select({ id: users.id, name: users.name, email: users.email })
-    .from(users)
-    .where(eq(users.id, appointment[0].patientId))
-    .all();
-
-  logger.info({
-    message: 'Appointment details fetched',
-    meta: {
-      appointmentId,
-      userId,
-      role: userRole,
-    },
-  });
-
-  return NextResponse.json({
-    ...decryptAppointmentFields(appointment[0]),
-    doctor: doctor[0] ? decryptUserFields(doctor[0]) : null,
-    patient: patient[0] ? decryptUserFields(patient[0]) : null,
-  });
 }

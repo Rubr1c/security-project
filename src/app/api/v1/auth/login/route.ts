@@ -11,6 +11,7 @@ import { aj } from '@/proxy';
 import { generateOtpCode, hashOtpCode, otpExpiresAtISO } from '@/lib/otp';
 import { sendOtpEmail } from '@/lib/email/send-otp';
 import { decrypt, hashEmail, BCRYPT_COST } from '@/lib/security/crypto';
+import { authService, ServiceError } from '@/services/auth-service';
 
 const DUMMY_HASH = bcrypt.hashSync('dummy-password-for-timing-mitigation', BCRYPT_COST);
 
@@ -57,86 +58,48 @@ export async function POST(req: Request) {
   }
 
   logger.info({
-    message: 'Fetching user from database for login attempt',
+    message: 'Login attempt', // concise log
   });
 
-  const emailHashValue = hashEmail(result.output.email);
-
-  const [user] = await db
-    .select({
-      id: users.id,
-      email: users.email,
-      passwordHash: users.passwordHash,
-    })
-    .from(users)
-    .where(eq(users.emailHash, emailHashValue));
-
-  if (!user) {
-    await bcrypt.compare(result.output.password, DUMMY_HASH);
+  try {
+    const serviceResult = await authService.login(
+      result.output.email,
+      result.output.password
+    );
 
     logger.info({
-      message: 'User not found during login attempt',
+      message: 'OTP sent for login',
+      meta: {
+        userId: serviceResult.userId,
+      },
     });
 
     return NextResponse.json(
-      { error: 'Invalid Credentials' },
-      { status: STATUS.UNAUTHORIZED }
+      {
+        otpRequired: serviceResult.otpRequired,
+        email: serviceResult.email,
+      },
+      { status: STATUS.OK }
     );
-  }
-
-  const passwordMatched = await bcrypt.compare(
-    result.output.password,
-    user.passwordHash
-  );
-
-  if (!passwordMatched) {
-    logger.info({
-      message: 'Invalid password',
-      meta: { userId: user.id },
+  } catch (error) {
+    if (error instanceof ServiceError) {
+      logger.info({
+        message: 'Login failed',
+        meta: { error: error.message },
+      });
+      return NextResponse.json(
+        { error: error.message },
+        { status: error.status }
+      );
+    }
+    
+    logger.error({
+        message: 'Login error',
+        error: error as Error,
     });
-
     return NextResponse.json(
-      { error: 'Invalid Credentials' },
-      { status: STATUS.UNAUTHORIZED }
+        { error: 'An unexpected error occurred.' },
+        { status: STATUS.INTERNAL_ERROR }
     );
   }
-
-  const code = generateOtpCode();
-  const otpHash = await hashOtpCode(code);
-  const expiresAt = otpExpiresAtISO();
-  const nowIso = new Date().toISOString();
-
-  await db
-    .update(users)
-    .set({
-      otpHash,
-      otpExpiresAt: expiresAt,
-      otpAttempts: 0,
-      otpLastSentAt: nowIso,
-      updatedAt: nowIso,
-    })
-    .where(eq(users.id, user.id));
-
-  const decryptedEmail = decrypt(user.email);
-
-  await sendOtpEmail({
-    to: decryptedEmail,
-    code,
-    expiresMinutes: 10,
-  });
-
-  logger.info({
-    message: 'OTP sent for login',
-    meta: {
-      userId: user.id,
-    },
-  });
-
-  return NextResponse.json(
-    {
-      otpRequired: true,
-      email: decryptedEmail,
-    },
-    { status: STATUS.OK }
-  );
 }

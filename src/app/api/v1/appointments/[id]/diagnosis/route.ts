@@ -1,13 +1,11 @@
-import { db } from '@/lib/db/client';
-import { appointments } from '@/lib/db/schema';
 import { STATUS } from '@/lib/http/status-codes';
 import { logger } from '@/lib/logger';
 import { requireRole } from '@/lib/auth/get-session';
 import { updateDiagnosisSchema } from '@/lib/validation/appointment-schemas';
 import { NextResponse } from 'next/server';
 import * as v from 'valibot';
-import { eq, and } from 'drizzle-orm';
-import { encrypt } from '@/lib/security/crypto';
+import { appointmentService } from '@/services/appointment-service';
+import { ServiceError } from '@/services/errors';
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -54,68 +52,26 @@ export async function PUT(req: Request, { params }: RouteParams) {
     );
   }
 
-  const doctorId = session.userId;
+  try {
+      await appointmentService.updateDiagnosis(appointmentId, session.userId, result.output.diagnosis);
+      
+      logger.info({
+        message: 'Diagnosis updated successfully',
+        meta: {
+          appointmentId,
+          doctorId: session.userId,
+        },
+      });
 
-  const appointment = db
-    .select()
-    .from(appointments)
-    .where(
-      and(
-        eq(appointments.id, appointmentId),
-        eq(appointments.doctorId, doctorId)
-      )
-    )
-    .all();
-
-  if (appointment.length === 0) {
-    logger.info({
-      message: 'Appointment not found or not assigned to this doctor',
-      meta: { appointmentId, doctorId },
-    });
-
-    return NextResponse.json(
-      { error: 'Appointment not found' },
-      { status: STATUS.NOT_FOUND }
-    );
+      return NextResponse.json(
+        { message: 'Diagnosis updated successfully' },
+        { status: STATUS.OK }
+      );
+  } catch (error) {
+      if (error instanceof ServiceError) {
+          return NextResponse.json({ error: error.message }, { status: error.status });
+      }
+      logger.error({ message: 'Update diagnosis error', error: error as Error });
+      return NextResponse.json({ error: 'Internal Error' }, { status: 500 });
   }
-
-  const updateResult = await db
-    .update(appointments)
-    .set({
-      diagnosis: encrypt(result.output.diagnosis),
-      status: 'completed',
-      updatedAt: new Date().toISOString(),
-    })
-    .where(
-      and(
-        eq(appointments.id, appointmentId),
-        eq(appointments.doctorId, doctorId)
-      )
-    );
-
-  if (updateResult.changes === 0) {
-    logger.info({
-      message:
-        'Diagnosis update failed - appointment not found or not owned by doctor',
-      meta: { appointmentId, doctorId },
-    });
-
-    return NextResponse.json(
-      { error: 'Appointment not found' },
-      { status: STATUS.NOT_FOUND }
-    );
-  }
-
-  logger.info({
-    message: 'Diagnosis updated successfully',
-    meta: {
-      appointmentId,
-      doctorId,
-    },
-  });
-
-  return NextResponse.json(
-    { message: 'Diagnosis updated successfully' },
-    { status: STATUS.OK }
-  );
 }

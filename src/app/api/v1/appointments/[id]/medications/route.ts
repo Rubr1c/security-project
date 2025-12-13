@@ -1,14 +1,11 @@
-import { db } from '@/lib/db/client';
-import { appointments, medications, users } from '@/lib/db/schema';
 import { STATUS } from '@/lib/http/status-codes';
 import { logger } from '@/lib/logger';
 import { getSession, requireRole } from '@/lib/auth/get-session';
 import { addMedicationSchema } from '@/lib/validation/medication-schemas';
 import { NextResponse } from 'next/server';
 import * as v from 'valibot';
-import { eq } from 'drizzle-orm';
-import { encrypt } from '@/lib/security/crypto';
-import { decryptMedicationRecords } from '@/lib/security/fields';
+import { appointmentService } from '@/services/appointment-service';
+import { ServiceError } from '@/services/errors';
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -46,100 +43,27 @@ export async function GET(_req: Request, { params }: RouteParams) {
     );
   }
 
-  const appointment = db
-    .select()
-    .from(appointments)
-    .where(eq(appointments.id, appointmentId))
-    .all();
+  try {
+      const medications = await appointmentService.getMedications(appointmentId, userId, userRole);
+      
+      logger.info({
+        message: 'Medications fetched',
+        meta: {
+          appointmentId,
+          userId,
+          role: userRole,
+          count: medications.length,
+        },
+      });
 
-  if (appointment.length === 0) {
-    logger.info({
-      message: 'Appointment not found',
-      meta: { appointmentId },
-    });
-
-    return NextResponse.json(
-      { error: 'Appointment not found' },
-      { status: STATUS.NOT_FOUND }
-    );
+      return NextResponse.json(medications);
+  } catch (error) {
+      if (error instanceof ServiceError) {
+          return NextResponse.json({ error: error.message }, { status: error.status });
+      }
+      logger.error({ message: 'Get medications error', error: error as Error });
+      return NextResponse.json({ error: 'Internal Error' }, { status: 500 });
   }
-
-  if (userRole === 'patient') {
-    if (appointment[0].patientId !== userId) {
-      logger.info({
-        message: 'Patient attempting to view medications for another patient',
-        meta: {
-          requestingPatientId: userId,
-          appointmentPatientId: appointment[0].patientId,
-        },
-      });
-
-      return NextResponse.json(
-        { error: 'Appointment not found' },
-        { status: STATUS.NOT_FOUND }
-      );
-    }
-  } else if (userRole === 'doctor') {
-    if (appointment[0].doctorId !== userId) {
-      logger.info({
-        message: 'Doctor attempting to view medications for another doctor',
-        meta: {
-          requestingDoctorId: userId,
-          appointmentDoctorId: appointment[0].doctorId,
-        },
-      });
-
-      return NextResponse.json(
-        { error: 'Appointment not found' },
-        { status: STATUS.NOT_FOUND }
-      );
-    }
-  } else if (userRole === 'nurse') {
-    const nurse = db
-      .select({ id: users.id, doctorId: users.doctorId })
-      .from(users)
-      .where(eq(users.id, userId))
-      .all();
-
-    if (
-      nurse.length === 0 ||
-      nurse[0].doctorId === null ||
-      nurse[0].doctorId !== appointment[0].doctorId
-    ) {
-      logger.info({
-        message:
-          'Nurse not authorized to view medications for this appointment',
-        meta: {
-          nurseId: userId,
-          nurseAssignedDoctorId: nurse[0]?.doctorId,
-          appointmentDoctorId: appointment[0].doctorId,
-        },
-      });
-
-      return NextResponse.json(
-        { error: 'Appointment not found' },
-        { status: STATUS.NOT_FOUND }
-      );
-    }
-  }
-
-  const appointmentMedications = db
-    .select()
-    .from(medications)
-    .where(eq(medications.appointmentId, appointmentId))
-    .all();
-
-  logger.info({
-    message: 'Medications fetched',
-    meta: {
-      appointmentId,
-      userId,
-      role: userRole,
-      count: appointmentMedications.length,
-    },
-  });
-
-  return NextResponse.json(decryptMedicationRecords(appointmentMedications));
 }
 
 export async function POST(req: Request, { params }: RouteParams) {
@@ -183,106 +107,37 @@ export async function POST(req: Request, { params }: RouteParams) {
     );
   }
 
-  const userId = session.userId;
-  const userRole = session.role;
+  try {
+      const medication = await appointmentService.addMedication(
+          appointmentId, 
+          session.userId, 
+          session.role, 
+          result.output
+      );
 
-  const appointment = db
-    .select()
-    .from(appointments)
-    .where(eq(appointments.id, appointmentId))
-    .all();
-
-  if (appointment.length === 0) {
-    logger.info({
-      message: 'Appointment not found',
-      meta: { appointmentId },
-    });
-
-    return NextResponse.json(
-      { error: 'Appointment not found' },
-      { status: STATUS.NOT_FOUND }
-    );
-  }
-
-  if (userRole === 'doctor') {
-    if (appointment[0].doctorId !== userId) {
       logger.info({
-        message: 'Doctor attempting to add medication to another doctor\'s appointment',
+        message: 'Medication added successfully',
         meta: {
-          requestingDoctorId: userId,
-          appointmentDoctorId: appointment[0].doctorId,
+          medicationId: medication.medicationId,
+          appointmentId,
+          userId: session.userId,
+          role: session.role,
+          name: result.output.name,
         },
       });
 
       return NextResponse.json(
-        { error: 'Not authorized to add medications to this appointment' },
-        { status: STATUS.FORBIDDEN }
-      );
-    }
-  } else {
-    // Nurse
-    const nurse = db
-      .select({ id: users.id, doctorId: users.doctorId })
-      .from(users)
-      .where(eq(users.id, userId))
-      .all();
-
-    if (nurse.length === 0 || nurse[0].doctorId === null) {
-      logger.info({
-        message: 'Nurse not found or not assigned to a doctor',
-        meta: { nurseId: userId },
-      });
-
-      return NextResponse.json(
-        { error: 'Nurse is not assigned to a doctor' },
-        { status: STATUS.FORBIDDEN }
-      );
-    }
-
-    if (appointment[0].doctorId !== nurse[0].doctorId) {
-      logger.info({
-        message:
-          'Nurse is not authorized to add medications to this appointment',
-        meta: {
-          nurseId: userId,
-          nurseAssignedDoctorId: nurse[0].doctorId,
-          appointmentDoctorId: appointment[0].doctorId,
+        {
+          message: 'Medication added successfully',
+          medicationId: medication.medicationId,
         },
-      });
-
-      return NextResponse.json(
-        { error: 'Not authorized to add medications to this appointment' },
-        { status: STATUS.FORBIDDEN }
+        { status: STATUS.CREATED }
       );
-    }
+  } catch (error) {
+     if (error instanceof ServiceError) {
+          return NextResponse.json({ error: error.message }, { status: error.status });
+      }
+      logger.error({ message: 'Add medication error', error: error as Error });
+      return NextResponse.json({ error: 'Internal Error' }, { status: 500 });
   }
-
-  const insertResult = db
-    .insert(medications)
-    .values({
-      appointmentId,
-      name: encrypt(result.output.name),
-      dosage: encrypt(result.output.dosage),
-      instructions: encrypt(result.output.instructions),
-    })
-    .run();
-
-  logger.info({
-    message: 'Medication added successfully',
-    meta: {
-      medicationId: insertResult.lastInsertRowid,
-      appointmentId,
-      userId,
-      role: userRole,
-      name: result.output.name,
-    },
-  });
-
-  return NextResponse.json(
-    {
-      message: 'Medication added successfully',
-      medicationId: insertResult.lastInsertRowid,
-    },
-    { status: STATUS.CREATED }
-  );
 }

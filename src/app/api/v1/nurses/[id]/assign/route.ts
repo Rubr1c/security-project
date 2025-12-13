@@ -1,10 +1,9 @@
-import { db } from '@/lib/db/client';
-import { users } from '@/lib/db/schema';
 import { STATUS } from '@/lib/http/status-codes';
 import { logger } from '@/lib/logger';
 import { requireRole } from '@/lib/auth/get-session';
 import { NextResponse } from 'next/server';
-import { eq, and, or, isNull } from 'drizzle-orm';
+import { nurseService } from '@/services/nurse-service';
+import { ServiceError } from '@/services/errors';
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -28,88 +27,34 @@ export async function PUT(_req: Request, { params }: RouteParams) {
   const nurseId = parseInt(id);
 
   if (isNaN(nurseId) || nurseId <= 0) {
-    logger.info({
-      message: 'Invalid nurse ID',
-      meta: { id },
-    });
-
     return NextResponse.json(
       { error: 'Invalid nurse ID' },
       { status: STATUS.BAD_REQUEST }
     );
   }
 
-  const nurse = db
-    .select({ id: users.id, role: users.role, doctorId: users.doctorId })
-    .from(users)
-    .where(and(eq(users.id, nurseId), eq(users.role, 'nurse')))
-    .all();
+  try {
+      await nurseService.assignNurse(nurseId, session.userId);
 
-  if (nurse.length === 0) {
-    logger.info({
-      message: 'Nurse not found',
-      meta: { nurseId },
-    });
+      logger.info({
+        message: 'Nurse assigned to doctor',
+        meta: {
+          nurseId,
+          doctorId: session.userId,
+        },
+      });
 
-    return NextResponse.json(
-      { error: 'Nurse not found' },
-      { status: STATUS.NOT_FOUND }
-    );
+      return NextResponse.json(
+        { message: 'Nurse assigned to doctor' },
+        { status: STATUS.OK }
+      );
+  } catch (error) {
+       if (error instanceof ServiceError) {
+          return NextResponse.json({ error: error.message }, { status: error.status });
+      }
+      logger.error({ message: 'Assign nurse error', error: error as Error });
+      return NextResponse.json({ error: 'Internal Error' }, { status: 500 });
   }
-
-  const doctorId = session.userId;
-
-  if (nurse[0].doctorId !== null && nurse[0].doctorId !== doctorId) {
-    logger.info({
-      message: 'Nurse is already assigned to another doctor',
-      meta: {
-        nurseId,
-        currentDoctorId: nurse[0].doctorId,
-        requestingDoctorId: doctorId,
-      },
-    });
-
-    return NextResponse.json(
-      { error: 'Nurse is already assigned to another doctor' },
-      { status: STATUS.BAD_REQUEST }
-    );
-  }
-
-  const updateResult = await db
-    .update(users)
-    .set({ doctorId: doctorId, updatedAt: new Date().toISOString() })
-    .where(
-      and(
-        eq(users.id, nurseId),
-        eq(users.role, 'nurse'),
-        or(isNull(users.doctorId), eq(users.doctorId, doctorId))
-      )
-    );
-
-  if (updateResult.changes === 0) {
-    logger.info({
-      message: 'Nurse assignment failed - concurrent modification',
-      meta: { nurseId, doctorId },
-    });
-
-    return NextResponse.json(
-      { error: 'Nurse assignment failed. Please try again.' },
-      { status: STATUS.CONFLICT }
-    );
-  }
-
-  logger.info({
-    message: 'Nurse assigned to doctor',
-    meta: {
-      nurseId,
-      doctorId,
-    },
-  });
-
-  return NextResponse.json(
-    { message: 'Nurse assigned to doctor' },
-    { status: STATUS.OK }
-  );
 }
 
 export async function DELETE(_req: Request, { params }: RouteParams) {
@@ -130,93 +75,32 @@ export async function DELETE(_req: Request, { params }: RouteParams) {
   const nurseId = parseInt(id);
 
   if (isNaN(nurseId) || nurseId <= 0) {
-    logger.info({
-      message: 'Invalid nurse ID',
-      meta: { id },
-    });
-
     return NextResponse.json(
       { error: 'Invalid nurse ID' },
       { status: STATUS.BAD_REQUEST }
     );
   }
 
-  const doctorId = session.userId;
+  try {
+      await nurseService.unassignNurse(nurseId, session.userId);
 
-  const nurse = db
-    .select({ id: users.id, role: users.role, doctorId: users.doctorId })
-    .from(users)
-    .where(and(eq(users.id, nurseId), eq(users.role, 'nurse')))
-    .all();
+      logger.info({
+        message: 'Nurse unassigned from doctor',
+        meta: {
+          nurseId,
+          doctorId: session.userId,
+        },
+      });
 
-  if (nurse.length === 0) {
-    logger.info({
-      message: 'Nurse not found',
-      meta: { nurseId },
-    });
-
-    return NextResponse.json(
-      { error: 'Nurse not found' },
-      { status: STATUS.NOT_FOUND }
-    );
+      return NextResponse.json(
+        { message: 'Nurse unassigned from doctor' },
+        { status: STATUS.OK }
+      );
+  } catch (error) {
+       if (error instanceof ServiceError) {
+          return NextResponse.json({ error: error.message }, { status: error.status });
+      }
+      logger.error({ message: 'Unassign nurse error', error: error as Error });
+      return NextResponse.json({ error: 'Internal Error' }, { status: 500 });
   }
-
-  if (nurse[0].doctorId === null) {
-    return NextResponse.json(
-      { message: 'Nurse is already unassigned' },
-      { status: STATUS.OK }
-    );
-  }
-
-  if (nurse[0].doctorId !== doctorId) {
-    logger.info({
-      message: 'Unauthorized: Cannot unassign nurse from another doctor',
-      meta: {
-        nurseId,
-        nurseDoctorId: nurse[0].doctorId,
-        requestingDoctorId: doctorId,
-      },
-    });
-
-    return NextResponse.json(
-      { error: 'Forbidden' },
-      { status: STATUS.FORBIDDEN }
-    );
-  }
-
-  const updateResult = await db
-    .update(users)
-    .set({ doctorId: null, updatedAt: new Date().toISOString() })
-    .where(
-      and(
-        eq(users.id, nurseId),
-        eq(users.role, 'nurse'),
-        eq(users.doctorId, doctorId)
-      )
-    );
-
-  if (updateResult.changes === 0) {
-    logger.info({
-      message: 'Nurse unassignment failed - not assigned to this doctor',
-      meta: { nurseId, doctorId },
-    });
-
-    return NextResponse.json(
-      { error: 'Nurse unassignment failed' },
-      { status: STATUS.CONFLICT }
-    );
-  }
-
-  logger.info({
-    message: 'Nurse unassigned from doctor',
-    meta: {
-      nurseId,
-      doctorId,
-    },
-  });
-
-  return NextResponse.json(
-    { message: 'Nurse unassigned from doctor' },
-    { status: STATUS.OK }
-  );
 }

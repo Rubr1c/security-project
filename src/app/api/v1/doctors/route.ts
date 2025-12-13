@@ -1,15 +1,11 @@
-import { db } from '@/lib/db/client';
-import { users } from '@/lib/db/schema';
 import { STATUS } from '@/lib/http/status-codes';
 import { logger } from '@/lib/logger';
-import { requireRole, getSession } from '@/lib/auth/get-session';
+import { requireRole } from '@/lib/auth/get-session';
 import { createUserSchema } from '@/lib/validation/user-schemas';
 import { NextResponse } from 'next/server';
-import bcrypt from 'bcrypt';
 import * as v from 'valibot';
-import { eq } from 'drizzle-orm';
-import { encrypt, hashEmail } from '@/lib/security/crypto';
-import { decryptUserRecords } from '@/lib/security/fields';
+import { doctorService } from '@/services/doctor-service';
+import { ServiceError } from '@/services/errors';
 
 export async function POST(req: Request) {
   const session = await requireRole('admin');
@@ -39,27 +35,28 @@ export async function POST(req: Request) {
     );
   }
 
-  db.insert(users)
-    .values({
-      email: encrypt(result.output.email),
-      emailHash: hashEmail(result.output.email),
-      name: encrypt(result.output.name),
-      passwordHash: await bcrypt.hash(result.output.password, 10),
-      role: 'doctor',
-    })
-    .run();
+  try {
+      const doctor = await doctorService.createDoctor(result.output);
+      
+      logger.info({
+        message: 'Doctor created successfully',
+        meta: {
+          email: doctor.email,
+        },
+      });
 
-  logger.info({
-    message: 'Doctor created successfully',
-    meta: {
-      email: result.output.email,
-    },
-  });
-
-  return NextResponse.json(
-    { message: 'Doctor Created' },
-    { status: STATUS.CREATED }
-  );
+      return NextResponse.json(
+        { message: 'Doctor Created' },
+        { status: STATUS.CREATED }
+      );
+  } catch (error) {
+       // Handle unique constraint or other errors if needed, though service currently doesn't wrap them explicitly except generic errors
+       if (error instanceof ServiceError) {
+          return NextResponse.json({ error: error.message }, { status: error.status });
+      }
+      logger.error({ message: 'Create doctor error', error: error as Error });
+      return NextResponse.json({ error: 'Internal Error' }, { status: 500 });
+  }
 }
 
 export async function GET() {
@@ -77,27 +74,23 @@ export async function GET() {
     );
   }
 
-  const doctors = db
-    .select({
-      id: users.id,
-      email: users.email,
-      name: users.name,
-      role: users.role,
-      createdAt: users.createdAt,
-    })
-    .from(users)
-    .where(eq(users.role, 'doctor'))
-    .all();
+  try {
+      const doctors = await doctorService.getAllDoctors();
+      
+      logger.info({
+        message: 'Doctors fetched',
+        meta: {
+          count: doctors.length,
+          requestedBy: session.role,
+        },
+      });
 
-  logger.info({
-    message: 'Doctors fetched',
-    meta: {
-      count: doctors.length,
-      requestedBy: session.role,
-    },
-  });
-
-  return NextResponse.json(
-    decryptUserRecords(doctors, ['id', 'email', 'name', 'role', 'createdAt'])
-  );
+      return NextResponse.json(doctors);
+  } catch (error) {
+      if (error instanceof ServiceError) {
+          return NextResponse.json({ error: error.message }, { status: error.status });
+      }
+      logger.error({ message: 'Get doctors error', error: error as Error });
+      return NextResponse.json({ error: 'Internal Error' }, { status: 500 });
+  }
 }

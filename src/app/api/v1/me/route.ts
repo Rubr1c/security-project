@@ -1,13 +1,10 @@
-import { db } from '@/lib/db/client';
-import { users } from '@/lib/db/schema';
 import { STATUS } from '@/lib/http/status-codes';
 import { logger } from '@/lib/logger';
 import { getSession } from '@/lib/auth/get-session';
 import { NextResponse } from 'next/server';
-import { eq } from 'drizzle-orm';
-import { decryptUserFields } from '@/lib/security/fields';
-import { encrypt, hashEmail } from '@/lib/security/crypto';
 import { cookies } from 'next/headers';
+import { accountService } from '@/services/account-service';
+import { ServiceError } from '@/services/errors';
 
 const AUTH_COOKIE_NAME = 'auth-token';
 
@@ -25,40 +22,22 @@ export async function GET() {
     );
   }
 
-  const userId = session.userId;
+  try {
+      const profile = await accountService.getProfile(session.userId);
+      
+      logger.info({
+        message: 'User profile fetched',
+        meta: { userId: session.userId },
+      });
 
-  const user = db
-    .select({
-      id: users.id,
-      email: users.email,
-      name: users.name,
-      role: users.role,
-      doctorId: users.doctorId,
-      createdAt: users.createdAt,
-      updatedAt: users.updatedAt,
-    })
-    .from(users)
-    .where(eq(users.id, userId))
-    .all();
-
-  if (user.length === 0) {
-    logger.info({
-      message: 'User not found',
-      meta: { userId },
-    });
-
-    return NextResponse.json(
-      { error: 'User not found' },
-      { status: STATUS.NOT_FOUND }
-    );
+      return NextResponse.json(profile);
+  } catch (error) {
+      if (error instanceof ServiceError) {
+          return NextResponse.json({ error: error.message }, { status: error.status });
+      }
+      logger.error({ message: 'Get profile error', error: error as Error });
+      return NextResponse.json({ error: 'Internal Error' }, { status: 500 });
   }
-
-  logger.info({
-    message: 'User profile fetched',
-    meta: { userId },
-  });
-
-  return NextResponse.json(decryptUserFields(user[0]));
 }
 
 export async function DELETE() {
@@ -75,59 +54,25 @@ export async function DELETE() {
     );
   }
 
-  const userId = session.userId;
-
-  // Strict Compliance Logging
-  logger.getAuditLogger()?.logAccountDeletion(userId);
-
-  // Anonymization (Soft Delete)
-  const timestamp = Date.now();
-  const randomSuffix = crypto.randomUUID();
-
   try {
-    const deletedEmailRaw = `deleted-${timestamp}-${randomSuffix}@healthcure.deleted`;
+      await accountService.deleteAccount(session.userId);
 
-    const encryptedEmail = encrypt(deletedEmailRaw);
+      // Invalidate Session
+      // Usually better to have this in the controller as it deals with HTTP cookies directly
+      // Service handles business logic (logging, db update).
+      const cookieStore = await cookies();
+      cookieStore.delete(AUTH_COOKIE_NAME);
 
-    const emailHash = hashEmail(deletedEmailRaw);
-
-    db.update(users)
-      .set({
-        name: `Deleted User ${userId}`,
-        email: encryptedEmail,
-        emailHash: emailHash,
-        passwordHash: 'DELETED_ACCOUNT_NO_LOGIN',
-        role: 'patient',
-        otpHash: null,
-        pendingPasswordHash: null,
-        pendingPasswordExpiresAt: null,
-        otpExpiresAt: null,
-        otpLastSentAt: null,
-        otpAttempts: 0,
-        emailVerifiedAt: null,
-        updatedAt: new Date().toISOString(),
-      })
-      .where(eq(users.id, userId))
-      .run();
-
-    // Invalidate Session
-    const cookieStore = await cookies();
-    cookieStore.delete(AUTH_COOKIE_NAME);
-
-    return NextResponse.json(
-      { message: 'Account deleted and anonymized successfully.' },
-      { status: STATUS.OK }
-    );
-  } catch (err: any) {
-    logger.error({
-      message: 'Failed to delete account',
-      error: err,
-      meta: { userId },
-    });
-
-    return NextResponse.json(
-      { error: 'Internal Server Error' },
-      { status: STATUS.INTERNAL_ERROR }
-    );
+      return NextResponse.json(
+        { message: 'Account deleted and anonymized successfully.' },
+        { status: STATUS.OK }
+      );
+  } catch (error) {
+      // accountService.deleteAccount wraps generic error with ServiceError(500) or throws.
+       if (error instanceof ServiceError) {
+          return NextResponse.json({ error: error.message }, { status: error.status });
+      }
+      logger.error({ message: 'Delete account error', error: error as Error });
+      return NextResponse.json({ error: 'Internal Error' }, { status: 500 });
   }
 }

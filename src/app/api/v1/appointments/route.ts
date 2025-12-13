@@ -1,14 +1,11 @@
-import { db } from '@/lib/db/client';
-import { appointments, users } from '@/lib/db/schema';
 import { STATUS } from '@/lib/http/status-codes';
 import { logger } from '@/lib/logger';
-import { getSession, requireRole } from '@/lib/auth/get-session';
+import { requireRole } from '@/lib/auth/get-session';
 import { createAppointmentSchema } from '@/lib/validation/appointment-schemas';
 import { NextResponse } from 'next/server';
 import * as v from 'valibot';
-import { eq, and, aliasedTable, getTableColumns } from 'drizzle-orm';
-import { decryptAppointmentRecords } from '@/lib/security/fields';
-import { decrypt } from '@/lib/security/crypto';
+import { appointmentService } from '@/services/appointment-service';
+import { ServiceError } from '@/services/errors';
 
 export async function POST(req: Request) {
   const session = await requireRole('patient');
@@ -36,66 +33,28 @@ export async function POST(req: Request) {
     );
   }
 
-  const patientId = session.userId;
+  try {
+      const appointment = await appointmentService.createAppointment(session.userId, result.output);
+      
+      logger.info({
+        message: 'Appointment requested successfully',
+        meta: appointment,
+      });
 
-  const doctor = db
-    .select({ id: users.id, role: users.role })
-    .from(users)
-    .where(and(eq(users.id, result.output.doctorId), eq(users.role, 'doctor')))
-    .all();
-
-  if (doctor.length === 0) {
-    logger.info({
-      message: 'Doctor not found',
-      meta: { doctorId: result.output.doctorId },
-    });
-
-    return NextResponse.json(
-      { error: 'Doctor not found' },
-      { status: STATUS.NOT_FOUND }
-    );
+      return NextResponse.json(
+        {
+          message: 'Appointment request submitted. Awaiting doctor approval.',
+          appointmentId: appointment.appointmentId,
+        },
+        { status: STATUS.CREATED }
+      );
+  } catch (error) {
+      if (error instanceof ServiceError) {
+          return NextResponse.json({ error: error.message }, { status: error.status });
+      }
+      logger.error({ message: 'Create appointment error', error: error as Error });
+      return NextResponse.json({ error: 'Internal Error' }, { status: 500 });
   }
-
-  const appointmentDate = new Date(result.output.date);
-  if (appointmentDate <= new Date()) {
-    logger.info({
-      message: 'Appointment date must be in the future',
-      meta: { date: result.output.date },
-    });
-
-    return NextResponse.json(
-      { error: 'Appointment date must be in the future' },
-      { status: STATUS.BAD_REQUEST }
-    );
-  }
-
-  const insertResult = db
-    .insert(appointments)
-    .values({
-      patientId,
-      doctorId: result.output.doctorId,
-      date: result.output.date,
-      status: 'pending',
-    })
-    .run();
-
-  logger.info({
-    message: 'Appointment requested successfully',
-    meta: {
-      appointmentId: insertResult.lastInsertRowid,
-      patientId,
-      doctorId: result.output.doctorId,
-      date: result.output.date,
-    },
-  });
-
-  return NextResponse.json(
-    {
-      message: 'Appointment request submitted. Awaiting doctor approval.',
-      appointmentId: insertResult.lastInsertRowid,
-    },
-    { status: STATUS.CREATED }
-  );
 }
 
 export async function GET() {
@@ -115,65 +74,26 @@ export async function GET() {
 
   const { userId, role: userRole } = session;
 
-  const doctors = aliasedTable(users, 'doctors');
-  const patients = aliasedTable(users, 'patients');
-
-  let baseQuery = db
-    .select({
-      ...getTableColumns(appointments),
-      doctorName: doctors.name,
-      patientName: patients.name,
-    })
-    .from(appointments)
-    .leftJoin(doctors, eq(appointments.doctorId, doctors.id))
-    .leftJoin(patients, eq(appointments.patientId, patients.id));
-
-  let userAppointments;
-
-  if (userRole === 'patient') {
-    userAppointments = baseQuery.where(eq(appointments.patientId, userId)).all();
-  } else if (userRole === 'doctor') {
-    userAppointments = baseQuery.where(eq(appointments.doctorId, userId)).all();
-  } else {
-    // Nurse
-    const nurse = db
-      .select({ id: users.id, doctorId: users.doctorId })
-      .from(users)
-      .where(eq(users.id, userId))
-      .all();
-
-    if (nurse.length === 0 || nurse[0].doctorId === null) {
+  try {
+      const appointments = await appointmentService.getAppointments(userId, userRole);
+      
       logger.info({
-        message: 'Nurse not assigned to a doctor',
-        meta: { nurseId: userId },
+        message: 'Appointments fetched',
+        meta: {
+          userId,
+          role: userRole,
+          count: appointments.length,
+          withNames: true,
+        },
       });
 
-      return NextResponse.json([]);
-    }
-
-    userAppointments = baseQuery
-      .where(eq(appointments.doctorId, nurse[0].doctorId))
-      .all();
+      return NextResponse.json(appointments);
+  } catch (error) {
+      // ServiceError usually not expected here unless DB fails, but good practice
+      if (error instanceof ServiceError) {
+          return NextResponse.json({ error: error.message }, { status: error.status });
+      }
+      logger.error({ message: 'Get appointments error', error: error as Error });
+      return NextResponse.json({ error: 'Internal Error' }, { status: 500 });
   }
-
-  logger.info({
-    message: 'Appointments fetched',
-    meta: {
-      userId,
-      role: userRole,
-      count: userAppointments.length,
-      withNames: true,
-    },
-  });
-
-  const decryptedAppointments = decryptAppointmentRecords(userAppointments);
-  
-  // Manually decrypt the joined name fields
-  const finalAppointments = decryptedAppointments.map((apt) => ({
-    ...apt,
-    doctorName: apt.doctorName ? decrypt(apt.doctorName) : undefined,
-    patientName: apt.patientName ? decrypt(apt.patientName) : undefined,
-  }));
-
-  return NextResponse.json(finalAppointments);
 }

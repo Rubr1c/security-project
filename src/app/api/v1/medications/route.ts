@@ -1,11 +1,9 @@
-import { db } from '@/lib/db/client';
-import { appointments, medications } from '@/lib/db/schema';
 import { STATUS } from '@/lib/http/status-codes';
 import { logger } from '@/lib/logger';
-import { getSession, requireRole } from '@/lib/auth/get-session';
+import { requireRole } from '@/lib/auth/get-session';
 import { NextResponse } from 'next/server';
-import { eq, inArray } from 'drizzle-orm';
-import { decryptMedicationRecords } from '@/lib/security/fields';
+import { appointmentService } from '@/services/appointment-service';
+import { ServiceError } from '@/services/errors';
 
 export async function GET() {
   const session = await requireRole('patient', 'doctor');
@@ -23,54 +21,24 @@ export async function GET() {
 
   const { userId, role: userRole } = session;
 
-  let userAppointments;
+  try {
+      const medications = await appointmentService.getAllMedications(userId, userRole);
+      
+      logger.info({
+        message: 'All medications fetched',
+        meta: {
+          userId,
+          role: userRole,
+          medicationCount: medications.length,
+        },
+      });
 
-  if (userRole === 'patient') {
-    userAppointments = db
-      .select({ id: appointments.id })
-      .from(appointments)
-      .where(eq(appointments.patientId, userId))
-      .all();
-  } else {
-    userAppointments = db
-      .select({ id: appointments.id })
-      .from(appointments)
-      .where(eq(appointments.doctorId, userId))
-      .all();
+      return NextResponse.json(medications);
+  } catch (error) {
+       if (error instanceof ServiceError) {
+          return NextResponse.json({ error: error.message }, { status: error.status });
+      }
+      logger.error({ message: 'Get all medications error', error: error as Error });
+      return NextResponse.json({ error: 'Internal Error' }, { status: 500 });
   }
-
-  if (userAppointments.length === 0) {
-    logger.info({
-      message: 'No appointments found',
-      meta: { userId, role: userRole },
-    });
-
-    return NextResponse.json([]);
-  }
-
-  const appointmentIds = userAppointments.map((a) => a.id);
-
-  const userMedications = db
-    .select({
-      id: medications.id,
-      appointmentId: medications.appointmentId,
-      name: medications.name,
-      dosage: medications.dosage,
-      instructions: medications.instructions,
-    })
-    .from(medications)
-    .where(inArray(medications.appointmentId, appointmentIds))
-    .all();
-
-  logger.info({
-    message: 'All medications fetched',
-    meta: {
-      userId,
-      role: userRole,
-      appointmentCount: appointmentIds.length,
-      medicationCount: userMedications.length,
-    },
-  });
-
-  return NextResponse.json(decryptMedicationRecords(userMedications));
 }

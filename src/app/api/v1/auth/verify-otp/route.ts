@@ -10,6 +10,7 @@ import { jwt } from '@/lib/jwt';
 import { cookies } from 'next/headers';
 import { env } from '@/lib/env';
 import { hashEmail } from '@/lib/security/crypto';
+import { authService, ServiceError } from '@/services/auth-service';
 
 const verifySchema = v.object({
   email: v.pipe(v.string(), v.email()),
@@ -28,100 +29,37 @@ export async function POST(req: Request) {
   }
 
   const { email, code } = parsed.output;
-  const emailHashValue = hashEmail(email);
 
-  const [user] = await db
-    .select({
-      id: users.id,
-      email: users.email,
-      role: users.role,
-      emailVerifiedAt: users.emailVerifiedAt,
-      otpHash: users.otpHash,
-      otpExpiresAt: users.otpExpiresAt,
-      otpAttempts: users.otpAttempts,
-    })
-    .from(users)
-    .where(eq(users.emailHash, emailHashValue));
+  try {
+      const { token, userId } = await authService.verifyOtp(email, code);
 
-  if (!user) {
-    return NextResponse.json(
-      { error: 'Invalid code' },
-      { status: STATUS.BAD_REQUEST }
-    );
+      logger.info({
+        message: 'OTP verified',
+        meta: { userId },
+      });
+
+      const isProduction = env.NODE_ENV === 'production';
+      const cookieStore = await cookies();
+      cookieStore.set('auth-token', token, {
+        httpOnly: true,
+        secure: isProduction,
+        sameSite: 'lax',
+        path: '/',
+        maxAge: 60 * 60,
+      });
+
+      return NextResponse.json({ success: true }, { status: STATUS.OK });
+  } catch (error) {
+      if (error instanceof ServiceError) {
+          return NextResponse.json(
+            { error: error.message },
+            { status: error.status }
+          );
+      }
+      logger.error({ message: 'Verify OTP error', error: error as Error });
+      return NextResponse.json(
+          { error: 'Internal Server Error' },
+          { status: STATUS.INTERNAL_ERROR }
+      );
   }
-
-  if (!user.otpHash || !user.otpExpiresAt) {
-    return NextResponse.json(
-      { error: 'No active code. Request a new code.' },
-      { status: STATUS.BAD_REQUEST }
-    );
-  }
-
-  if (user.otpAttempts >= OTP_MAX_ATTEMPTS) {
-    return NextResponse.json(
-      { error: 'Too many attempts. Request a new code.' },
-      { status: STATUS.TOO_MANY_REQUESTS }
-    );
-  }
-
-  if (isExpired(user.otpExpiresAt)) {
-    return NextResponse.json(
-      { error: 'Code expired. Request a new code.' },
-      { status: STATUS.BAD_REQUEST }
-    );
-  }
-
-  const ok = await verifyOtpCode(code, user.otpHash);
-  const nowIso = new Date().toISOString();
-
-  if (!ok) {
-    await db
-      .update(users)
-      .set({
-        otpAttempts: (user.otpAttempts ?? 0) + 1,
-        updatedAt: nowIso,
-      })
-      .where(eq(users.id, user.id));
-
-    logger.info({
-      message: 'Invalid OTP attempt',
-      meta: { userId: user.id },
-    });
-
-    return NextResponse.json(
-      { error: 'Invalid code' },
-      { status: STATUS.BAD_REQUEST }
-    );
-  }
-
-  await db
-    .update(users)
-    .set({
-      otpHash: null,
-      otpExpiresAt: null,
-      otpLastSentAt: null,
-      otpAttempts: 0,
-      emailVerifiedAt: user.emailVerifiedAt ?? nowIso,
-      updatedAt: nowIso,
-    })
-    .where(eq(users.id, user.id));
-
-  logger.info({
-    message: 'OTP verified',
-    meta: { userId: user.id },
-  });
-
-  const token = await jwt.sign({ userId: user.id, role: user.role });
-  const isProduction = env.NODE_ENV === 'production';
-
-  const cookieStore = await cookies();
-  cookieStore.set('auth-token', token, {
-    httpOnly: true,
-    secure: isProduction,
-    sameSite: 'lax',
-    path: '/',
-    maxAge: 60 * 60,
-  });
-
-  return NextResponse.json({ success: true }, { status: STATUS.OK });
 }

@@ -1,12 +1,11 @@
-import { db } from '@/lib/db/client';
-import { appointments } from '@/lib/db/schema';
 import { STATUS } from '@/lib/http/status-codes';
 import { logger } from '@/lib/logger';
 import { requireRole } from '@/lib/auth/get-session';
 import { appointmentResponseSchema } from '@/lib/validation/appointment-schemas';
 import { NextResponse } from 'next/server';
 import * as v from 'valibot';
-import { eq, and } from 'drizzle-orm';
+import { appointmentService } from '@/services/appointment-service';
+import { ServiceError } from '@/services/errors';
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -56,104 +55,35 @@ export async function PUT(req: Request, { params }: RouteParams) {
     );
   }
 
-  const doctorId = session.userId;
-
-  const appointment = db
-    .select()
-    .from(appointments)
-    .where(
-      and(
-        eq(appointments.id, appointmentId),
-        eq(appointments.doctorId, doctorId)
-      )
-    )
-    .all();
-
-  if (appointment.length === 0) {
-    logger.info({
-      message: 'Appointment not found or not assigned to this doctor',
-      meta: { appointmentId, doctorId },
-    });
-
-    return NextResponse.json(
-      { error: 'Appointment not found' },
-      { status: STATUS.NOT_FOUND }
-    );
-  }
-
-  if (appointment[0].status !== 'pending') {
-    logger.info({
-      message: 'Appointment has already been responded to',
-      meta: {
-        appointmentId,
-        currentStatus: appointment[0].status,
-      },
-    });
-
-    return NextResponse.json(
-      { error: `Appointment has already been ${appointment[0].status}` },
-      { status: STATUS.BAD_REQUEST }
-    );
-  }
-
-  const newStatus = result.output.action === 'confirm' ? 'confirmed' : 'denied';
-
-  const updateResult = await db
-    .update(appointments)
-    .set({
-      status: newStatus,
-      updatedAt: new Date().toISOString(),
-    })
-    .where(
-      and(
-        eq(appointments.id, appointmentId),
-        eq(appointments.doctorId, doctorId),
-        eq(appointments.status, 'pending')
-      )
-    );
-
-  if (updateResult.changes === 0) {
-    const current = db
-      .select({ status: appointments.status, doctorId: appointments.doctorId })
-      .from(appointments)
-      .where(eq(appointments.id, appointmentId))
-      .all();
-
-    if (current.length === 0 || current[0].doctorId !== doctorId) {
-      return NextResponse.json(
-        { error: 'Appointment not found' },
-        { status: STATUS.NOT_FOUND }
+  try {
+      const response = await appointmentService.respondToAppointment(
+          appointmentId, 
+          session.userId, 
+          result.output.action
       );
-    }
+      
+      logger.info({
+        message: `Appointment ${response.status} by doctor`,
+        meta: {
+          appointmentId,
+          doctorId: session.userId,
+          patientId: response.patientId,
+          action: result.output.action,
+        },
+      });
 
-    if (current[0].status !== 'pending') {
       return NextResponse.json(
-        { error: `Appointment has already been ${current[0].status}` },
-        { status: STATUS.BAD_REQUEST }
+        {
+          message: `Appointment ${response.status} successfully`,
+          status: response.status,
+        },
+        { status: STATUS.OK }
       );
-    }
-
-    return NextResponse.json(
-      { error: 'Failed to update appointment' },
-      { status: STATUS.INTERNAL_ERROR }
-    );
+  } catch (error) {
+      if (error instanceof ServiceError) {
+          return NextResponse.json({ error: error.message }, { status: error.status });
+      }
+      logger.error({ message: 'Respond to appointment error', error: error as Error });
+      return NextResponse.json({ error: 'Internal Error' }, { status: 500 });
   }
-
-  logger.info({
-    message: `Appointment ${newStatus} by doctor`,
-    meta: {
-      appointmentId,
-      doctorId,
-      patientId: appointment[0].patientId,
-      action: result.output.action,
-    },
-  });
-
-  return NextResponse.json(
-    {
-      message: `Appointment ${newStatus} successfully`,
-      status: newStatus,
-    },
-    { status: STATUS.OK }
-  );
 }

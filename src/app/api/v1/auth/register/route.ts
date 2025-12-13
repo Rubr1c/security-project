@@ -12,6 +12,7 @@ import { generateOtpCode, hashOtpCode, otpExpiresAtISO } from '@/lib/otp';
 import { sendOtpEmail } from '@/lib/email/send-otp';
 import { encrypt, hashEmail, BCRYPT_COST } from '@/lib/security/crypto';
 import { decryptUserFields } from '@/lib/security/fields';
+import { authService, ServiceError } from '@/services/auth-service';
 
 export async function POST(req: Request) {
   const decision = await aj.protect(req, { requested: 7 });
@@ -56,84 +57,29 @@ export async function POST(req: Request) {
     );
   }
 
-  const emailHashValue = hashEmail(result.output.email);
+  try {
+    const serviceResult = await authService.register(result.output);
 
-  const existing = await db
-    .select({ id: users.id })
-    .from(users)
-    .where(eq(users.emailHash, emailHashValue));
-
-  if (existing.length > 0) {
     logger.info({
-      message: 'Email already exists during registration attempt',
+      message: 'User created, OTP sent',
     });
 
     return NextResponse.json(
-      { error: 'Email already exists' },
-      { status: STATUS.BAD_REQUEST }
+      { otpRequired: serviceResult.otpRequired, email: serviceResult.email },
+      { status: STATUS.CREATED }
     );
-  }
-
-  const nowIso = new Date().toISOString();
-
-  db.insert(users)
-    .values({
-      email: encrypt(result.output.email),
-      emailHash: emailHashValue,
-      name: encrypt(result.output.name),
-      passwordHash: await bcrypt.hash(result.output.password, BCRYPT_COST),
-      role: 'patient',
-      emailVerifiedAt: null,
-      otpHash: null,
-      otpExpiresAt: null,
-      otpLastSentAt: null,
-      otpAttempts: 0,
-      createdAt: nowIso,
-      updatedAt: nowIso,
-    })
-    .run();
-
-  const [created] = await db
-    .select({ id: users.id, email: users.email })
-    .from(users)
-    .where(eq(users.emailHash, emailHashValue));
-
-  const decryptedCreated = created ? decryptUserFields(created) : null;
-
-  if (!decryptedCreated) {
+  } catch (error) {
+    if (error instanceof ServiceError) {
+       return NextResponse.json(
+        { error: error.message },
+        { status: error.status }
+      );
+    }
+    
+    logger.error({ message: 'Register error', error: error as Error });
     return NextResponse.json(
-      { error: 'Failed to create user' },
-      { status: STATUS.INTERNAL_ERROR }
+        { error: 'Internal Server Error' },
+        { status: STATUS.INTERNAL_ERROR }
     );
   }
-
-  const code = generateOtpCode();
-  const otpHash = await hashOtpCode(code);
-  const expiresAt = otpExpiresAtISO();
-
-  await db
-    .update(users)
-    .set({
-      otpHash,
-      otpExpiresAt: expiresAt,
-      otpAttempts: 0,
-      otpLastSentAt: nowIso,
-      updatedAt: nowIso,
-    })
-    .where(eq(users.id, created.id));
-
-  await sendOtpEmail({
-    to: decryptedCreated.email,
-    code,
-    expiresMinutes: 10,
-  });
-
-  logger.info({
-    message: 'User created, OTP sent',
-  });
-
-  return NextResponse.json(
-    { otpRequired: true, email: result.output.email },
-    { status: STATUS.CREATED }
-  );
 }

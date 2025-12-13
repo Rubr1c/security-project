@@ -1,16 +1,15 @@
-import { db } from '@/lib/db/client';
-import { users } from '@/lib/db/schema';
 import { STATUS } from '@/lib/http/status-codes';
 import { logger } from '@/lib/logger';
 import { requireRole } from '@/lib/auth/get-session';
 import { NextResponse } from 'next/server';
-import { and, eq } from 'drizzle-orm';
+import { nurseService } from '@/services/nurse-service';
+import { ServiceError } from '@/services/errors';
 
 interface RouteParams {
   params: Promise<{ id: string }>;
 }
 
-export async function DELETE(_req: Request, { params }: RouteParams) {
+export async function DELETE(req: Request, { params }: RouteParams) {
   const session = await requireRole('admin');
 
   if (!session) {
@@ -34,35 +33,20 @@ export async function DELETE(_req: Request, { params }: RouteParams) {
     );
   }
 
-  const nurse = db
-    .select({ id: users.id, role: users.role })
-    .from(users)
-    .where(and(eq(users.id, nurseId), eq(users.role, 'nurse')))
-    .all();
+  try {
+      await nurseService.deleteNurse(nurseId, session.userId);
+      
+      logger.info({
+        message: 'Nurse deleted successfully',
+        meta: { id: nurseId, deletedBy: session.userId },
+      });
 
-  if (nurse.length === 0) {
-    return NextResponse.json(
-      { error: 'Nurse not found' },
-      { status: STATUS.NOT_FOUND }
-    );
+      return NextResponse.json({ message: 'Nurse Deleted' }, { status: STATUS.OK });
+  } catch (error) {
+      if (error instanceof ServiceError) {
+          return NextResponse.json({ error: error.message }, { status: error.status });
+      }
+      logger.error({ message: 'Delete nurse error', error: error as Error });
+      return NextResponse.json({ error: 'Internal Error' }, { status: 500 });
   }
-
-  const deleteResult = db
-    .delete(users)
-    .where(and(eq(users.id, nurseId), eq(users.role, 'nurse')))
-    .run();
-
-  if (deleteResult.changes === 0) {
-    return NextResponse.json(
-      { error: 'Nurse not found or already deleted' },
-      { status: STATUS.NOT_FOUND }
-    );
-  }
-
-  logger.info({
-    message: 'Nurse deleted successfully',
-    meta: { id: nurseId, deletedBy: session.userId },
-  });
-
-  return NextResponse.json({ message: 'Nurse Deleted' }, { status: STATUS.OK });
 }
