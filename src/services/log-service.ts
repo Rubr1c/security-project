@@ -7,8 +7,10 @@ const MAX_LIMIT = 100;
 
 export const logService = {
   async getLogs(page = 1, limit = DEFAULT_LIMIT) {
-    const safeLimit = Math.min(Math.max(1, limit), MAX_LIMIT);
-    const safePage = Math.max(1, page);
+    const safePage = Number.isNaN(page) || page < 1 ? 1 : page;
+    const safeLimit = Number.isNaN(limit)
+      ? DEFAULT_LIMIT
+      : Math.min(Math.max(1, limit), MAX_LIMIT);
     const offset = (safePage - 1) * safeLimit;
 
     const data = db

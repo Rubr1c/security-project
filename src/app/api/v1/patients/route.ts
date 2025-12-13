@@ -21,13 +21,15 @@ export async function GET(request: NextRequest) {
 
   try {
     const { searchParams } = new URL(request.url);
-    const page = parseInt(searchParams.get('page') || '1', 10);
-    const limit = parseInt(searchParams.get('limit') || '50', 10);
+    const pageParam = searchParams.get('page');
+    const limitParam = searchParams.get('limit');
+    const page = pageParam ? parseInt(pageParam, 10) : 1;
+    const limit = limitParam ? parseInt(limitParam, 10) : 50;
 
     const result = await patientService.getPatientsForDoctor(
       session.userId,
-      page,
-      limit
+      Number.isNaN(page) ? 1 : page,
+      Number.isNaN(limit) ? 50 : limit
     );
 
     logger.info({
