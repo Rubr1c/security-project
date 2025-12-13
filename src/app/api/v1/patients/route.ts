@@ -20,22 +20,25 @@ export async function GET() {
   }
 
   try {
-      const patients = await patientService.getPatientsForDoctor(session.userId);
-      
-      logger.info({
-        message: 'Patients fetched',
-        meta: {
-          doctorId: session.userId,
-          count: patients.length,
-        },
-      });
+    const patients = await patientService.getPatientsForDoctor(session.userId);
 
-      return NextResponse.json(patients);
+    logger.info({
+      message: 'Patients fetched',
+      meta: {
+        doctorId: session.userId,
+        count: patients.length,
+      },
+    });
+
+    return NextResponse.json(patients);
   } catch (error) {
-      if (error instanceof ServiceError) {
-          return NextResponse.json({ error: error.message }, { status: error.status });
-      }
-      logger.error({ message: 'Get patients error', error: error as Error });
-      return NextResponse.json({ error: 'Internal Error' }, { status: 500 });
+    if (error instanceof ServiceError) {
+      return NextResponse.json(
+        { error: error.message },
+        { status: error.status }
+      );
+    }
+    logger.error({ message: 'Get patients error', error: error as Error });
+    return NextResponse.json({ error: 'Internal Error' }, { status: 500 });
   }
 }

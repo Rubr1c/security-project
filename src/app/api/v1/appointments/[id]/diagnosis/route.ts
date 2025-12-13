@@ -53,25 +53,32 @@ export async function PUT(req: Request, { params }: RouteParams) {
   }
 
   try {
-      await appointmentService.updateDiagnosis(appointmentId, session.userId, result.output.diagnosis);
-      
-      logger.info({
-        message: 'Diagnosis updated successfully',
-        meta: {
-          appointmentId,
-          doctorId: session.userId,
-        },
-      });
+    await appointmentService.updateDiagnosis(
+      appointmentId,
+      session.userId,
+      result.output.diagnosis
+    );
 
-      return NextResponse.json(
-        { message: 'Diagnosis updated successfully' },
-        { status: STATUS.OK }
-      );
+    logger.info({
+      message: 'Diagnosis updated successfully',
+      meta: {
+        appointmentId,
+        doctorId: session.userId,
+      },
+    });
+
+    return NextResponse.json(
+      { message: 'Diagnosis updated successfully' },
+      { status: STATUS.OK }
+    );
   } catch (error) {
-      if (error instanceof ServiceError) {
-          return NextResponse.json({ error: error.message }, { status: error.status });
-      }
-      logger.error({ message: 'Update diagnosis error', error: error as Error });
-      return NextResponse.json({ error: 'Internal Error' }, { status: 500 });
+    if (error instanceof ServiceError) {
+      return NextResponse.json(
+        { error: error.message },
+        { status: error.status }
+      );
+    }
+    logger.error({ message: 'Update diagnosis error', error: error as Error });
+    return NextResponse.json({ error: 'Internal Error' }, { status: 500 });
   }
 }

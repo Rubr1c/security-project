@@ -27,7 +27,7 @@ export function useCsrf() {
     }
 
     fetchCsrfToken();
-  }, []);
+  }, [setGlobalCsrfToken]);
 
   return { csrfToken, loading, error };
 }

@@ -34,26 +34,29 @@ export async function PUT(_req: Request, { params }: RouteParams) {
   }
 
   try {
-      await nurseService.assignNurse(nurseId, session.userId);
+    await nurseService.assignNurse(nurseId, session.userId);
 
-      logger.info({
-        message: 'Nurse assigned to doctor',
-        meta: {
-          nurseId,
-          doctorId: session.userId,
-        },
-      });
+    logger.info({
+      message: 'Nurse assigned to doctor',
+      meta: {
+        nurseId,
+        doctorId: session.userId,
+      },
+    });
 
-      return NextResponse.json(
-        { message: 'Nurse assigned to doctor' },
-        { status: STATUS.OK }
-      );
+    return NextResponse.json(
+      { message: 'Nurse assigned to doctor' },
+      { status: STATUS.OK }
+    );
   } catch (error) {
-       if (error instanceof ServiceError) {
-          return NextResponse.json({ error: error.message }, { status: error.status });
-      }
-      logger.error({ message: 'Assign nurse error', error: error as Error });
-      return NextResponse.json({ error: 'Internal Error' }, { status: 500 });
+    if (error instanceof ServiceError) {
+      return NextResponse.json(
+        { error: error.message },
+        { status: error.status }
+      );
+    }
+    logger.error({ message: 'Assign nurse error', error: error as Error });
+    return NextResponse.json({ error: 'Internal Error' }, { status: 500 });
   }
 }
 
@@ -82,25 +85,28 @@ export async function DELETE(_req: Request, { params }: RouteParams) {
   }
 
   try {
-      await nurseService.unassignNurse(nurseId, session.userId);
+    await nurseService.unassignNurse(nurseId, session.userId);
 
-      logger.info({
-        message: 'Nurse unassigned from doctor',
-        meta: {
-          nurseId,
-          doctorId: session.userId,
-        },
-      });
+    logger.info({
+      message: 'Nurse unassigned from doctor',
+      meta: {
+        nurseId,
+        doctorId: session.userId,
+      },
+    });
 
-      return NextResponse.json(
-        { message: 'Nurse unassigned from doctor' },
-        { status: STATUS.OK }
-      );
+    return NextResponse.json(
+      { message: 'Nurse unassigned from doctor' },
+      { status: STATUS.OK }
+    );
   } catch (error) {
-       if (error instanceof ServiceError) {
-          return NextResponse.json({ error: error.message }, { status: error.status });
-      }
-      logger.error({ message: 'Unassign nurse error', error: error as Error });
-      return NextResponse.json({ error: 'Internal Error' }, { status: 500 });
+    if (error instanceof ServiceError) {
+      return NextResponse.json(
+        { error: error.message },
+        { status: error.status }
+      );
+    }
+    logger.error({ message: 'Unassign nurse error', error: error as Error });
+    return NextResponse.json({ error: 'Internal Error' }, { status: 500 });
   }
 }

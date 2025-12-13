@@ -34,26 +34,35 @@ export async function POST(req: Request) {
   }
 
   try {
-      const appointment = await appointmentService.createAppointment(session.userId, result.output);
-      
-      logger.info({
-        message: 'Appointment requested successfully',
-        meta: appointment,
-      });
+    const appointment = await appointmentService.createAppointment(
+      session.userId,
+      result.output
+    );
 
-      return NextResponse.json(
-        {
-          message: 'Appointment request submitted. Awaiting doctor approval.',
-          appointmentId: appointment.appointmentId,
-        },
-        { status: STATUS.CREATED }
-      );
+    logger.info({
+      message: 'Appointment requested successfully',
+      meta: appointment,
+    });
+
+    return NextResponse.json(
+      {
+        message: 'Appointment request submitted. Awaiting doctor approval.',
+        appointmentId: appointment.appointmentId,
+      },
+      { status: STATUS.CREATED }
+    );
   } catch (error) {
-      if (error instanceof ServiceError) {
-          return NextResponse.json({ error: error.message }, { status: error.status });
-      }
-      logger.error({ message: 'Create appointment error', error: error as Error });
-      return NextResponse.json({ error: 'Internal Error' }, { status: 500 });
+    if (error instanceof ServiceError) {
+      return NextResponse.json(
+        { error: error.message },
+        { status: error.status }
+      );
+    }
+    logger.error({
+      message: 'Create appointment error',
+      error: error as Error,
+    });
+    return NextResponse.json({ error: 'Internal Error' }, { status: 500 });
   }
 }
 
@@ -75,25 +84,31 @@ export async function GET() {
   const { userId, role: userRole } = session;
 
   try {
-      const appointments = await appointmentService.getAppointments(userId, userRole);
-      
-      logger.info({
-        message: 'Appointments fetched',
-        meta: {
-          userId,
-          role: userRole,
-          count: appointments.length,
-          withNames: true,
-        },
-      });
+    const appointments = await appointmentService.getAppointments(
+      userId,
+      userRole
+    );
 
-      return NextResponse.json(appointments);
+    logger.info({
+      message: 'Appointments fetched',
+      meta: {
+        userId,
+        role: userRole,
+        count: appointments.length,
+        withNames: true,
+      },
+    });
+
+    return NextResponse.json(appointments);
   } catch (error) {
-      // ServiceError usually not expected here unless DB fails, but good practice
-      if (error instanceof ServiceError) {
-          return NextResponse.json({ error: error.message }, { status: error.status });
-      }
-      logger.error({ message: 'Get appointments error', error: error as Error });
-      return NextResponse.json({ error: 'Internal Error' }, { status: 500 });
+    // ServiceError usually not expected here unless DB fails, but good practice
+    if (error instanceof ServiceError) {
+      return NextResponse.json(
+        { error: error.message },
+        { status: error.status }
+      );
+    }
+    logger.error({ message: 'Get appointments error', error: error as Error });
+    return NextResponse.json({ error: 'Internal Error' }, { status: 500 });
   }
 }

@@ -3,10 +3,18 @@ import { appointments, users, medications } from '@/lib/db/schema';
 import { eq, and, aliasedTable, getTableColumns, inArray } from 'drizzle-orm';
 import { ServiceError } from './errors';
 import { encrypt, decrypt } from '@/lib/security/crypto';
-import { decryptAppointmentRecords, decryptAppointmentFields, decryptUserFields, decryptMedicationRecords } from '@/lib/security/fields';
+import {
+  decryptAppointmentRecords,
+  decryptAppointmentFields,
+  decryptUserFields,
+  decryptMedicationRecords,
+} from '@/lib/security/fields';
 
 export const appointmentService = {
-  async createAppointment(patientId: number, data: { doctorId: number; date: string }) {
+  async createAppointment(
+    patientId: number,
+    data: { doctorId: number; date: string }
+  ) {
     // Check doctor
     const doctor = db
       .select({ id: users.id, role: users.role })
@@ -45,7 +53,7 @@ export const appointmentService = {
     const doctors = aliasedTable(users, 'doctors');
     const patients = aliasedTable(users, 'patients');
 
-    let baseQuery = db
+    const baseQuery = db
       .select({
         ...getTableColumns(appointments),
         doctorName: doctors.name,
@@ -58,9 +66,13 @@ export const appointmentService = {
     let userAppointments;
 
     if (role === 'patient') {
-      userAppointments = baseQuery.where(eq(appointments.patientId, userId)).all();
+      userAppointments = baseQuery
+        .where(eq(appointments.patientId, userId))
+        .all();
     } else if (role === 'doctor') {
-      userAppointments = baseQuery.where(eq(appointments.doctorId, userId)).all();
+      userAppointments = baseQuery
+        .where(eq(appointments.doctorId, userId))
+        .all();
     } else {
       // Nurse
       const nurse = db
@@ -79,7 +91,7 @@ export const appointmentService = {
     }
 
     const decryptedAppointments = decryptAppointmentRecords(userAppointments);
-    
+
     // Manually decrypt the joined name fields
     return decryptedAppointments.map((apt) => ({
       ...apt,
@@ -88,7 +100,11 @@ export const appointmentService = {
     }));
   },
 
-  async getAppointmentById(appointmentId: number, userId: number, role: string) {
+  async getAppointmentById(
+    appointmentId: number,
+    userId: number,
+    role: string
+  ) {
     const appointment = db
       .select()
       .from(appointments)
@@ -138,7 +154,11 @@ export const appointmentService = {
     };
   },
 
-  async respondToAppointment(appointmentId: number, doctorId: number, action: 'confirm' | 'deny') {
+  async respondToAppointment(
+    appointmentId: number,
+    doctorId: number,
+    action: 'confirm' | 'deny'
+  ) {
     const appointment = db
       .select()
       .from(appointments)
@@ -155,7 +175,10 @@ export const appointmentService = {
     }
 
     if (appointment[0].status !== 'pending') {
-      throw new ServiceError(`Appointment has already been ${appointment[0].status}`, 400);
+      throw new ServiceError(
+        `Appointment has already been ${appointment[0].status}`,
+        400
+      );
     }
 
     const newStatus = action === 'confirm' ? 'confirmed' : 'denied';
@@ -175,20 +198,24 @@ export const appointmentService = {
       );
 
     if (updateResult.changes === 0) {
-        // Concurrency check or state change in between
-        throw new ServiceError('Failed to update appointment', 500);
+      // Concurrency check or state change in between
+      throw new ServiceError('Failed to update appointment', 500);
     }
 
     return {
-        appointmentId,
-        patientId: appointment[0].patientId,
-        doctorId,
-        status: newStatus,
-        action
+      appointmentId,
+      patientId: appointment[0].patientId,
+      doctorId,
+      status: newStatus,
+      action,
     };
   },
 
-  async updateDiagnosis(appointmentId: number, doctorId: number, diagnosis: string) {
+  async updateDiagnosis(
+    appointmentId: number,
+    doctorId: number,
+    diagnosis: string
+  ) {
     const appointment = db
       .select()
       .from(appointments)
@@ -221,16 +248,16 @@ export const appointmentService = {
     if (updateResult.changes === 0) {
       throw new ServiceError('Appointment not found', 404);
     }
-    
+
     return { appointmentId, doctorId };
   },
-  
+
   // Adding medication logic here since it's closely related to appointment access control
   async getMedications(appointmentId: number, userId: number, role: string) {
-      // First check access logic which is identical to getAppointmentById essentially
-      // Reuse getAppointmentById logic? Or simpler check.
-      // Re-implementing for decoupling.
-      
+    // First check access logic which is identical to getAppointmentById essentially
+    // Reuse getAppointmentById logic? Or simpler check.
+    // Re-implementing for decoupling.
+
     const appointment = db
       .select()
       .from(appointments)
@@ -264,63 +291,74 @@ export const appointmentService = {
         throw new ServiceError('Appointment not found', 404);
       }
     }
-    
+
     const appointmentMedications = db
       .select()
       .from(medications)
       .where(eq(medications.appointmentId, appointmentId))
       .all();
-      
+
     return decryptMedicationRecords(appointmentMedications);
   },
-  
-  async addMedication(appointmentId: number, userId: number, role: string, data: { name: string; dosage: string; instructions: string }) {
-      const appointment = db
-        .select()
-        .from(appointments)
-        .where(eq(appointments.id, appointmentId))
+
+  async addMedication(
+    appointmentId: number,
+    userId: number,
+    role: string,
+    data: { name: string; dosage: string; instructions: string }
+  ) {
+    const appointment = db
+      .select()
+      .from(appointments)
+      .where(eq(appointments.id, appointmentId))
+      .all();
+
+    if (appointment.length === 0) {
+      throw new ServiceError('Appointment not found', 404);
+    }
+
+    if (role === 'doctor') {
+      if (appointment[0].doctorId !== userId) {
+        throw new ServiceError(
+          'Not authorized to add medications to this appointment',
+          403
+        );
+      }
+    } else {
+      // Nurse
+      const nurse = db
+        .select({ id: users.id, doctorId: users.doctorId })
+        .from(users)
+        .where(eq(users.id, userId))
         .all();
 
-      if (appointment.length === 0) {
-        throw new ServiceError('Appointment not found', 404);
+      if (nurse.length === 0 || nurse[0].doctorId === null) {
+        throw new ServiceError('Nurse is not assigned to a doctor', 403);
       }
 
-      if (role === 'doctor') {
-        if (appointment[0].doctorId !== userId) {
-          throw new ServiceError('Not authorized to add medications to this appointment', 403);
-        }
-      } else {
-        // Nurse
-        const nurse = db
-          .select({ id: users.id, doctorId: users.doctorId })
-          .from(users)
-          .where(eq(users.id, userId))
-          .all();
-
-        if (nurse.length === 0 || nurse[0].doctorId === null) {
-            throw new ServiceError('Nurse is not assigned to a doctor', 403);
-        }
-
-        if (appointment[0].doctorId !== nurse[0].doctorId) {
-            throw new ServiceError('Not authorized to add medications to this appointment', 403);
-        }
+      if (appointment[0].doctorId !== nurse[0].doctorId) {
+        throw new ServiceError(
+          'Not authorized to add medications to this appointment',
+          403
+        );
       }
+    }
 
-      const insertResult = db
-        .insert(medications)
-        .values({
-          appointmentId,
-          name: encrypt(data.name),
-          dosage: encrypt(data.dosage),
-          instructions: encrypt(data.instructions),
-        })
-        .run();
-        
-      return {
-          medicationId: insertResult.lastInsertRowid,
-          appointmentId,
-          name: data.name
-      };
+    const insertResult = db
+      .insert(medications)
+      .values({
+        appointmentId,
+        name: encrypt(data.name),
+        dosage: encrypt(data.dosage),
+        instructions: encrypt(data.instructions),
+      })
+      .run();
+
+    return {
+      medicationId: insertResult.lastInsertRowid,
+      appointmentId,
+      name: data.name,
+    };
   },
 
   async getAllMedications(userId: number, role: string) {
@@ -359,5 +397,5 @@ export const appointmentService = {
       .all();
 
     return decryptMedicationRecords(userMedications);
-  }
+  },
 };

@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server';
-import { sendPasswordResetEmail } from '@/lib/email/mailer';
 import * as v from 'valibot';
 import { forgotPasswordSchema } from '@/lib/validation/auth-schemas';
 import { STATUS } from '@/lib/http/status-codes';
@@ -19,20 +18,20 @@ export async function POST(req: Request) {
     }
 
     const { email } = result.output;
-    
+
     // Always return success message to prevent enumeration, even if service returns undefined
     const serviceResult = await authService.forgotPassword(email);
 
     if (serviceResult) {
-        logger.info({
-          message: 'Password reset link sent',
-          meta: { userId: serviceResult.userId },
-        });
+      logger.info({
+        message: 'Password reset link sent',
+        meta: { userId: serviceResult.userId },
+      });
     } else {
-        logger.info({
-          message: 'Password reset requested for non-existent email',
-          meta: { email },
-        });
+      logger.info({
+        message: 'Password reset requested for non-existent email',
+        meta: { email },
+      });
     }
 
     return NextResponse.json({
@@ -40,13 +39,16 @@ export async function POST(req: Request) {
     });
   } catch (error) {
     if (error instanceof ServiceError) {
-        // Should usually be silent for this route but let's follow pattern
-        logger.error({ message: 'Forgot password service error', error: error as Error });
+      // Should usually be silent for this route but let's follow pattern
+      logger.error({
+        message: 'Forgot password service error',
+        error: error as Error,
+      });
     } else {
-        logger.error({
-          message: 'Error processing forgot password request',
-          error: error as Error,
-        });
+      logger.error({
+        message: 'Error processing forgot password request',
+        error: error as Error,
+      });
     }
     return NextResponse.json(
       { error: 'Internal Server Error' },

@@ -1,6 +1,6 @@
 import { STATUS } from '@/lib/http/status-codes';
 import { logger } from '@/lib/logger';
-import { getSession, requireRole } from '@/lib/auth/get-session';
+import { requireRole } from '@/lib/auth/get-session';
 import { addMedicationSchema } from '@/lib/validation/medication-schemas';
 import { NextResponse } from 'next/server';
 import * as v from 'valibot';
@@ -44,25 +44,32 @@ export async function GET(_req: Request, { params }: RouteParams) {
   }
 
   try {
-      const medications = await appointmentService.getMedications(appointmentId, userId, userRole);
-      
-      logger.info({
-        message: 'Medications fetched',
-        meta: {
-          appointmentId,
-          userId,
-          role: userRole,
-          count: medications.length,
-        },
-      });
+    const medications = await appointmentService.getMedications(
+      appointmentId,
+      userId,
+      userRole
+    );
 
-      return NextResponse.json(medications);
+    logger.info({
+      message: 'Medications fetched',
+      meta: {
+        appointmentId,
+        userId,
+        role: userRole,
+        count: medications.length,
+      },
+    });
+
+    return NextResponse.json(medications);
   } catch (error) {
-      if (error instanceof ServiceError) {
-          return NextResponse.json({ error: error.message }, { status: error.status });
-      }
-      logger.error({ message: 'Get medications error', error: error as Error });
-      return NextResponse.json({ error: 'Internal Error' }, { status: 500 });
+    if (error instanceof ServiceError) {
+      return NextResponse.json(
+        { error: error.message },
+        { status: error.status }
+      );
+    }
+    logger.error({ message: 'Get medications error', error: error as Error });
+    return NextResponse.json({ error: 'Internal Error' }, { status: 500 });
   }
 }
 
@@ -108,36 +115,39 @@ export async function POST(req: Request, { params }: RouteParams) {
   }
 
   try {
-      const medication = await appointmentService.addMedication(
-          appointmentId, 
-          session.userId, 
-          session.role, 
-          result.output
-      );
+    const medication = await appointmentService.addMedication(
+      appointmentId,
+      session.userId,
+      session.role,
+      result.output
+    );
 
-      logger.info({
+    logger.info({
+      message: 'Medication added successfully',
+      meta: {
+        medicationId: medication.medicationId,
+        appointmentId,
+        userId: session.userId,
+        role: session.role,
+        name: result.output.name,
+      },
+    });
+
+    return NextResponse.json(
+      {
         message: 'Medication added successfully',
-        meta: {
-          medicationId: medication.medicationId,
-          appointmentId,
-          userId: session.userId,
-          role: session.role,
-          name: result.output.name,
-        },
-      });
-
-      return NextResponse.json(
-        {
-          message: 'Medication added successfully',
-          medicationId: medication.medicationId,
-        },
-        { status: STATUS.CREATED }
-      );
+        medicationId: medication.medicationId,
+      },
+      { status: STATUS.CREATED }
+    );
   } catch (error) {
-     if (error instanceof ServiceError) {
-          return NextResponse.json({ error: error.message }, { status: error.status });
-      }
-      logger.error({ message: 'Add medication error', error: error as Error });
-      return NextResponse.json({ error: 'Internal Error' }, { status: 500 });
+    if (error instanceof ServiceError) {
+      return NextResponse.json(
+        { error: error.message },
+        { status: error.status }
+      );
+    }
+    logger.error({ message: 'Add medication error', error: error as Error });
+    return NextResponse.json({ error: 'Internal Error' }, { status: 500 });
   }
 }

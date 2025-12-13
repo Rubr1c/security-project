@@ -20,16 +20,19 @@ export async function GET() {
   }
 
   try {
-      const exportData = await accountService.exportUserData(session.userId);
-      
-      // Logging is handled in service for strict compliance
-      
-      return NextResponse.json(exportData);
+    const exportData = await accountService.exportUserData(session.userId);
+
+    // Logging is handled in service for strict compliance
+
+    return NextResponse.json(exportData);
   } catch (error) {
-      if (error instanceof ServiceError) {
-          return NextResponse.json({ error: error.message }, { status: error.status });
-      }
-      logger.error({ message: 'Export data error', error: error as Error });
-      return NextResponse.json({ error: 'Internal Error' }, { status: 500 });
+    if (error instanceof ServiceError) {
+      return NextResponse.json(
+        { error: error.message },
+        { status: error.status }
+      );
+    }
+    logger.error({ message: 'Export data error', error: error as Error });
+    return NextResponse.json({ error: 'Internal Error' }, { status: 500 });
   }
 }

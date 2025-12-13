@@ -2,12 +2,20 @@ import { encrypt, decrypt } from './crypto';
 
 export const USER_ENCRYPTED_FIELDS = ['name', 'email'] as const;
 export const APPOINTMENT_ENCRYPTED_FIELDS = ['diagnosis'] as const;
-export const MEDICATION_ENCRYPTED_FIELDS = ['name', 'instructions', 'dosage'] as const;
+export const MEDICATION_ENCRYPTED_FIELDS = [
+  'name',
+  'instructions',
+  'dosage',
+] as const;
 
 type UserFields = { name?: unknown; email?: unknown; [key: string]: unknown };
 type AppointmentFields = { diagnosis?: unknown; [key: string]: unknown };
-type MedicationFields = { name?: unknown; instructions?: unknown; dosage?: unknown; [key: string]: unknown };
-
+type MedicationFields = {
+  name?: unknown;
+  instructions?: unknown;
+  dosage?: unknown;
+  [key: string]: unknown;
+};
 
 type EncryptableRecord = Record<string, unknown>;
 
@@ -47,46 +55,32 @@ export function encryptUserFields<T extends UserFields>(record: T): T {
   return encryptFields(record, USER_ENCRYPTED_FIELDS);
 }
 
-
 export function decryptUserFields<T extends UserFields>(record: T): T {
   return decryptFields(record, USER_ENCRYPTED_FIELDS);
 }
 
-
 export function encryptAppointmentFields<T extends AppointmentFields>(
   record: T
 ): T {
-  return encryptFields(
-    record,
-    APPOINTMENT_ENCRYPTED_FIELDS
-  );
+  return encryptFields(record, APPOINTMENT_ENCRYPTED_FIELDS);
 }
 
 export function decryptAppointmentFields<T extends AppointmentFields>(
   record: T
 ): T {
-  return decryptFields(
-    record,
-    APPOINTMENT_ENCRYPTED_FIELDS
-  );
+  return decryptFields(record, APPOINTMENT_ENCRYPTED_FIELDS);
 }
 
 export function encryptMedicationFields<T extends MedicationFields>(
   record: T
 ): T {
-  return encryptFields(
-    record,
-    MEDICATION_ENCRYPTED_FIELDS
-  );
+  return encryptFields(record, MEDICATION_ENCRYPTED_FIELDS);
 }
 
 export function decryptMedicationFields<T extends MedicationFields>(
   record: T
 ): T {
-  return decryptFields(
-    record,
-    MEDICATION_ENCRYPTED_FIELDS
-  );
+  return decryptFields(record, MEDICATION_ENCRYPTED_FIELDS);
 }
 
 export function decryptUserRecords<T extends UserFields, K extends keyof T>(

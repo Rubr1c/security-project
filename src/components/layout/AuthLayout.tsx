@@ -1,6 +1,3 @@
-import Link from 'next/link';
-import { ArrowRight, ShieldCheck } from 'lucide-react';
-
 interface AuthLayoutProps {
   children: React.ReactNode;
   title: string;

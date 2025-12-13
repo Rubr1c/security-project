@@ -1,5 +1,4 @@
 import { ResetPasswordForm } from '@/components/forms/ResetPasswordForm';
-import Link from 'next/link';
 import { AuthLayout } from '@/components/layout/AuthLayout';
 
 export default function ResetPasswordPage() {

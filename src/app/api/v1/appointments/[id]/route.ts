@@ -1,6 +1,6 @@
 import { STATUS } from '@/lib/http/status-codes';
 import { logger } from '@/lib/logger';
-import { getSession, requireRole } from '@/lib/auth/get-session';
+import { requireRole } from '@/lib/auth/get-session';
 import { NextResponse } from 'next/server';
 import { appointmentService } from '@/services/appointment-service';
 import { ServiceError } from '@/services/errors';
@@ -42,23 +42,33 @@ export async function GET(_req: Request, { params }: RouteParams) {
   }
 
   try {
-      const appointment = await appointmentService.getAppointmentById(appointmentId, userId, userRole);
-      
-      logger.info({
-        message: 'Appointment details fetched',
-        meta: {
-          appointmentId,
-          userId,
-          role: userRole,
-        },
-      });
+    const appointment = await appointmentService.getAppointmentById(
+      appointmentId,
+      userId,
+      userRole
+    );
 
-      return NextResponse.json(appointment);
+    logger.info({
+      message: 'Appointment details fetched',
+      meta: {
+        appointmentId,
+        userId,
+        role: userRole,
+      },
+    });
+
+    return NextResponse.json(appointment);
   } catch (error) {
-      if (error instanceof ServiceError) {
-          return NextResponse.json({ error: error.message }, { status: error.status });
-      }
-      logger.error({ message: 'Get appointment details error', error: error as Error });
-      return NextResponse.json({ error: 'Internal Error' }, { status: 500 });
+    if (error instanceof ServiceError) {
+      return NextResponse.json(
+        { error: error.message },
+        { status: error.status }
+      );
+    }
+    logger.error({
+      message: 'Get appointment details error',
+      error: error as Error,
+    });
+    return NextResponse.json({ error: 'Internal Error' }, { status: 500 });
   }
 }

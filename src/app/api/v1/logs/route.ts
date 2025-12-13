@@ -4,7 +4,6 @@ import { requireRole } from '@/lib/auth/get-session';
 import { NextResponse } from 'next/server';
 
 import { logService } from '@/services/log-service';
-import { ServiceError } from '@/services/errors';
 
 export async function GET() {
   const session = await requireRole('admin');
@@ -21,20 +20,20 @@ export async function GET() {
   }
 
   try {
-      const logs = await logService.getAllLogs();
-      
-      logger.info({
-         message: 'Logs fetched successfully',
-         meta: {
-           count: logs.length,
-           userId: session.userId,
-         },
-       });
-       
-      return NextResponse.json(logs);
+    const logs = await logService.getAllLogs();
+
+    logger.info({
+      message: 'Logs fetched successfully',
+      meta: {
+        count: logs.length,
+        userId: session.userId,
+      },
+    });
+
+    return NextResponse.json(logs);
   } catch (error) {
-       // logService doesn't throw ServiceError currently but for consistency
-      logger.error({ message: 'Get logs error', error: error as Error });
-      return NextResponse.json({ error: 'Internal Error' }, { status: 500 });
+    // logService doesn't throw ServiceError currently but for consistency
+    logger.error({ message: 'Get logs error', error: error as Error });
+    return NextResponse.json({ error: 'Internal Error' }, { status: 500 });
   }
 }

@@ -39,20 +39,29 @@ export async function GET(_req: Request, { params }: RouteParams) {
   }
 
   try {
-      const patientDetails = await patientService.getPatientDetails(session.userId, patientId);
-      
-      // Log for controller level (PHI access logged in service)
-      logger.info({
-          message: 'Patient details access',
-          meta: { doctorId: session.userId, patientId }
-      });
+    const patientDetails = await patientService.getPatientDetails(
+      session.userId,
+      patientId
+    );
 
-      return NextResponse.json(patientDetails);
+    // Log for controller level (PHI access logged in service)
+    logger.info({
+      message: 'Patient details access',
+      meta: { doctorId: session.userId, patientId },
+    });
+
+    return NextResponse.json(patientDetails);
   } catch (error) {
-      if (error instanceof ServiceError) {
-          return NextResponse.json({ error: error.message }, { status: error.status });
-      }
-      logger.error({ message: 'Get patient details error', error: error as Error });
-      return NextResponse.json({ error: 'Internal Error' }, { status: 500 });
+    if (error instanceof ServiceError) {
+      return NextResponse.json(
+        { error: error.message },
+        { status: error.status }
+      );
+    }
+    logger.error({
+      message: 'Get patient details error',
+      error: error as Error,
+    });
+    return NextResponse.json({ error: 'Internal Error' }, { status: 500 });
   }
 }

@@ -36,26 +36,29 @@ export async function POST(req: Request) {
   }
 
   try {
-      const nurse = await nurseService.createNurse(result.output, session.userId);
+    const nurse = await nurseService.createNurse(result.output);
 
-      logger.info({
-        message: 'Nurse created successfully',
-        meta: {
-          email: nurse.email,
-          createdBy: session.userId,
-        },
-      });
+    logger.info({
+      message: 'Nurse created successfully',
+      meta: {
+        email: nurse.email,
+        createdBy: session.userId,
+      },
+    });
 
-      return NextResponse.json(
-        { message: 'Nurse Created' },
-        { status: STATUS.CREATED }
-      );
+    return NextResponse.json(
+      { message: 'Nurse Created' },
+      { status: STATUS.CREATED }
+    );
   } catch (error) {
-     if (error instanceof ServiceError) {
-          return NextResponse.json({ error: error.message }, { status: error.status });
-      }
-      logger.error({ message: 'Create nurse error', error: error as Error });
-      return NextResponse.json({ error: 'Internal Error' }, { status: 500 });
+    if (error instanceof ServiceError) {
+      return NextResponse.json(
+        { error: error.message },
+        { status: error.status }
+      );
+    }
+    logger.error({ message: 'Create nurse error', error: error as Error });
+    return NextResponse.json({ error: 'Internal Error' }, { status: 500 });
   }
 }
 
@@ -74,22 +77,25 @@ export async function GET() {
   }
 
   try {
-      const nurses = await nurseService.getAllNurses();
-      
-      logger.info({
-        message: 'Nurses fetched',
-        meta: {
-          count: nurses.length,
-          requestedBy: session.role,
-        },
-      });
+    const nurses = await nurseService.getAllNurses();
 
-      return NextResponse.json(nurses);
+    logger.info({
+      message: 'Nurses fetched',
+      meta: {
+        count: nurses.length,
+        requestedBy: session.role,
+      },
+    });
+
+    return NextResponse.json(nurses);
   } catch (error) {
-      if (error instanceof ServiceError) {
-          return NextResponse.json({ error: error.message }, { status: error.status });
-      }
-      logger.error({ message: 'Get nurses error', error: error as Error });
-      return NextResponse.json({ error: 'Internal Error' }, { status: 500 });
+    if (error instanceof ServiceError) {
+      return NextResponse.json(
+        { error: error.message },
+        { status: error.status }
+      );
+    }
+    logger.error({ message: 'Get nurses error', error: error as Error });
+    return NextResponse.json({ error: 'Internal Error' }, { status: 500 });
   }
 }

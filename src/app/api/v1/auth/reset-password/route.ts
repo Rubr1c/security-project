@@ -3,7 +3,7 @@ import * as v from 'valibot';
 import { resetPasswordSchema } from '@/lib/validation/auth-schemas';
 import { STATUS } from '@/lib/http/status-codes';
 import { logger } from '@/lib/logger';
-import { authService, ServiceError } from '@/services/auth-service';
+import { authService } from '@/services/auth-service';
 
 export async function POST(req: Request) {
   try {
@@ -18,7 +18,7 @@ export async function POST(req: Request) {
     }
 
     const { token, password } = result.output;
-    
+
     const serviceResult = await authService.resetPassword(token, password);
 
     logger.info({

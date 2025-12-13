@@ -5,8 +5,6 @@ import { STATUS } from './lib/http/status-codes';
 import arcjet, { detectBot, shield, tokenBucket } from '@arcjet/next';
 import { env } from './lib/env';
 
-const AUTH_COOKIE_NAME = 'auth-token';
-
 const RATE_LIMIT_REFILL_RATE = 5;
 const RATE_LIMIT_CAPACITY = 15;
 const RATE_LIMIT_INTERVAL = 10;

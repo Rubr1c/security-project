@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { ChangePasswordForm } from '@/components/forms/ChangePasswordForm';
 import { useAuthStore } from '@/store/auth';
@@ -10,7 +9,6 @@ import { Modal } from '@/components/ui/Modal';
 
 export default function AccountPage() {
   const user = useAuthStore((s) => s.user);
-  const router = useRouter();
 
   const [isExporting, setIsExporting] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);

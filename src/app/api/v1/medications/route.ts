@@ -22,23 +22,32 @@ export async function GET() {
   const { userId, role: userRole } = session;
 
   try {
-      const medications = await appointmentService.getAllMedications(userId, userRole);
-      
-      logger.info({
-        message: 'All medications fetched',
-        meta: {
-          userId,
-          role: userRole,
-          medicationCount: medications.length,
-        },
-      });
+    const medications = await appointmentService.getAllMedications(
+      userId,
+      userRole
+    );
 
-      return NextResponse.json(medications);
+    logger.info({
+      message: 'All medications fetched',
+      meta: {
+        userId,
+        role: userRole,
+        medicationCount: medications.length,
+      },
+    });
+
+    return NextResponse.json(medications);
   } catch (error) {
-       if (error instanceof ServiceError) {
-          return NextResponse.json({ error: error.message }, { status: error.status });
-      }
-      logger.error({ message: 'Get all medications error', error: error as Error });
-      return NextResponse.json({ error: 'Internal Error' }, { status: 500 });
+    if (error instanceof ServiceError) {
+      return NextResponse.json(
+        { error: error.message },
+        { status: error.status }
+      );
+    }
+    logger.error({
+      message: 'Get all medications error',
+      error: error as Error,
+    });
+    return NextResponse.json({ error: 'Internal Error' }, { status: 500 });
   }
 }

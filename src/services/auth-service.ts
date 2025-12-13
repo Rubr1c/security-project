@@ -324,7 +324,7 @@ export const authService = {
         passwordResetTokenExpiresAt: null,
       })
       .where(eq(users.id, user.id));
-    
+
     return { userId: user.id };
   },
 
@@ -358,9 +358,18 @@ export const authService = {
       }
 
       if (isExpired(user.pendingPasswordExpiresAt)) {
-         await db.update(users).set({
-           pendingPasswordHash: null, pendingPasswordExpiresAt: null, otpHash: null, otpExpiresAt: null, otpLastSentAt: null, otpAttempts: 0, updatedAt: new Date().toISOString()
-         }).where(eq(users.id, user.id));
+        await db
+          .update(users)
+          .set({
+            pendingPasswordHash: null,
+            pendingPasswordExpiresAt: null,
+            otpHash: null,
+            otpExpiresAt: null,
+            otpLastSentAt: null,
+            otpAttempts: 0,
+            updatedAt: new Date().toISOString(),
+          })
+          .where(eq(users.id, user.id));
         throw new ServiceError(
           'Password change request expired. Start again.',
           400
@@ -408,9 +417,9 @@ export const authService = {
       return { success: true, userId: user.id };
     } else {
       // Request change
-        if (!data.oldPassword || !data.newPassword) {
-            throw new ServiceError("Missing passwords", 400);
-        }
+      if (!data.oldPassword || !data.newPassword) {
+        throw new ServiceError('Missing passwords', 400);
+      }
 
       if (data.oldPassword === data.newPassword) {
         throw new ServiceError(

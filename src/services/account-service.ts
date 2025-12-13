@@ -1,7 +1,11 @@
 import { db } from '@/lib/db/client';
 import { users, appointments, medications } from '@/lib/db/schema';
 import { eq, inArray } from 'drizzle-orm';
-import { decryptUserFields, decryptAppointmentRecords, decryptMedicationRecords } from '@/lib/security/fields';
+import {
+  decryptUserFields,
+  decryptAppointmentRecords,
+  decryptMedicationRecords,
+} from '@/lib/security/fields';
 import { encrypt, hashEmail } from '@/lib/security/crypto';
 import { logger } from '@/lib/logger';
 import { ServiceError } from './errors';
@@ -31,7 +35,7 @@ export const accountService = {
   },
 
   async deleteAccount(userId: number) {
-     // Strict Compliance Logging
+    // Strict Compliance Logging
     logger.getAuditLogger()?.logAccountDeletion(userId);
 
     // Anonymization (Soft Delete)
@@ -61,16 +65,14 @@ export const accountService = {
         })
         .where(eq(users.id, userId))
         .run();
-        
+
       return true;
-    } catch (err: any) {
-       // Ideally we wrap error with more context, but existing controller caught generic 'any'
-       // We can throw ServiceError
-       throw new ServiceError('Failed to delete account', 500); 
+    } catch {
+      // Ideally we wrap error with more context, but existing controller caught generic 'any'
+      // We can throw ServiceError
+      throw new ServiceError('Failed to delete account', 500);
     }
   },
-
-
 
   async exportUserData(userId: number) {
     const user = db.select().from(users).where(eq(users.id, userId)).get();
@@ -108,5 +110,5 @@ export const accountService = {
         compliance: 'GDPR Article 20 / HIPAA Right of Access',
       },
     };
-  }
+  },
 };

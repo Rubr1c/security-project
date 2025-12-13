@@ -36,26 +36,29 @@ export async function POST(req: Request) {
   }
 
   try {
-      const doctor = await doctorService.createDoctor(result.output);
-      
-      logger.info({
-        message: 'Doctor created successfully',
-        meta: {
-          email: doctor.email,
-        },
-      });
+    const doctor = await doctorService.createDoctor(result.output);
 
-      return NextResponse.json(
-        { message: 'Doctor Created' },
-        { status: STATUS.CREATED }
-      );
+    logger.info({
+      message: 'Doctor created successfully',
+      meta: {
+        email: doctor.email,
+      },
+    });
+
+    return NextResponse.json(
+      { message: 'Doctor Created' },
+      { status: STATUS.CREATED }
+    );
   } catch (error) {
-       // Handle unique constraint or other errors if needed, though service currently doesn't wrap them explicitly except generic errors
-       if (error instanceof ServiceError) {
-          return NextResponse.json({ error: error.message }, { status: error.status });
-      }
-      logger.error({ message: 'Create doctor error', error: error as Error });
-      return NextResponse.json({ error: 'Internal Error' }, { status: 500 });
+    // Handle unique constraint or other errors if needed, though service currently doesn't wrap them explicitly except generic errors
+    if (error instanceof ServiceError) {
+      return NextResponse.json(
+        { error: error.message },
+        { status: error.status }
+      );
+    }
+    logger.error({ message: 'Create doctor error', error: error as Error });
+    return NextResponse.json({ error: 'Internal Error' }, { status: 500 });
   }
 }
 
@@ -75,22 +78,25 @@ export async function GET() {
   }
 
   try {
-      const doctors = await doctorService.getAllDoctors();
-      
-      logger.info({
-        message: 'Doctors fetched',
-        meta: {
-          count: doctors.length,
-          requestedBy: session.role,
-        },
-      });
+    const doctors = await doctorService.getAllDoctors();
 
-      return NextResponse.json(doctors);
+    logger.info({
+      message: 'Doctors fetched',
+      meta: {
+        count: doctors.length,
+        requestedBy: session.role,
+      },
+    });
+
+    return NextResponse.json(doctors);
   } catch (error) {
-      if (error instanceof ServiceError) {
-          return NextResponse.json({ error: error.message }, { status: error.status });
-      }
-      logger.error({ message: 'Get doctors error', error: error as Error });
-      return NextResponse.json({ error: 'Internal Error' }, { status: 500 });
+    if (error instanceof ServiceError) {
+      return NextResponse.json(
+        { error: error.message },
+        { status: error.status }
+      );
+    }
+    logger.error({ message: 'Get doctors error', error: error as Error });
+    return NextResponse.json({ error: 'Internal Error' }, { status: 500 });
   }
 }

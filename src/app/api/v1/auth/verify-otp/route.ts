@@ -1,15 +1,9 @@
 import { NextResponse } from 'next/server';
 import * as v from 'valibot';
-import { eq } from 'drizzle-orm';
-import { db } from '@/lib/db/client';
-import { users } from '@/lib/db/schema';
 import { STATUS } from '@/lib/http/status-codes';
 import { logger } from '@/lib/logger';
-import { OTP_MAX_ATTEMPTS, isExpired, verifyOtpCode } from '@/lib/otp';
-import { jwt } from '@/lib/jwt';
 import { cookies } from 'next/headers';
 import { env } from '@/lib/env';
-import { hashEmail } from '@/lib/security/crypto';
 import { authService, ServiceError } from '@/services/auth-service';
 
 const verifySchema = v.object({
@@ -31,35 +25,35 @@ export async function POST(req: Request) {
   const { email, code } = parsed.output;
 
   try {
-      const { token, userId } = await authService.verifyOtp(email, code);
+    const { token, userId } = await authService.verifyOtp(email, code);
 
-      logger.info({
-        message: 'OTP verified',
-        meta: { userId },
-      });
+    logger.info({
+      message: 'OTP verified',
+      meta: { userId },
+    });
 
-      const isProduction = env.NODE_ENV === 'production';
-      const cookieStore = await cookies();
-      cookieStore.set('auth-token', token, {
-        httpOnly: true,
-        secure: isProduction,
-        sameSite: 'lax',
-        path: '/',
-        maxAge: 60 * 60,
-      });
+    const isProduction = env.NODE_ENV === 'production';
+    const cookieStore = await cookies();
+    cookieStore.set('auth-token', token, {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: 'lax',
+      path: '/',
+      maxAge: 60 * 60,
+    });
 
-      return NextResponse.json({ success: true }, { status: STATUS.OK });
+    return NextResponse.json({ success: true }, { status: STATUS.OK });
   } catch (error) {
-      if (error instanceof ServiceError) {
-          return NextResponse.json(
-            { error: error.message },
-            { status: error.status }
-          );
-      }
-      logger.error({ message: 'Verify OTP error', error: error as Error });
+    if (error instanceof ServiceError) {
       return NextResponse.json(
-          { error: 'Internal Server Error' },
-          { status: STATUS.INTERNAL_ERROR }
+        { error: error.message },
+        { status: error.status }
       );
+    }
+    logger.error({ message: 'Verify OTP error', error: error as Error });
+    return NextResponse.json(
+      { error: 'Internal Server Error' },
+      { status: STATUS.INTERNAL_ERROR }
+    );
   }
 }

@@ -1,7 +1,12 @@
 import { db } from '@/lib/db/client';
 import { users, appointments, medications } from '@/lib/db/schema';
 import { eq, and, inArray } from 'drizzle-orm';
-import { decryptUserRecords, decryptUserFields, decryptAppointmentRecords, decryptMedicationRecords } from '@/lib/security/fields';
+import {
+  decryptUserRecords,
+  decryptUserFields,
+  decryptAppointmentRecords,
+  decryptMedicationRecords,
+} from '@/lib/security/fields';
 import { logger } from '@/lib/logger';
 import { ServiceError } from './errors';
 
@@ -21,7 +26,15 @@ export const patientService = {
       .where(and(eq(users.role, 'patient'), eq(users.doctorId, doctorId)))
       .all();
 
-    return decryptUserRecords(patients, ['id', 'email', 'name', 'role', 'doctorId', 'createdAt', 'updatedAt']);
+    return decryptUserRecords(patients, [
+      'id',
+      'email',
+      'name',
+      'role',
+      'doctorId',
+      'createdAt',
+      'updatedAt',
+    ]);
   },
 
   async getPatientDetails(requesterId: number, patientId: number) {
@@ -97,5 +110,5 @@ export const patientService = {
       appointments: decryptAppointmentRecords(patientAppointments),
       medications: decryptMedicationRecords(patientMedications),
     };
-  }
+  },
 };

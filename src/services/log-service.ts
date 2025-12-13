@@ -4,5 +4,5 @@ import { logs } from '@/lib/db/schema';
 export const logService = {
   async getAllLogs() {
     return db.select().from(logs).all();
-  }
+  },
 };

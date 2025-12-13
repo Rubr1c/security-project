@@ -56,34 +56,40 @@ export async function PUT(req: Request, { params }: RouteParams) {
   }
 
   try {
-      const response = await appointmentService.respondToAppointment(
-          appointmentId, 
-          session.userId, 
-          result.output.action
-      );
-      
-      logger.info({
-        message: `Appointment ${response.status} by doctor`,
-        meta: {
-          appointmentId,
-          doctorId: session.userId,
-          patientId: response.patientId,
-          action: result.output.action,
-        },
-      });
+    const response = await appointmentService.respondToAppointment(
+      appointmentId,
+      session.userId,
+      result.output.action
+    );
 
-      return NextResponse.json(
-        {
-          message: `Appointment ${response.status} successfully`,
-          status: response.status,
-        },
-        { status: STATUS.OK }
-      );
+    logger.info({
+      message: `Appointment ${response.status} by doctor`,
+      meta: {
+        appointmentId,
+        doctorId: session.userId,
+        patientId: response.patientId,
+        action: result.output.action,
+      },
+    });
+
+    return NextResponse.json(
+      {
+        message: `Appointment ${response.status} successfully`,
+        status: response.status,
+      },
+      { status: STATUS.OK }
+    );
   } catch (error) {
-      if (error instanceof ServiceError) {
-          return NextResponse.json({ error: error.message }, { status: error.status });
-      }
-      logger.error({ message: 'Respond to appointment error', error: error as Error });
-      return NextResponse.json({ error: 'Internal Error' }, { status: 500 });
+    if (error instanceof ServiceError) {
+      return NextResponse.json(
+        { error: error.message },
+        { status: error.status }
+      );
+    }
+    logger.error({
+      message: 'Respond to appointment error',
+      error: error as Error,
+    });
+    return NextResponse.json({ error: 'Internal Error' }, { status: 500 });
   }
 }

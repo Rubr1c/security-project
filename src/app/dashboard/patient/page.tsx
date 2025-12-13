@@ -8,7 +8,6 @@ import { BookAppointmentForm } from '@/components/forms/BookAppointmentForm';
 import { Button, Modal, EmptyState, LoadingSpinner } from '@/components/ui';
 import { useAppointments } from '@/hooks/useAppointments';
 import { useMedications } from '@/hooks/useMedications';
-import { useUsers } from '@/hooks/useUsers';
 import { Calendar, Pill, Plus } from 'lucide-react';
 import type { AppointmentStatus } from '@/lib/db/types';
 
@@ -16,7 +15,6 @@ export default function PatientDashboardPage() {
   const [isBookingOpen, setIsBookingOpen] = useState(false);
   const { appointmentsQuery } = useAppointments();
   const { medicationsQuery } = useMedications();
-
 
   const sortedAppointments = useMemo(() => {
     const appointments = appointmentsQuery.data ?? [];
@@ -101,7 +99,8 @@ export default function PatientDashboardPage() {
                     appointment={appointment}
                     showDoctor
                     doctorName={
-                      appointment.doctorName ?? `Doctor #${appointment.doctorId}`
+                      appointment.doctorName ??
+                      `Doctor #${appointment.doctorId}`
                     }
                   />
                 ))}

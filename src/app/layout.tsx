@@ -3,8 +3,6 @@ import './globals.css';
 import { Providers } from '@/components/providers/QueryProvider';
 import { ToastProvider } from '@/components/providers/ToastProvider';
 
-
-
 export const metadata: Metadata = {
   title: 'HealthCare',
   description: 'Secure healthcare management',
@@ -18,7 +16,6 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="min-h-dvh">
-
         <Providers>
           <ToastProvider>{children}</ToastProvider>
         </Providers>

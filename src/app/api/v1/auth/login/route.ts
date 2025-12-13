@@ -1,19 +1,10 @@
-import { db } from '@/lib/db/client';
-import { users } from '@/lib/db/schema';
 import { STATUS } from '@/lib/http/status-codes';
 import { loginSchema } from '@/lib/validation/user-schemas';
-import { eq } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
-import bcrypt from 'bcrypt';
 import * as v from 'valibot';
 import { logger } from '@/lib/logger';
 import { aj } from '@/proxy';
-import { generateOtpCode, hashOtpCode, otpExpiresAtISO } from '@/lib/otp';
-import { sendOtpEmail } from '@/lib/email/send-otp';
-import { decrypt, hashEmail, BCRYPT_COST } from '@/lib/security/crypto';
 import { authService, ServiceError } from '@/services/auth-service';
-
-const DUMMY_HASH = bcrypt.hashSync('dummy-password-for-timing-mitigation', BCRYPT_COST);
 
 export async function POST(req: Request) {
   const decision = await aj.protect(req, { requested: 5 });
@@ -92,14 +83,14 @@ export async function POST(req: Request) {
         { status: error.status }
       );
     }
-    
+
     logger.error({
-        message: 'Login error',
-        error: error as Error,
+      message: 'Login error',
+      error: error as Error,
     });
     return NextResponse.json(
-        { error: 'An unexpected error occurred.' },
-        { status: STATUS.INTERNAL_ERROR }
+      { error: 'An unexpected error occurred.' },
+      { status: STATUS.INTERNAL_ERROR }
     );
   }
 }

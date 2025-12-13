@@ -9,19 +9,20 @@ import { ServiceError } from './errors';
 export const doctorService = {
   async createDoctor(data: { email: string; name: string; password: string }) {
     const hashedPassword = await bcrypt.hash(data.password, 10);
-    
-    // Check if email exists? 
+
+    // Check if email exists?
     // db.insert doesn't throw usually with Drizzle unless constraint violation.
     // Ideally we check first or handle error.
     // Existing controller didn't check explicitly but schema might have unique constraint?
     // User schema usually has unique emailHash.
     // I'll add a check or let it fail? Existing controller just ran `run()`.
-    // I will let it run, but generally checking is better. 
+    // I will let it run, but generally checking is better.
     // For now mirroring existing logic but cleaner.
-    
+
     // Wait, Drizzle `run()` might throw if unique constraint fails.
-    
-    const insertResult = db.insert(users)
+
+    const insertResult = db
+      .insert(users)
       .values({
         email: encrypt(data.email),
         emailHash: hashEmail(data.email),
@@ -30,10 +31,10 @@ export const doctorService = {
         role: 'doctor',
       })
       .run();
-      
+
     return {
-        id: insertResult.lastInsertRowid,
-        email: data.email
+      id: insertResult.lastInsertRowid,
+      email: data.email,
     };
   },
 
@@ -50,7 +51,13 @@ export const doctorService = {
       .where(eq(users.role, 'doctor'))
       .all();
 
-    return decryptUserRecords(doctors, ['id', 'email', 'name', 'role', 'createdAt']);
+    return decryptUserRecords(doctors, [
+      'id',
+      'email',
+      'name',
+      'role',
+      'createdAt',
+    ]);
   },
 
   async deleteDoctor(doctorId: number, force: boolean) {
@@ -71,9 +78,12 @@ export const doctorService = {
       .all();
 
     if (appts.length > 0 && !force) {
-      throw new ServiceError('This doctor has appointments. Delete anyway to remove the doctor and all associated appointments/medications.', 409);
+      throw new ServiceError(
+        'This doctor has appointments. Delete anyway to remove the doctor and all associated appointments/medications.',
+        409
+      );
     }
-    
+
     let deletionSuccess = false;
 
     sqlite.transaction(() => {
@@ -107,8 +117,8 @@ export const doctorService = {
       }
       deletionSuccess = true;
     })();
-    
+
     // If transaction throws, it will bubble up.
     return { success: deletionSuccess, doctorId };
-  }
+  },
 };

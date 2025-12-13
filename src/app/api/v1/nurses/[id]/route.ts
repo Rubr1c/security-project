@@ -34,19 +34,25 @@ export async function DELETE(req: Request, { params }: RouteParams) {
   }
 
   try {
-      await nurseService.deleteNurse(nurseId, session.userId);
-      
-      logger.info({
-        message: 'Nurse deleted successfully',
-        meta: { id: nurseId, deletedBy: session.userId },
-      });
+    await nurseService.deleteNurse(nurseId);
 
-      return NextResponse.json({ message: 'Nurse Deleted' }, { status: STATUS.OK });
+    logger.info({
+      message: 'Nurse deleted successfully',
+      meta: { id: nurseId, deletedBy: session.userId },
+    });
+
+    return NextResponse.json(
+      { message: 'Nurse Deleted' },
+      { status: STATUS.OK }
+    );
   } catch (error) {
-      if (error instanceof ServiceError) {
-          return NextResponse.json({ error: error.message }, { status: error.status });
-      }
-      logger.error({ message: 'Delete nurse error', error: error as Error });
-      return NextResponse.json({ error: 'Internal Error' }, { status: 500 });
+    if (error instanceof ServiceError) {
+      return NextResponse.json(
+        { error: error.message },
+        { status: error.status }
+      );
+    }
+    logger.error({ message: 'Delete nurse error', error: error as Error });
+    return NextResponse.json({ error: 'Internal Error' }, { status: 500 });
   }
 }

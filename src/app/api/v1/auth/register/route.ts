@@ -1,17 +1,9 @@
-import { db } from '@/lib/db/client';
-import { users } from '@/lib/db/schema';
 import { STATUS } from '@/lib/http/status-codes';
 import { logger } from '@/lib/logger';
 import { createUserSchema } from '@/lib/validation/user-schemas';
 import { aj } from '@/proxy';
-import bcrypt from 'bcrypt';
 import { NextResponse } from 'next/server';
 import * as v from 'valibot';
-import { eq } from 'drizzle-orm';
-import { generateOtpCode, hashOtpCode, otpExpiresAtISO } from '@/lib/otp';
-import { sendOtpEmail } from '@/lib/email/send-otp';
-import { encrypt, hashEmail, BCRYPT_COST } from '@/lib/security/crypto';
-import { decryptUserFields } from '@/lib/security/fields';
 import { authService, ServiceError } from '@/services/auth-service';
 
 export async function POST(req: Request) {
@@ -70,16 +62,16 @@ export async function POST(req: Request) {
     );
   } catch (error) {
     if (error instanceof ServiceError) {
-       return NextResponse.json(
+      return NextResponse.json(
         { error: error.message },
         { status: error.status }
       );
     }
-    
+
     logger.error({ message: 'Register error', error: error as Error });
     return NextResponse.json(
-        { error: 'Internal Server Error' },
-        { status: STATUS.INTERNAL_ERROR }
+      { error: 'Internal Server Error' },
+      { status: STATUS.INTERNAL_ERROR }
     );
   }
 }

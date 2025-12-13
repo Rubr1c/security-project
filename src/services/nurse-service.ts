@@ -7,7 +7,7 @@ import bcrypt from 'bcrypt';
 import { ServiceError } from './errors';
 
 export const nurseService = {
-  async createNurse(data: { email: string; name: string; password: string }, creatorId: number) {
+  async createNurse(data: { email: string; name: string; password: string }) {
     const emailHashValue = hashEmail(data.email);
 
     const existingUser = db
@@ -22,7 +22,8 @@ export const nurseService = {
 
     const hashedPassword = await bcrypt.hash(data.password, 10);
 
-    const insertResult = db.insert(users)
+    const insertResult = db
+      .insert(users)
       .values({
         email: encrypt(data.email),
         emailHash: emailHashValue,
@@ -31,10 +32,10 @@ export const nurseService = {
         role: 'nurse',
       })
       .run();
-    
+
     return {
-        id: insertResult.lastInsertRowid,
-        email: data.email
+      id: insertResult.lastInsertRowid,
+      email: data.email,
     };
   },
 
@@ -64,7 +65,7 @@ export const nurseService = {
     ]);
   },
 
-  async deleteNurse(nurseId: number, adminId: number) {
+  async deleteNurse(nurseId: number) {
     const nurse = db
       .select({ id: users.id, role: users.role })
       .from(users)
@@ -81,8 +82,8 @@ export const nurseService = {
       .run();
 
     if (deleteResult.changes === 0) {
-        // Should have been caught by select above, but for safety
-        throw new ServiceError('Nurse not found or already deleted', 404);
+      // Should have been caught by select above, but for safety
+      throw new ServiceError('Nurse not found or already deleted', 404);
     }
   },
 
@@ -98,7 +99,10 @@ export const nurseService = {
     }
 
     if (nurse[0].doctorId !== null && nurse[0].doctorId !== doctorId) {
-       throw new ServiceError('Nurse is already assigned to another doctor', 400);
+      throw new ServiceError(
+        'Nurse is already assigned to another doctor',
+        400
+      );
     }
 
     const updateResult = await db
@@ -113,7 +117,10 @@ export const nurseService = {
       );
 
     if (updateResult.changes === 0) {
-      throw new ServiceError('Nurse assignment failed - concurrent modification', 409);
+      throw new ServiceError(
+        'Nurse assignment failed - concurrent modification',
+        409
+      );
     }
 
     return { nurseId, doctorId };
@@ -135,7 +142,10 @@ export const nurseService = {
     }
 
     if (nurse[0].doctorId !== doctorId) {
-      throw new ServiceError('Unauthorized: Cannot unassign nurse from another doctor', 403);
+      throw new ServiceError(
+        'Unauthorized: Cannot unassign nurse from another doctor',
+        403
+      );
     }
 
     const updateResult = await db
@@ -152,5 +162,5 @@ export const nurseService = {
     if (updateResult.changes === 0) {
       throw new ServiceError('Nurse unassignment failed', 409);
     }
-  }
+  },
 };
